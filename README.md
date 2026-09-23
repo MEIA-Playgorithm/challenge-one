@@ -29,3 +29,8 @@ O id da issue vem do **Issue Board do GitHub**.
 ## Fluxo de release
 
 - `development` → `main` semanalmente (merge/PR semanal para produção).
+
+## Documentação
+
+- [Branch management](docs/branch-management.md)
+- [Conventional Commits](docs/conventional-commits.md)
