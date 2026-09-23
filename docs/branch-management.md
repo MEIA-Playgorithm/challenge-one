@@ -22,6 +22,7 @@ git switch -c feature/123_nome-da-feature
 
 - Keep each branch focused on a single issue or change.
 - Make small, focused commits that describe what you changed.
+- Follow the project's [Conventional Commits](conventional-commits.md) format.
 - Avoid including temporary files, credentials, or changes unrelated to the issue.
 - Regularly synchronise the branch with `development` to reduce conflicts:
 
