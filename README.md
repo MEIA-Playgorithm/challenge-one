@@ -1,36 +1,36 @@
 # challenge-one
 Inference Engine
 
-# Política de Branches
+# Branch Policy
 
-## Branches principais
+## Main branches
 
-- **main** — produção. Só recebe merge via PR.
-- **development** — testes e playground. Só recebe merge via PR.
+- **main** - production. Changes are merged through Pull Requests only.
+- **development** - testing and playground. Changes are merged through Pull Requests only.
 
-## Branches de trabalho
+## Working branches
 
-- **feature/** — novas funcionalidades
-- **bugfix/** — correções de bugs
+- **feature/** - new features
+- **bugfix/** - bug fixes
 
-Sempre nascem de `development` e fazem merge de volta para `development`.
+Always create them from `development` and merge them back into `development`.
 
-### Convenção de nomes
+### Naming convention
 
 ```
 feature/idissue_nomebranch
 bugfix/idissue_nomebranch
 ```
 
-Exemplo: `feature/123_login-social`
+Example: `feature/123_login-social`
 
-O id da issue vem do **Issue Board do GitHub**.
+The issue ID comes from the **GitHub Issue Board**.
 
-## Fluxo de release
+## Release flow
 
-- `development` → `main` semanalmente (merge/PR semanal para produção).
+- Merge `development` into `main` weekly through a Pull Request for production.
 
-## Documentação
+## Documentation
 
 - [Branch management](docs/branch-management.md)
 - [Conventional Commits](docs/conventional-commits.md)
