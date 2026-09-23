@@ -1,73 +1,73 @@
-# Como fazer a gestão de branches
+# How to manage branches
 
-Neste guia encontras práticas para manter o histórico do projeto organizado e facilitar o trabalho em equipa. Estas orientações complementam a política de branches do projeto.
+This guide presents practices for keeping the project history organised and making teamwork easier. These guidelines complement the project's branch policy.
 
-## Antes de criar uma branch
+## Before creating a branch
 
-- Confirma que a issue está bem definida e usa o respetivo ID no nome da branch.
-- Atualiza a branch de origem antes de começar:
+- Make sure the issue is well defined and use its ID in the branch name.
+- Update the source branch before starting:
 
 ```bash
 git switch development
 git pull origin development
 ```
 
-- Cria a branch a partir de `development`:
+- Create the branch from `development`:
 
 ```bash
 git switch -c feature/123_nome-da-feature
 ```
 
-## Durante o desenvolvimento
+## During development
 
-- Mantém cada branch focada numa única issue ou alteração.
-- Faz commits pequenos e objetivos, descrevendo o que alteraste.
-- Evita incluir ficheiros temporários, credenciais ou alterações sem relação com a issue.
-- Sincroniza regularmente a branch com `development` para reduzir conflitos:
+- Keep each branch focused on a single issue or change.
+- Make small, focused commits that describe what you changed.
+- Avoid including temporary files, credentials, or changes unrelated to the issue.
+- Regularly synchronise the branch with `development` to reduce conflicts:
 
 ```bash
 git fetch origin
 git rebase origin/development
 ```
 
-- Executa os testes localmente antes de abrir um Pull Request.
+- Run the tests locally before opening a Pull Request.
 
-## Ao terminar o trabalho
+## When finishing the work
 
-- Revê as alterações antes de publicar:
+- Review the changes before pushing them:
 
 ```bash
 git status
 git diff
 ```
 
-- Envia a branch para o repositório remoto:
+- Push the branch to the remote repository:
 
 ```bash
 git push -u origin feature/123_nome-da-feature
 ```
 
-- Abre um Pull Request para `development` e associa-o à issue correspondente.
-- Explica no Pull Request o que foi feito, como validar a alteração e eventuais limitações.
-- Pede uma revisão a pelo menos um colega e resolve todos os comentários antes do merge.
+- Open a Pull Request targeting `development` and link it to the corresponding issue.
+- Explain in the Pull Request what was changed, how to validate it, and any limitations.
+- Ask at least one colleague to review it and resolve all comments before merging.
 
-## Depois do merge
+## After merging
 
-- Confirma que a branch foi integrada corretamente.
-- Apaga a branch remota e local quando já não for necessária:
+- Confirm that the branch was merged correctly.
+- Delete the remote and local branches when they are no longer needed:
 
 ```bash
 git push origin --delete feature/123_nome-da-feature
 git branch -d feature/123_nome-da-feature
 ```
 
-- Não faças commits diretamente em `main` ou `development`; usa sempre Pull Requests.
+- Do not commit directly to `main` or `development`; always use Pull Requests.
 
-## Resolução de conflitos
+## Resolving conflicts
 
-1. Atualiza a branch com a versão mais recente de `development`.
-2. Resolve os conflitos manualmente, mantendo o comportamento correto das duas alterações.
-3. Confirma que não ficaram marcadores como `<<<<<<<` ou `>>>>>>>`.
-4. Executa os testes e só depois faz o push e atualiza o Pull Request.
+1. Update the branch with the latest version of `development`.
+2. Resolve the conflicts manually while preserving the correct behaviour of both changes.
+3. Make sure no markers such as `<<<<<<<` or `>>>>>>>` remain.
+4. Run the tests, then push the changes and update the Pull Request.
 
-Se tiveres dúvidas sobre o resultado de um conflito, pede uma revisão antes de continuar.
+If you are unsure about the result of a conflict, ask for a review before continuing.
