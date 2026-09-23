@@ -1,0 +1,123 @@
+@startuml play_fluxogram
+title Sistema pericial de recomendação de filmes
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam ArrowColor #475569
+skinparam activity {
+  BackgroundColor #EFF6FF
+  BorderColor #2563EB
+  FontColor #0F172A
+  DiamondBackgroundColor #FEF3C7
+  DiamondBorderColor #D97706
+  StartColor #2563EB
+  EndColor #2563EB
+}
+
+start
+
+partition "1. Conhecimento dos filmes" {
+  :Carregar catálogo curado de 50–100 filmes\ne dicionário controlado de palavras-chave;
+  :Preservar os factos originais da API/base de dados;
+  note right
+    Géneros, duração, ano, classificação etária,
+    idioma, elenco, realizador, produtor,
+    argumentista, personagens, palavras-chave,
+    popularidade, votos e tendências.
+  end note
+  :Derivar década e atributos semânticos\na partir dos factos e das evidências;
+  note right
+    Subgéneros, temas, conteúdo sobrenatural,
+    realismo, humor e perfil mainstream/nicho.
+  end note
+  :Aplicar regras periciais de inferência (A);
+  note right
+    Ritmo, complexidade, intensidade psicológica,
+    tom emocional, violência, gore e arquétipos.
+    Exemplo: horror + masked killer + final girl
+    contribuem para a classificação slasher.
+  end note
+  :Guardar atributos inferidos separadamente\ne registar regras, evidências e limiares usados;
+}
+
+partition "2. Perfil do utilizador" {
+  :Recolher preferências de conteúdo, duração,\népoca, idioma, pessoas e personagens;
+  :Associar intensidade às preferências\n(-2: detesta ... 0: neutro ... +2: gosta muito);
+  :Separar preferências flexíveis\nde restrições obrigatórias;
+  note right
+    Preferir 90–110 minutos afeta a pontuação.
+    Exigir duração máxima de 120 minutos
+    exclui filmes que ultrapassem esse limite.
+  end note
+  :Recolher preferências de descoberta e tendências\ne permissão para explicações com spoilers;
+}
+
+partition "3. Regras e cálculos por filme" {
+  :Inicializar lista de candidatos\ne registo de exclusões;
+  while (Há filmes por avaliar?) is (sim)
+    :Selecionar próximo filme;
+    :Aplicar restrições obrigatórias (C);
+    if (Viola alguma restrição?) then (sim)
+      :Excluir filme e registar\na restrição e a evidência;
+    else (não)
+      :Avaliar regras de compatibilidade (B)\ne registar correspondências e incompatibilidades;
+      :Aplicar a intensidade das preferências\naos contributos positivos e negativos;
+      :Agregar contributos e normalizar\na compatibilidade para 0–100;
+      :Calcular confiança separadamente;
+      note right
+        Confiança: completude do perfil e dos dados
+        do filme, quantidade e qualidade das
+        regras aplicadas e respetivas evidências.
+        Compatibilidade: adequação ao gosto.
+        Pesos e limiares validados pelo perito.
+      end note
+      :Aplicar ajuste de novidade (D)\nconforme a preferência de descoberta;
+      note right
+        Ajuste moderado, sem sobrepor
+        a novidade à compatibilidade.
+      end note
+      :Guardar candidato, compatibilidade, confiança,\najustes e rasto das regras aplicadas;
+    endif
+  endwhile (não)
+}
+
+partition "4. Ordenação e seleção" {
+  if (Existem candidatos elegíveis?) then (sim)
+    :Ordenar candidatos considerando\ncompatibilidade e ajuste de novidade;
+    :Aplicar diversidade à lista (D);
+    note right
+      Reduzir repetições de saga, realizador
+      ou subgénero quando existam alternativas
+      com pontuações próximas.
+      Registar os ajustes de ordenação.
+    end note
+    :Selecionar Top 5\n(ou todos, se houver menos de cinco);
+  else (não)
+    :Informar que não existem filmes elegíveis\ne apresentar os motivos de exclusão;
+    stop
+  endif
+}
+
+partition "5. Explicações e resultado" {
+  :Gerar explicações a partir\ndas regras efetivamente aplicadas;
+  :Destacar fatores positivos e negativos,\najustes de ordenação e inferências relevantes;
+  :Ligar cada inferência às suas evidências\ne disponibilizar motivos de exclusão quando úteis;
+  if (O utilizador permite spoilers?) then (sim)
+    :Disponibilizar explicações completas;
+  else (não)
+    :Omitir detalhes que revelem o enredo\ndas explicações e dos rastos apresentados;
+  endif
+  :Apresentar recomendações ordenadas,\ncompatibilidade (0–100), confiança (%)\ne respetivas justificações;
+}
+
+stop
+
+legend bottom
+  Modelo conceptual comum a Prolog e Drools:
+  mesmo esquema de dados, regras, pesos e perfis de teste.
+  A: inferência | B: compatibilidade | C: restrições | D: metarregras
+
+  (rascunho basado no modelo Filipe Fontes)
+endlegend
+@enduml
