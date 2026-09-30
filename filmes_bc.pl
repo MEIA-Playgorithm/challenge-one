@@ -7,6 +7,7 @@
 :- dynamic facto/2, ultimo_facto/1.
 
 :- ensure_loaded(rules_movies).
+:- ensure_loaded(rules_user).
 
 % Só os predicados de dados do CSV são importados, não as regras Prolog.
 predicado_filme(Predicate) :-
@@ -15,6 +16,7 @@ predicado_filme(Predicate) :-
         rating_imdb, budget, star, filming_location, win, nomination, oscar]).
 
 carrega_factos_filmes :-
+    load_users,
     load_movies,
     findall(Fact, (predicado_filme(Predicate),
                   Fact =.. [Predicate, _, _], call(Fact)), Facts),

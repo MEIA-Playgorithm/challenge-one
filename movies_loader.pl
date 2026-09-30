@@ -41,8 +41,11 @@ load_movies :-
     retractall(nomination(_, _)),
     retractall(oscar(_, _)),
 
+    source_file(load_movies, Source),
+    file_directory_name(Source, Directory),
+    directory_file_path(Directory, 'knowledge_base_movies.csv', CsvFile),
     csv_read_file(
-        'knowledge_base_movies.csv',
+        CsvFile,
         [_Header | Rows],
         [functor(movie_data), arity(19)]
     ),

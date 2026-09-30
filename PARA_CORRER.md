@@ -6,13 +6,17 @@ Compatível com `sp_exp1.pl` e `sp_exp2.pl`. Carrega como factos (devidamente in
 
 Id, Title, Vote, Year, Duration, RatingMPA, RatingIMDB, Budget, Director, Writer, Star, Genre, Country, FilmingLocation, Company, Language, Win, Nomination, Oscar
 
-*(A integração de `rules_user.pl` ainda não foi feita.)*
+Os inquéritos em `knowledge_base_users.csv` são carregados por `user_bc.pl` e interpretados por `rules_user.pl`. Ver o formato e o endpoint personalizado em [api/README.md](api/README.md#inquéritos-e-recomendações-por-utilizador).
 
 ## Carregar
 
-``` bash
+```bash
 swipl sp_exp1.pl
+```
 
+No promt do prolog
+
+```prolog
 ?- carrega_bc.
 # quando pedir nome da base de conhecimento
 ?- 'filmes_bc.pl'.
@@ -25,7 +29,7 @@ true
 
 ## depois pode ser interrogada com
 
-``` bash
+```prolog
 # saber os géneros de um filme
 facto(_, genre(tt0372784, Genre)).
 
@@ -104,21 +108,12 @@ carrega_bc.
 'filmes_bc.pl'.
 arranca_motor.
 
-% Como foi concluído que este filme tem ritmo rápido?
+% como foi concluído que este filme tem ritmo rápido?
 facto(N, pace(tt0372784, fast)), como(N).
 
-% Porque não foi classificado com ritmo lento?
+% porque não foi classificado com ritmo lento?
 whynot(pace(tt0372784, slow)).
 ```
 
-As consultas de filmes acima funcionam nos dois motores. A segunda versão
-suporta também condições `nao` nas regras e preserva as justificações.
-A negação verifica ausência no momento de execução; ligar primeiro as variáveis
-com condições positivas. Recarregar os factos antes de recalcular após alterações
-nos dados; o motor não retira automaticamente conclusões anteriores.
-
-Testes do segundo motor:
-
-```bash
-swipl -q -s sp_exp2.pl -s tests_movies_engine.pl -g run_tests -t halt
-```
+As consultas de filmes acima funcionam nos dois motores. A segunda versão suporta também condições `nao` nas regras e preserva as justificações.
+A negação verifica ausência no momento de execução; ligar primeiro as variáveis com condições positivas. Recarregar os factos antes de recalcular após alterações nos dados; o motor não retira automaticamente conclusões anteriores.
