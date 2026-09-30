@@ -1,5 +1,7 @@
-% Base de filmes para o motor sp_exp1.pl.
+% Base de filmes para os motores sp_exp1.pl e sp_exp2.pl.
+:- if(\+ current_predicate(arranca_motor/0)).
 :- ensure_loaded(sp_exp1).
+:- endif.
 :- ensure_loaded(movies_loader).
 
 :- dynamic facto/2, ultimo_facto/1.

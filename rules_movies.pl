@@ -1,5 +1,7 @@
-% Regras de produção para sp_exp1.pl; conclusões guardadas em facto/2.
+% Regras de produção para sp_exp1.pl e sp_exp2.pl; conclusões guardadas em facto/2.
+:- if(\+ current_predicate(arranca_motor/0)).
 :- ensure_loaded(sp_exp1).
+:- endif.
 
 regra 1
     se [movie(Id, _)

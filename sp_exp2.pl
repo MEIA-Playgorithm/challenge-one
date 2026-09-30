@@ -1,6 +1,6 @@
 % Versão preparada para lidar com regras que contenham negação (nao)
 % Metaconhecimento
-% Usar base de conhecimento veIculos2.txt
+% Compatível com filmes_bc.pl; não exige um índice facto_dispara_regras/2.
 % Explicações como?(how?) e porque não?(whynot?)
 
 :-op(220,xfx,entao).
@@ -17,64 +17,33 @@ carrega_bc:-
 		read(NBC),
 		consult(NBC).
 
-arranca_motor:-	facto(N,Facto),
-		facto_dispara_regras1(Facto, LRegras),
-		dispara_regras(N, Facto, LRegras),
-		ultimo_facto(N).
+arranca_motor :-
+    ultimo_facto(Before),
+    forall((regra ID se LHS entao RHS, verifica_condicoes(LHS, Evidence)),
+           concluir(RHS, ID, Evidence)),
+    ultimo_facto(After),
+    ( After =:= Before -> true ; arranca_motor ).
 
-facto_dispara_regras1(Facto, LRegras):-
-	facto_dispara_regras(Facto, LRegras),
-	!.
-facto_dispara_regras1(_, []).
-% Caso em que o facto não origina o disparo de qualquer regra.
+verifica_condicoes([X e Y], Evidence) :-
+    !,
+    verifica_condicao(X, First),
+    verifica_condicoes([Y], Rest),
+    append(First, Rest, Evidence).
+verifica_condicoes([X], Evidence) :- verifica_condicao(X, Evidence).
 
-dispara_regras(N, Facto, [ID|LRegras]):-
-	regra ID se LHS entao RHS,
-	facto_esta_numa_condicao(Facto,LHS),
-	% Instancia Facto em LHS
-	verifica_condicoes(LHS, LFactos),
-	member(N,LFactos),
-	concluir(RHS,ID,LFactos),
-	!,
-	dispara_regras(N, Facto, LRegras).
-
-dispara_regras(N, Facto, [_|LRegras]):-
-	dispara_regras(N, Facto, LRegras).
-
-dispara_regras(_, _, []).
-
-
-facto_esta_numa_condicao(F,[F  e _]).
-
-facto_esta_numa_condicao(F,[avalia(F1)  e _]):- F=..[H,H1|_],F1=..[H,H1|_].
-
-facto_esta_numa_condicao(F,[_ e Fs]):- facto_esta_numa_condicao(F,[Fs]).
-
-facto_esta_numa_condicao(F,[F]).
-
-facto_esta_numa_condicao(F,[avalia(F1)]):-F=..[H,H1|_],F1=..[H,H1|_].
-
-
-verifica_condicoes([nao avalia(X) e Y],[nao X|LF]):- !,
-	\+ avalia(_,X),
-	verifica_condicoes([Y],LF).
-verifica_condicoes([avalia(X) e Y],[N|LF]):- !,
-	avalia(N,X),
-	verifica_condicoes([Y],LF).
-
-verifica_condicoes([nao avalia(X)],[nao X]):- !, \+ avalia(_,X).
-verifica_condicoes([avalia(X)],[N]):- !, avalia(N,X).
-
-verifica_condicoes([nao X e Y],[nao X|LF]):- !,
-	\+ facto(_,X),
-	verifica_condicoes([Y],LF).
-verifica_condicoes([X e Y],[N|LF]):- !,
-	facto(N,X),
-	verifica_condicoes([Y],LF).
-
-verifica_condicoes([nao X],[nao X]):- !, \+ facto(_,X).
-verifica_condicoes([X],[N]):- facto(N,X).
-
+% Negação por ausência: as variáveis devem ser ligadas por condições anteriores.
+verifica_condicao(nao avalia(X), [nao avalia(X)]) :- !, \+ avalia(_, X).
+verifica_condicao(nao X, [nao X]) :- !, \+ facto(_, X).
+verifica_condicao(avalia(X), [N]) :- !, avalia(N, X).
+% Testes puros: comparação, pertença e cálculo sem alterar a base.
+verifica_condicao(teste(Goal), []) :- !, call(Goal).
+% Recolhe também os números dos factos usados, para a justificação.
+verifica_condicao(recolhe(Template, Pattern, Values), Evidence) :-
+    !,
+    findall(Template-N, facto(N, Pattern), Pairs),
+    findall(Value, member(Value-_, Pairs), Values),
+    findall(N, member(_-N, Pairs), Evidence).
+verifica_condicao(X, [N]) :- facto(N, X).
 
 
 concluir([cria_facto(F)|Y],ID,LFactos):-
@@ -95,7 +64,7 @@ cria_facto(F,ID,LFactos):-
 	asserta(ultimo_facto(N)),
 	assertz(justifica(N,ID,LFactos)),
 	assertz(facto(N,F)),
-	write('Foi concluído o facto nº '),write(N),write(' -> '),write(F),get0(_),!.
+	write('Foi concluído o facto nº '),write(N),write(' -> '),write(F),nl,!.
 
 
 
@@ -168,6 +137,7 @@ whynot(Facto,_):-
 	write('O facto '),write(Facto),write(' não é falso!'),nl.
 whynot(Facto,Nivel):-
 	encontra_regras_whynot(Facto,LLPF),
+    LLPF \= [], !,
 	whynot1(LLPF,Nivel).
 whynot(nao Facto,Nivel):-
 	formata(Nivel),write('Porque:'),write(' O facto '),write(Facto),
@@ -195,31 +165,19 @@ whynot1([(ID,LPF)|LLPF],Nivel):-
 	explica_porque_nao(LPF,Nivel1),
 	whynot1(LLPF,Nivel).
 
-encontra_premissas_falsas([nao X e Y], LPF):-
-	verifica_condicoes([nao X], _),
-	!,
-	encontra_premissas_falsas([Y], LPF).
-encontra_premissas_falsas([X e Y], LPF):-
-	verifica_condicoes([X], _),
-	!,
-	encontra_premissas_falsas([Y], LPF).
-encontra_premissas_falsas([nao X], []):-
-	verifica_condicoes([nao X], _),
-	!.
-encontra_premissas_falsas([X], []):-
-	verifica_condicoes([X], _),
-	!.
-encontra_premissas_falsas([nao X e Y], [nao X|LPF]):-
-	!,
-	encontra_premissas_falsas([Y], LPF).
-encontra_premissas_falsas([X e Y], [X|LPF]):-
-	!,
-	encontra_premissas_falsas([Y], LPF).
-encontra_premissas_falsas([nao X], [nao X]):-!.
-encontra_premissas_falsas([X], [X]).
-encontra_premissas_falsas([]).
+% Para na primeira condição que falha, evitando testar cálculos sem variáveis ligadas.
+encontra_premissas_falsas([X e Y], LPF) :-
+    !,
+    ( verifica_condicao(X, _) -> encontra_premissas_falsas([Y], LPF)
+    ; LPF = [X] ).
+encontra_premissas_falsas([X], LPF) :-
+    ( verifica_condicao(X, _) -> LPF = [] ; LPF = [X] ).
+
 
 explica_porque_nao([],_).
+explica_porque_nao([teste(Goal)|LPF], Nivel) :-
+    !, formata(Nivel), write('O teste '), write(Goal), write(' falhou'), nl,
+    explica_porque_nao(LPF, Nivel).
 explica_porque_nao([nao avalia(X)|LPF],Nivel):-
 	!,
 	formata(Nivel),write('A condição nao '),write(X),write(' é falsa'),nl,

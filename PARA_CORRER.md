@@ -2,11 +2,11 @@
 
 ## Esta base de conhecimento experimental está feita com 100 filmes
 
-Foi experimentada com sp_exp1.spl (apenas). Carrega como factos (devidamente inpendentizados onde é possivel partir) do ficheiro knowledge_base_movies.csv:
+Compatível com `sp_exp1.pl` e `sp_exp2.pl`. Carrega como factos (devidamente inpendentizados onde é possivel partir) do ficheiro knowledge_base_movies.csv:
 
 Id, Title, Vote, Year, Duration, RatingMPA, RatingIMDB, Budget, Director, Writer, Star, Genre, Country, FilmingLocation, Company, Language, Win, Nomination, Oscar
 
-*(Não fiz nada (ainda) com rules_user.pl e com sp_exp2.pl)*
+*(A integração de `rules_user.pl` ainda não foi feita.)*
 
 ## Carregar
 
@@ -87,4 +87,38 @@ facto(_, pace(Id, fast)),
 facto(_, complexity(Id, low)),
 facto(_, movie(Id, Title)).
 
+```
+
+## Usar o segundo motor e pedir explicações
+
+Iniciar numa sessão nova, escolhendo apenas um motor:
+
+```bash
+swipl -s sp_exp2.pl
+```
+
+No prompt do Prolog:
+
+```prolog
+carrega_bc.
+'filmes_bc.pl'.
+arranca_motor.
+
+% Como foi concluído que este filme tem ritmo rápido?
+facto(N, pace(tt0372784, fast)), como(N).
+
+% Porque não foi classificado com ritmo lento?
+whynot(pace(tt0372784, slow)).
+```
+
+As consultas de filmes acima funcionam nos dois motores. A segunda versão
+suporta também condições `nao` nas regras e preserva as justificações.
+A negação verifica ausência no momento de execução; ligar primeiro as variáveis
+com condições positivas. Recarregar os factos antes de recalcular após alterações
+nos dados; o motor não retira automaticamente conclusões anteriores.
+
+Testes do segundo motor:
+
+```bash
+swipl -q -s sp_exp2.pl -s tests_movies_engine.pl -g run_tests -t halt
 ```
