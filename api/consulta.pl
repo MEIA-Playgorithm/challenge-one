@@ -6,7 +6,7 @@
 :- use_module(library(lists)).
 :- ensure_loaded('../sp_exp2.pl').
 :- ensure_loaded('../filmes_bc.pl').
-:- ensure_loaded('../rules_user.pl').
+:- ensure_loaded('../rules_users.pl').
 :- dynamic server_port/1.
 
 :- http_handler(root(api/recomendacoes_utilizador), endpoint(user_recommendations), []).
@@ -22,7 +22,7 @@ start(Port) :-
 start_locked(Port) :-
     ( server_port(Port) -> true
     ; server_port(_) -> throw(error(permission_error(start, server, Port), _))
-    ; load_users,
+    ; carrega_factos_filmes,
       setup_call_cleanup(open_null_stream(S), with_output_to(S, arranca_motor), close(S)),
       http_server(http_dispatch, [port(Port)]),
       assertz(server_port(Port)) ).
@@ -90,6 +90,8 @@ serve(user_recommendations, Request) :-
 
 user_recommendation_json(_-Id-Score-Reasons, _{score:Score,reasons:Labels,movie:Movie}) :-
     maplist(reason_json,Reasons,Labels), movie_json(Id,Movie).
+reason_json(Reason, _{type:Attribute,value:Value}) :-
+    Reason =.. [Attribute,Value], user_preference_column(_,Attribute,_,_).
 reason_json(wishlist, _{type:wishlist}).
 reason_json(genre(G), _{type:genre,value:G}).
 reason_json(language(L), _{type:language,value:L}).

@@ -3,6 +3,8 @@
 :- ensure_loaded(sp_exp1).
 :- endif.
 
+:- multifile regra/1.
+
 regra 1
     se [movie(Id, _)
         e recolhe(G, genre(Id, G), Genres)
@@ -176,7 +178,8 @@ regra 33
         e teste(movie_score([GA-GB-4,DAs-DBs-3,WAs-WBs-2,CAs-CBs-1,LAs-LBs-1], Score))]
     entao [cria_facto(similarity_score(A, B, Score))].
 
-ultima_regra(33).
+% Última regra do conjunto filmes + utilizadores.
+ultima_regra(61).
 
 % Interface de apresentação; não é uma regra que cria conhecimento.
 get_genre(Id) :- facto(_, get_genre(Id, Genres)), writeln(Genres).

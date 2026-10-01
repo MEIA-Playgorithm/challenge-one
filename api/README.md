@@ -67,11 +67,12 @@ O teste inicia um servidor temporário, verifica pedidos HTTP reais e termina-o.
 ## Inquéritos e recomendações por utilizador
 
 A pipeline carrega `knowledge_base_users.csv` através de `user_bc.pl` e aplica
-`rules_user.pl` aos perfis e aos factos dos filmes. Não gera código Prolog a partir
+`rules_users.pl` aos perfis e aos factos dos filmes. Não gera código Prolog a partir
 do texto recebido: os dados são factos `user_fact/1` em memória. O ficheiro incluído
-contém apenas o cabeçalho, sem utilizadores reais ou perfis de exemplo ativos.
+contém 10 utilizadores fictícios com preferências variadas para experimentar as
+recomendações: ana, bruno, carla, diogo, eva, filipe, ines, joao, mariana e tiago.
 
-Formato obrigatório (uma linha por utilizador, listas separadas por `|`):
+Formato base, ainda aceite (uma linha por utilizador, listas separadas por `|`):
 
 ```csv
 user_id,age,watched,wishlist,preferred_genres,disliked_genres,preferred_languages,disliked_languages
@@ -102,7 +103,7 @@ uma lista vazia. A ordenação é por score decrescente e ID como desempate.
 `reasons` contém objetos como `{ "type": "genre", "value": "Action" }`,
 `{ "type": "wishlist" }` e `{ "type": "watched_similarity", "movie_id": "..." }`.
 
-Pontuação inicial, ajustável em `rules_user.pl`:
+Pontuação inicial, ajustável em `rules_users.pl`:
 
 - +4 por género preferido correspondente;
 - +2 por idioma preferido correspondente;
@@ -129,3 +130,76 @@ Antes de disponibilizar dados reais fora do ambiente local, associar `user_id`
 
 Testes dos perfis: `swipl -q -s tests_users.pl -g run_tests -t halt`.
 O teste HTTP também verifica o novo endpoint com um CSV temporário.
+
+### Novas preferências opcionais
+
+O cabeçalho de `knowledge_base_users.csv` inclui agora as colunas abaixo, depois
+das oito originais. Podem ficar vazias ou conter vários valores separados por `|`.
+Também são aceites ficheiros com apenas as oito colunas originais ou com um
+subconjunto das novas colunas. Valores enumerados inválidos rejeitam o carregamento.
+
+| Coluna | Valores | Pontos por correspondência |
+| --- | --- | --- |
+| `preferred_directors` | Nomes de `director`, ex.: `Christopher Nolan` | 3 |
+| `preferred_writers` | Nomes de `writer` | 2 |
+| `preferred_stars` | Nomes de `star`, ex.: `Christian Bale` | 3 |
+| `preferred_countries` | Nomes de `country_origin`, ex.: `United States` | 1 |
+| `preferred_subgenres` | Subgéneros reconhecidos em `rules_movies.pl`, ex.: `Superhero` | 3 |
+| `preferred_pace` | `slow`, `medium`, `fast` | 2 |
+| `preferred_complexity` | `low`, `medium`, `high` | 2 |
+| `preferred_violence` | `low`, `medium`, `high` | 2 |
+| `preferred_humor` | `low`, `medium`, `high` | 2 |
+| `preferred_psychological_intensity` | `low`, `medium`, `high` | 2 |
+| `preferred_emotional_tones` | `tense`, `dark`, `sad`, `lighthearted`, `romantic`, `reflective`, `exciting` | 2 |
+| `preferred_themes` | `love`, `family`, `growing_up`, `crime`, `justice`, `war`, `history`, `technology`, `supernatural`, `exploration`, `psychology`, `music`, `sport`, `life_story` | 3 |
+| `preferred_audience` | `mainstream`, `niche` | 1 |
+| `preferred_eras` | `classic` (antes de 2000), `modern` (2000–2019), `recent` (desde 2020) | 1 |
+| `preferred_popularity` | `very_popular` (>= 1 milhão de votos), `popular` (500 mil–999 999), `less_popular` (< 500 mil) | 1 |
+
+São preferências que somam pontos, não limites obrigatórios: `preferred_violence=low`
+favorece baixa violência, mas não exclui outros níveis. As exclusões existentes
+continuam a prevalecer. Valores repetidos não somam pontos extra. Atributos
+inferidos exigem executar `arranca_motor` e seguem as heurísticas de
+`rules_movies.pl`; ausência de informação (`unknown`) não corresponde a uma preferência.
+Época e popularidade usam os anos e votos do catálogo, sem corrigir os dados originais.
+
+Exemplo de ficheiro com um subconjunto de colunas adicionais:
+
+```csv
+user_id,age,watched,wishlist,preferred_genres,disliked_genres,preferred_languages,disliked_languages,preferred_directors,preferred_pace,preferred_themes,preferred_eras
+demo,25,,,Action,,English,,Christopher Nolan,fast,justice|exploration,modern
+```
+
+O carregador cria, por exemplo, `user_fact(prefers(demo,pace,fast))`.
+`rules_users.pl` cruza esse facto com `facto(_,pace(Movie,fast))`, soma 2 pontos
+e inclui `pace(fast)` na explicação. Na API corresponde a
+`{"type":"pace","value":"fast"}`. Não são executadas regras escritas no CSV.
+
+### Regras de produção dos utilizadores
+
+`rules_users.pl` contém as regras 34–61 no formato `regra N se [...] entao
+[cria_facto(...)].`, partilhando o motor com as regras 1–33 dos filmes.
+`rules_user.pl` mantém-se como ficheiro de compatibilidade.
+O carregamento copia também os dados de `user_fact/1` para factos numerados
+`facto/2`, permitindo justificar as conclusões com os dados do inquérito.
+
+As regras inferem `preference_reason(User,Movie,Reason,Weight)`,
+`excluded_movie(User,Movie)` e `matches_preferences(User,Movie)`.
+Uma correspondência de preferências pode existir para um filme excluído;
+`user_recommendation/4` aplica as exclusões e soma a pontuação só na consulta,
+após terminar o motor, evitando guardar resultados parciais.
+
+Depois de alterar o CSV, recarregar os factos e voltar a executar o motor
+(`load_users` isoladamente apenas atualiza `user_fact/1`):
+
+```prolog
+carrega_factos_filmes.
+arranca_motor.
+user_recommendation(demo, Movie, Score, Reasons).
+facto(N, preference_reason(demo, Movie, pace(fast), 2)).
+% No sp_exp2, usar o N obtido acima:
+como(N).
+```
+
+As características de violência, ritmo e restantes atributos continuam a
+classificar filmes; as novas conclusões relacionam cada utilizador com um filme.
