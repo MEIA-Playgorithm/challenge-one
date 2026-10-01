@@ -179,7 +179,7 @@ regra 33
     entao [cria_facto(similarity_score(A, B, Score))].
 
 % Última regra do conjunto filmes + utilizadores.
-ultima_regra(61).
+ultima_regra(65).
 
 % Interface de apresentação; não é uma regra que cria conhecimento.
 get_genre(Id) :- facto(_, get_genre(Id, Genres)), writeln(Genres).

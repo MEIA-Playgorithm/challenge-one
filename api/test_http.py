@@ -1,4 +1,5 @@
 """Teste de integração: python3 api/test_http.py (requer portas locais)."""
+import csv
 import json
 import os
 import tempfile
@@ -14,8 +15,15 @@ with socket.socket() as sock:
     sock.bind(('127.0.0.1', 0))
     port = sock.getsockname()[1]
 users_file = tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False)
-users_file.write('user_id,age,watched,wishlist,preferred_genres,disliked_genres,preferred_languages,disliked_languages\n')
-users_file.write('test_user,25,,tt0372784,Action,,,\n')
+columns = ['user_id','age','watched','wishlist','preferred_genres','disliked_genres',
+           'preferred_languages','disliked_languages','max_duration_minutes','session_min_age',
+           'min_rating','rating_tolerance','rating_required']
+writer = csv.DictWriter(users_file, fieldnames=columns)
+writer.writeheader()
+writer.writerow(dict(user_id='test_user',age=25,wishlist='tt0372784',preferred_genres='Action'))
+writer.writerow(dict(user_id='alternative',age=25,preferred_genres='Action',min_rating=8.5,rating_tolerance=0.5))
+writer.writerow(dict(user_id='strict',age=25,min_rating=8.5,rating_tolerance=0.5,rating_required='true'))
+writer.writerow(dict(user_id='family',age=35,session_min_age=8,max_duration_minutes=100))
 users_file.close()
 env = dict(os.environ, USERS_CSV=users_file.name)
 server = subprocess.Popen(['swipl', '-q', '-s', str(root / 'api/consulta.pl'),
@@ -44,7 +52,21 @@ try:
     personalized = get('recomendacoes_utilizador?user_id=test_user&limit=100')
     assert personalized['total'] > 0
     batman = next(x for x in personalized['items'] if x['movie']['id'] == 'tt0372784')
-    assert batman['score'] == 10 and {'type': 'wishlist'} in batman['reasons']
+    assert batman['score'] == 70.6 and {'type': 'wishlist'} in batman['reasons']
+    assert batman['status'] == 'main'
+    assert round(sum(batman['score_breakdown'].values()), 2) == batman['score']
+    alternatives = get('recomendacoes_utilizador?user_id=alternative&limit=100')['items']
+    candidate = next(x for x in alternatives if x['movie']['id'] == 'tt0372784')
+    assert candidate['status'] == 'alternative'
+    assert {'type':'rating_below_target','arguments':[8.2,8.5]} in candidate['unmet_preferences']
+    statuses = [x['status'] for x in alternatives]
+    assert statuses == sorted(statuses, key=lambda s: s == 'alternative')
+    strict = get('recomendacoes_utilizador?user_id=strict&limit=100')['items']
+    assert all(x['movie']['id'] != 'tt0372784' for x in strict)
+    family = get('recomendacoes_utilizador?user_id=family&limit=100')['items']
+    assert family and all(x['movie']['rating_mpa'] in ['G','PG'] for x in family)
+    assert all(any(c['type']=='duration' and c['arguments'][0]<=100
+                   for c in x['satisfied_requirements']) for x in family)
     get('recomendacoes_utilizador?user_id=missing', 404)
     get('recomendacoes_utilizador', 400)
     result = get('filmes?pace=fast&limit=3')

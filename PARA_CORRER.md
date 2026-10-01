@@ -179,9 +179,10 @@ facto(N, prefers(ines, pace, fast)).
 
 ### Consultar as conclusões das regras
 
-As regras 34–37 inferem exclusões, as regras 38–60 inferem motivos e respetivos
+As regras 34–37 inferem motivos de exclusão, as regras 38–60 inferem motivos e respetivos
 pesos, e a regra 61 identifica pares utilizador–filme com preferências
-correspondentes. Estas consultas exigem que `arranca_motor` tenha terminado.
+correspondentes. As regras 62–64 acrescentam rejeições de atores/realizadores e
+limites obrigatórios; a regra 65 conclui a exclusão final. Estas consultas exigem que `arranca_motor` tenha terminado.
 
 ```prolog
 % Motivos pelos quais Jungle Cruise corresponde às preferências da Inês.
@@ -240,22 +241,22 @@ user_recommendation(ines, tt0870154, Score, Reasons).
 ```
 
 Com os dados atuais, `Jungle Cruise` (`tt0870154`) é a melhor recomendação para a
-Inês, com **55 pontos**. Corresponde, entre outros critérios, a aventura, fantasia,
+Inês, com **88,8 pontos**. Corresponde, entre outros critérios, a aventura, fantasia,
 comédia, ritmo rápido, humor elevado e temas de exploração e sobrenatural.
 Também está na lista de desejos. A pontuação é uma soma de pesos, não uma
 percentagem nem uma garantia de que o utilizador gostará do filme.
 
 ### Ordenar e escolher a melhor recomendação
 
-A chave negativa permite ordenar por pontuação decrescente, com desempate por
-ID do filme. `findall/3` devolve uma lista vazia quando não há recomendações.
+A chave de `recommendation_key/4` coloca opções principais antes das alternativas,
+seguindo-se pontuação, avaliação e ID. `findall/3` devolve uma lista vazia quando não há recomendações.
 
 ```prolog
 % Listar todas as recomendações por ordem de pontuação.
 findall(Key-Movie-Title-Score-Reasons,
         (user_recommendation(ines, Movie, Score, Reasons),
          facto(_, movie(Movie, Title)),
-         Key is -Score),
+         recommendation_key(ines, Movie, Score, Key)),
         Candidates),
 sort(Candidates, Ranked).
 
@@ -263,7 +264,7 @@ sort(Candidates, Ranked).
 findall(Key-Movie-Title-Score-Reasons,
         (user_recommendation(ines, Movie, Score, Reasons),
          facto(_, movie(Movie, Title)),
-         Key is -Score),
+         recommendation_key(ines, Movie, Score, Key)),
         Candidates),
 sort(Candidates, [_-BestMovie-BestTitle-BestScore-BestReasons|_]).
 ```
@@ -274,29 +275,34 @@ Para consultar outro perfil, substituir `ines` por um dos IDs do CSV, por exempl
 
 ### Como é calculada a pontuação
 
-Cada motivo distinto contribui com o peso definido em `rules_users.pl`:
+A pontuação é calculada por grupos, depois de aplicar as exclusões:
 
-| Correspondência | Pontos |
+| Grupo | Contribuição máxima |
 | --- | --- |
-| Género preferido | 4 |
-| Idioma preferido | 2 |
-| Filme na lista de desejos | 6 |
-| Realizador, ator ou subgénero preferido | 3 |
-| Argumentista preferido | 2 |
-| País de origem preferido | 1 |
-| Ritmo, complexidade, violência, humor ou intensidade psicológica | 2 |
-| Tom emocional | 2 |
-| Tema | 3 |
-| Público, época ou popularidade | 1 |
-| Similaridade >= 7 com um filme visto | 1 no máximo pelo histórico todo |
+| Pelo menos um género preferido | 40 |
+| Avaliação IMDb | 30 (`3 × nota`) |
+| Pelo menos um realizador preferido | 10 |
+| Pelo menos um ator preferido | 10 |
+| Restantes motivos, incluindo lista de desejos e histórico | 9 |
 
-Vários géneros ou temas correspondentes podem somar várias contribuições.
-Motivos repetidos são eliminados antes da soma. O histórico indica familiaridade,
-não necessariamente gosto. A pontuação final é calculada na consulta, depois das
-inferências, e não guardada como um facto de recomendação.
+Vários atores ou géneros não multiplicam a contribuição do grupo. Os restantes
+motivos conservam os pesos das regras, mas a soma é limitada a 9 pontos.
+Esta pontuação substitui a anterior soma sem limites. Não é uma percentagem.
+As avaliações são absolutas, ainda sem ajuste por género.
+
+```prolog
+score_breakdown(ines, tt0870154, Breakdown).
+recommendation_explanation(ines, tt0870154, Status, Checks, Unmet).
+```
+
+`Status` é `main` ou `alternative`. `Checks` lista requisitos verificados;
+`Unmet` identifica preferências não satisfeitas, incluindo uma avaliação abaixo
+do objetivo quando admitida pela tolerância. Perfis sem preferências pontuáveis
+também podem receber filmes elegíveis, ordenados pela avaliação.
 
 As exclusões prevalecem sobre a pontuação e a lista de desejos. Por exemplo, o
-João tem `tt0067500` na lista de desejos, mas rejeita `Horror`, género desse filme:
+João rejeita `Horror`, pelo que `tt0067500` é excluído. A sua lista de desejos
+contém agora o western `The Undefeated` (`tt0065150`), compatível com o perfil:
 
 ```prolog
 excluded_movie(joao, tt0067500).
@@ -343,3 +349,102 @@ whynot(preference_reason(ines, tt0870154, pace(slow), 2)).
 Usar `como/1` e `whynot/1` sobre factos inferidos, como `preference_reason/4` ou
 `excluded_movie/2`. `user_recommendation/4` é uma consulta auxiliar que agrega os
 resultados, não uma conclusão produzida por `cria_facto`.
+
+### Recomendação para a ines que ela goste
+
+Recomendo **Jungle Cruise** (`tt0870154`): foi o filme com maior pontuação para a Inês, com **88,8 pontos**.
+
+Segundo a base de conhecimento, combina os gostos dela por:
+
+- **Aventura, comédia e fantasia**;
+- Ritmo rápido e bastante humor;
+- Temas de exploração e sobrenatural;
+- Dwayne Johnson e o realizador Jaume ColletSerra.
+
+Também já está na lista de filmes que ela quer ver e não corresponde ao género rejeitado, terror (Horror).
+
+### Definir limites para uma sessão
+
+Preencher as novas colunas opcionais de `knowledge_base_users.csv`:
+`max_duration_minutes`, `year_from`, `year_to`, `required_languages`,
+`disliked_directors`, `disliked_stars`, `session_min_age`, `min_rating`,
+`rating_tolerance` e `rating_required`. Consultar formatos e exemplo completo em
+[api/README.md](api/README.md#limites-obrigatórios-e-público-da-sessão).
+
+Os limites de duração e anos são inclusivos. Em `required_languages`, basta
+um dos idiomas separados por `|`. `session_min_age` representa o espectador
+mais novo e prevalece sobre a idade do titular do perfil.
+Com `min_rating=8` e tolerância `0.5`, uma nota de 7.5 permite uma alternativa;
+com `rating_required=true`, essa alternativa é excluída.
+Nenhum outro limite é relaxado. Os 10 perfis fictícios têm os limites preenchidos e compatíveis com os filmes
+das listas de desejos. As avaliações ainda não fornecidas no histórico usam nota 0.
+A Inês admite alternativas: `min_rating=7`, `rating_tolerance=0.5` e
+`rating_required=false`; `Jungle Cruise`, com nota 6.6 no catálogo, é uma alternativa.
+
+Após editar, executar `carrega_factos_filmes.` e `arranca_motor.` novamente.
+
+```prolog
+% Ver limites carregados e os motivos de exclusão.
+user_fact(user_limit(ines, Criterion, Value)).
+facto(N, exclusion_reason(ines, Movie, Reason)).
+% No segundo motor, explicar o facto obtido:
+como(N).
+```
+
+### Histórico com avaliação pessoal e pedidos para rever
+
+`watched` guarda pares `filme=nota` separados por `|`, sem parênteses retos:
+
+```text
+tt0087469=4|tt7798634=1
+```
+
+Notas inteiras entre 0 e 5: 0 significa visto mas não classificado; 1–2 indicam
+avaliações negativas; 3 é intermédio; 4–5 indicam filmes apreciados.
+O limiar 4 é uma política ajustável na regra 41. Notas 0–3 não geram bónus por
+semelhança nem exclusões de outros filmes. Não há médias de avaliações pessoais.
+IDs antigos sem `=nota` são aceites como nota 0. Entradas malformadas, notas fora
+do intervalo e filmes duplicados no histórico são rejeitados antes de substituir
+os perfis em memória.
+
+O carregador cria dois factos por entrada:
+
+```prolog
+% Exemplos de factos carregados:
+user_fact(watched(ana, tt0087469)).
+user_fact(user_movie_rating(ana, tt0087469, 4)).
+% Consultar todo o histórico e respetivas notas:
+user_fact(user_movie_rating(ana, Movie, Rating)).
+```
+
+A regra 41 cruza avaliações >=4 com similaridade >=7 e produz
+`liked_similarity(Reference)`. A contribuição total mantém-se em 1 ponto no
+máximo, mesmo com várias referências apreciadas. Na API, o motivo continua a
+usar `type: liked_similarity` e `movie_id`. Esta avaliação pessoal (0–5) é
+independente da nota IMDb (0–10).
+
+`allow_rewatch=true` permite recomendar filmes vistos, qualquer que seja a nota;
+vazio ou `false` mantém a exclusão. Os outros requisitos continuam obrigatórios.
+Não existe uma coluna separada para filmes apreciados.
+
+Os exemplos fornecidos para Ana e Carla foram aplicados, preservando o histórico
+anterior da Carla. Os restantes filmes vistos migraram para nota 0, pois não
+havia avaliações pessoais registadas. Uma nota positiva num filme de terror não
+anula uma rejeição de terror para a sessão atual.
+Após editar o CSV, executar `carrega_factos_filmes.` e `arranca_motor.`.
+
+### Estado da lista de requisitos da entrevista
+
+| Elemento | Estado |
+| --- | --- |
+| Duração, anos e idioma obrigatórios | Implementado |
+| Rejeição de realizadores e atores | Implementado |
+| Público da sessão | Implementado por idade mínima; sem descritores de conteúdo |
+| Classificação mínima, tolerância e plano B | Implementado |
+| Filmes apreciados e pedidos para rever | Implementado; depende do preenchimento dos gostos |
+| Conteúdo e linguagem imprópria | Pendente de descritores fiáveis por filme |
+| Plataformas acessíveis | Pendente de disponibilidade por plataforma, região e data |
+| Sagas | Pendente de identificação das sagas no catálogo |
+| Avaliações de pessoas semelhantes | Pendente de avaliações explícitas e de uma medida validada de semelhança entre utilizadores |
+
+Os dados ausentes não são deduzidos dos títulos, dos géneros nem das produtoras.
