@@ -17,12 +17,12 @@ Always create them from `development` and merge them back into `development`.
 
 ### Naming convention
 
-```
-feature/idissue_nomebranch
-bugfix/idissue_nomebranch
+```bash
+feature/issueid_branch-name
+bugfix/issueid_branch-name
 ```
 
-Example: `feature/123_login-social`
+Example: `feature/123_social-login`
 
 The issue ID comes from the **GitHub Issue Board**.
 
