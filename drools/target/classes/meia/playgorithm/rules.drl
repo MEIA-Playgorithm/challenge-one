@@ -1,0 +1,20 @@
+package meia.playgorithm;
+
+unit MovieRecommendationUnit;
+
+rule "Recommend movie with favorite genre"
+when
+    $preference : /preferences[ $genre : favoriteGenre ]
+    $movie : /movies[ genre == $genre, $title : title ]
+then
+    recommendations.add(
+        new Recommendation(
+            $title,
+            "O género do filme corresponde ao género favorito do utilizador."
+        )
+    );
+end
+
+query FindRecommendations
+    $recommendation : /recommendations
+end
