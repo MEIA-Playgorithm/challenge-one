@@ -1,0 +1,9 @@
+services:
+  swi-prolog:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${PORT:-8081}:8080"
+    init: true
+    restart: unless-stopped
