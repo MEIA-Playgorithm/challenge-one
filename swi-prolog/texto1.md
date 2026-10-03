@@ -74,5 +74,3 @@ Estas funcionalidades não são todas restrições de exclusão. Plataformas, sa
 - Manteria **lista de desejos, argumentistas, países, ritmo, humor e complexidade** como extensões opcionais, sem as apresentar como regras confirmadas pelo perito.
 - Não usaria **violência inferida pelo género** como garantia de adequação do conteúdo.
 - Não transformaria **notas pessoais baixas** em rejeições obrigatórias de géneros, atores ou filmes semelhantes.
-
-A prioridade agora é **melhorar a utilização das avaliações e as explicações**, validar os pesos com o perito e recolher dados para conteúdo, plataformas e sagas. Os requisitos básicos de elegibilidade já estão cobertos; a adequação completa do conteúdo ao público ainda não.

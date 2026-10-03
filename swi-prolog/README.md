@@ -1,6 +1,23 @@
 # challenge-one
 Inference Engine
 
+Os programas, dados e testes encontram-se neste diretório. A partir da raiz do
+repositório, executar primeiro:
+
+```bash
+cd swi-prolog
+```
+
+Consultar [PARA_CORRER.md](PARA_CORRER.md) para os motores de inferência e
+[api/README.md](api/README.md) para a API HTTP.
+
+Executar os testes:
+
+```bash
+swipl -q -s tests_movies_engine.pl -s tests_users.pl -s tests_user_constraints.pl -g run_tests -t halt
+python3 api/test_http.py
+```
+
 # Política de Branches
 
 ## Branches principais

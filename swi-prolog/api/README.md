@@ -1,7 +1,8 @@
 # API de filmes
 
 Requer SWI-Prolog com as bibliotecas HTTP (incluídas na instalação padrão).
-Iniciar a partir da raiz do projeto:
+A partir da raiz do repositório, executar `cd swi-prolog`. Todos os comandos
+deste guia são executados dentro dessa pasta. Iniciar a API:
 
 ```bash
 swipl -q -s api/consulta.pl -g 'consulta:start(8080), thread_get_message(stop)'
@@ -66,11 +67,7 @@ O teste inicia um servidor temporário, verifica pedidos HTTP reais e termina-o.
 
 ## Inquéritos e recomendações por utilizador
 
-A pipeline carrega `knowledge_base_users.csv` através de `user_bc.pl` e aplica
-`rules_users.pl` aos perfis e aos factos dos filmes. Não gera código Prolog a partir
-do texto recebido: os dados são factos `user_fact/1` em memória. O ficheiro incluído
-contém 10 utilizadores fictícios com preferências variadas para experimentar as
-recomendações: ana, bruno, carla, diogo, eva, filipe, ines, joao, mariana e tiago.
+A pipeline carrega `knowledge_base_users.csv` através de `user_bc.pl` e aplica `rules_users.pl` aos perfis e aos factos dos filmes. Não gera código Prolog a partir do texto recebido: os dados são factos `user_fact/1` em memória. O ficheiro incluído contém 10 utilizadores fictícios com preferências variadas para experimentar as recomendações: ana, bruno, carla, diogo, eva, filipe, ines, joao, mariana e tiago.
 
 Formato base, ainda aceite (uma linha por utilizador, listas separadas por `|`):
 
@@ -97,21 +94,11 @@ Novo endpoint:
 GET /api/recomendacoes_utilizador?user_id=demo&limit=10&offset=0
 ```
 
-Resposta: `{ user_id, total, offset, limit, items: [{ score, reasons, movie,
-status, satisfied_requirements, unmet_preferences, score_breakdown }] }`.
-Um utilizador inexistente devolve 404. Sem preferências pontuáveis, os filmes
-elegíveis continuam disponíveis, ordenados pela avaliação. Uma lista vazia
-significa que não há filmes elegíveis. Opções `main` aparecem antes de
-`alternative`; dentro de cada grupo, pontuação decrescente, avaliação decrescente
-e ID. `reasons` mantém os motivos positivos e acrescenta `rating`.
+Resposta: `{ user_id, total, offset, limit, items: [{ score, reasons, movie, status, satisfied_requirements, unmet_preferences, score_breakdown }] }`.
+Um utilizador inexistente devolve 404. Sem preferências pontuáveis, os filmes elegíveis continuam disponíveis, ordenados pela avaliação. Uma lista vazia significa que não há filmes elegíveis. Opções `main` aparecem antes de `alternative`; dentro de cada grupo, pontuação decrescente, avaliação decrescente e ID. `reasons` mantém os motivos positivos e acrescenta `rating`.
 
-A pontuação usa grupos limitados: género 40 pontos (uma vez), avaliação IMDb
-`3 × nota` (0–30), realizador 10, ator 10 e restantes motivos somados até 9.
-A lista de desejos contribui 6 para esse último grupo; cada idioma, 2; semelhança com filmes explicitamente apreciados,
-1 no máximo. Esta configuração dá maior peso aos critérios principais, sem
-multiplicar pontos por cada ator ou género. Não constitui uma ordenação
-lexicográfica entre critérios nem uma probabilidade. `score_breakdown` mostra
-as contribuições efetivas de cada grupo, cuja soma dá `score`.
+A pontuação usa grupos limitados: género 40 pontos (uma vez), avaliação IMDb `3 × nota` (0–30), realizador 10, ator 10 e restantes motivos somados até 9.
+A lista de desejos contribui 6 para esse último grupo; cada idioma, 2; semelhança com filmes explicitamente apreciados, 1 no máximo. Esta configuração dá maior peso aos critérios principais, sem multiplicar pontos por cada ator ou género. Não constitui uma ordenação lexicográfica entre critérios nem uma probabilidade. `score_breakdown` mostra as contribuições efetivas de cada grupo, cuja soma dá `score`.
 
 Filmes vistos são excluídos salvo se `allow_rewatch=true`. Filmes com géneros
 ou idiomas rejeitados são sempre excluídos, mesmo que estejam na lista “quero ver”. A idade mínima da sessão (ou a idade do perfil, se não definida) aplica uma política conservadora baseada em MPA:
@@ -218,8 +205,8 @@ limites e rejeições compatíveis com as respetivas listas de desejos):
 | --- | --- |
 | `max_duration_minutes` | Inteiro 1–1440; duração máxima inclusiva |
 | `year_from`, `year_to` | Inteiros 1800–3000; intervalo inclusivo; aceita só um extremo |
-| `required_languages` | Idiomas separados por `|`; basta existir um dos indicados |
-| `disliked_directors`, `disliked_stars` | Nomes exatos do catálogo separados por `|`; qualquer correspondência exclui |
+| `required_languages` | Idiomas separados por ` | `; basta existir um dos indicados |
+| `disliked_directors`, `disliked_stars` | Nomes exatos do catálogo separados por ` | `; qualquer correspondência exclui |
 | `session_min_age` | Inteiro 0–120; idade do espectador mais novo, substitui a idade do perfil para esta sessão |
 | `min_rating` | Número 0–10; avaliação IMDb pretendida |
 | `rating_tolerance` | Número 0–10; margem abaixo do mínimo; por defeito 0 |
@@ -257,8 +244,7 @@ exclusão final. `user_constraints.pl` contém normalização, verificações e 
 `recommendation_explanation(User,Movie,Status,Checks,Unmet)` explica filmes elegíveis.
 Na API, requisitos e preferências não satisfeitas têm formato
 `{"type":"rating_below_target","arguments":[7.5,8]}` ou
-`{"type":"duration","arguments":[95,100]}`. Os motivos positivos mantêm o formato
-anterior. Os pesos isolados das regras não devem ser somados pelo cliente:
+`{"type":"duration","arguments":[95,100]}`. Os motivos positivos mantêm o formato anterior. Os pesos isolados das regras não devem ser somados pelo cliente:
 usar `score_breakdown`, que já aplica os limites dos grupos.
 
 Testar: `swipl -q -s tests_user_constraints.pl -g run_tests -t halt`.
@@ -271,13 +257,9 @@ Testar: `swipl -q -s tests_user_constraints.pl -g run_tests -t halt`.
 tt0087469=4|tt7798634=1
 ```
 
-Notas inteiras entre 0 e 5: 0 significa visto mas não classificado; 1–2 indicam
-avaliações negativas; 3 é intermédio; 4–5 indicam filmes apreciados.
-O limiar 4 é uma política ajustável na regra 41. Notas 0–3 não geram bónus por
-semelhança nem exclusões de outros filmes. Não há médias de avaliações pessoais.
-IDs antigos sem `=nota` são aceites como nota 0. Entradas malformadas, notas fora
-do intervalo e filmes duplicados no histórico são rejeitados antes de substituir
-os perfis em memória.
+Notas inteiras entre 0 e 5: 0 significa visto mas não classificado; 1–2 indicam avaliações negativas; 3 é intermédio; 4–5 indicam filmes apreciados.
+O limiar 4 é uma política ajustável na regra 41. Notas 0–3 não geram bónus por semelhança nem exclusões de outros filmes. Não há médias de avaliações pessoais.
+IDs antigos sem `=nota` são aceites como nota 0. Entradas malformadas, notas fora do intervalo e filmes duplicados no histórico são rejeitados antes de substituir os perfis em memória.
 
 O carregador cria dois factos por entrada:
 
@@ -290,19 +272,12 @@ user_fact(user_movie_rating(ana, Movie, Rating)).
 ```
 
 A regra 41 cruza avaliações >=4 com similaridade >=7 e produz
-`liked_similarity(Reference)`. A contribuição total mantém-se em 1 ponto no
-máximo, mesmo com várias referências apreciadas. Na API, o motivo continua a
-usar `type: liked_similarity` e `movie_id`. Esta avaliação pessoal (0–5) é
-independente da nota IMDb (0–10).
+`liked_similarity(Reference)`. A contribuição total mantém-se em 1 ponto no máximo, mesmo com várias referências apreciadas. Na API, o motivo continua a usar `type: liked_similarity` e `movie_id`. Esta avaliação pessoal (0–5) é independente da nota IMDb (0–10).
 
-`allow_rewatch=true` permite recomendar filmes vistos, qualquer que seja a nota;
-vazio ou `false` mantém a exclusão. Os outros requisitos continuam obrigatórios.
+`allow_rewatch=true` permite recomendar filmes vistos, qualquer que seja a nota; vazio ou `false` mantém a exclusão. Os outros requisitos continuam obrigatórios.
 Não existe uma coluna separada para filmes apreciados.
 
-Os exemplos fornecidos para Ana e Carla foram aplicados, preservando o histórico
-anterior da Carla. Os restantes filmes vistos migraram para nota 0, pois não
-havia avaliações pessoais registadas. Uma nota positiva num filme de terror não
-anula uma rejeição de terror para a sessão atual.
+Os exemplos fornecidos para Ana e Carla foram aplicados, preservando o histórico anterior da Carla. Os restantes filmes vistos migraram para nota 0, pois não havia avaliações pessoais registadas. Uma nota positiva num filme de terror não anula uma rejeição de terror para a sessão atual.
 Após editar o CSV, executar `carrega_factos_filmes.` e `arranca_motor.`.
 
 ### Estado da lista de requisitos da entrevista

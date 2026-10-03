@@ -1,3 +1,33 @@
+> Executar os comandos deste guia dentro de `swi-prolog`: a partir da raiz do repositório, usar `cd swi-prolog`.
+
+## Executar com Docker
+
+Com Docker e Docker Compose instalados, iniciar a API em segundo plano:
+
+```bash
+docker compose up --build -d
+docker compose logs -f
+```
+
+A API fica disponível em `http://localhost:8080` depois de calcular as inferências.
+Verificar o estado em `http://localhost:8080/api/health`.
+Para usar outra porta, executar `PORT=8081 docker compose up --build -d`.
+Após alterar os ficheiros Prolog ou CSV, repetir `docker compose up --build -d`
+para reconstruir a imagem com as alterações.
+
+Para abrir uma consola Prolog com a base de conhecimento carregada:
+
+```bash
+docker compose run --rm --no-deps swi-prolog swipl -q -s filmes_bc.pl
+```
+
+No prompt Prolog, executar `arranca_motor.` antes de consultar as inferências.
+Sair com `halt.`. Para parar a API e remover o contentor:
+
+```bash
+docker compose down
+```
+
 # Para tomar conhecimento
 
 ## Esta base de conhecimento experimental está feita com 100 filmes
@@ -68,11 +98,15 @@ facto(_, movie(Id, Title)).
 
 ---
 # obter apenas o filme com maior pontuação
-setof(Score-Id-Title,
-      (facto(_, similarity_score(tt0372784, Id, Score)),
-       facto(_, movie(Id, Title))),
-      Lista),
+% findall reúne todos os resultados, sem agrupar pelos números dos factos.
+findall(Score-Id-Title,
+        (facto(_, similarity_score(tt0372784, Id, Score)),
+         facto(_, movie(Id, Title))),
+        Resultados),
+sort(Resultados, Lista),
 last(Lista, Pontuacao-Filme-Titulo).
+% Em empate, devolve o último ID na ordem padrão do Prolog.
+% Sem resultados, a consulta falha (false).
 
 ---
 # recomendar por preferências, por exemplo, ação com ritmo rápido
