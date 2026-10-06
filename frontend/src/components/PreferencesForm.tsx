@@ -57,7 +57,7 @@ export default function PreferencesForm() {
   return (
     <Paper
       elevation={0}
-      sx={{ border: "1px solid", borderColor: "divider", borderRadius: 3, p: 3, maxHeight: 500, overflow: "auto" }}
+      sx={{ border: "1px solid", borderColor: "divider", borderRadius: 3, p: 3, height: 500, overflow: "auto" }}
     >
       <Typography variant="h6" sx={{ fontWeight: 700, mb: 2.5 }}>
         Taste profile

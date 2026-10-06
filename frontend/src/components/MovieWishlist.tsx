@@ -113,7 +113,7 @@ export default function MovieWishlist() {
       <Stack
         spacing={0}
         divider={<Box sx={{ borderBottom: 1, borderColor: "divider" }} />}
-        sx={{ overflow: "auto", maxHeight: 500 }}
+        sx={{ overflow: "auto", height: 500 }}
       >
         {movies.length === 0 && (
           <Box sx={{ p: 4, textAlign: "center" }}>
