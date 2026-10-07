@@ -34,3 +34,4 @@ The issue ID comes from the **GitHub Issue Board**.
 
 - [Branch management](docs/branch-management.md)
 - [Conventional Commits](docs/conventional-commits.md)
+- [Frontend setup](frontend/README.md)
