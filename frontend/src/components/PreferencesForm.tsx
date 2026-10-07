@@ -1,35 +1,34 @@
 import { useEffect, useState } from "react";
-import { Box, Button, Divider, Paper, Stack, TextField, Typography } from "@mui/material";
+import { Box, Button, Divider, Stack, TextField, Typography } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import { useApp } from "../context/AppContext";
-import type { User } from "../types/User";
+import type { User, UserLimits } from "../types/User";
 import { GENRES, LANGUAGES } from "../mocks/data";
 import RankedSelector from "./RankedSelector";
 import ExcludeSelector from "./ExcludeSelector";
 
-type PrefFields = Pick<
-  User,
-  | "preferredLanguages"
-  | "excludedLanguages"
-  | "preferredGenres"
-  | "excludedGenres"
-  | "minRating"
-  | "yearFrom"
-  | "yearTo"
-  | "maxDuration"
->;
+type PrefFields = {
+  likes_language: string[];
+  dislikes_language: string[];
+  likes_genre: string[];
+  dislikes_genre: string[];
+  min_rating?: number;
+  year_from?: number;
+  year_to?: number;
+  max_duration_minutes?: number;
+};
 
-function fromUser(u: User): PrefFields {
+function fromUser(user: User): PrefFields {
   return {
-    preferredLanguages: [...u.preferredLanguages],
-    excludedLanguages: [...u.excludedLanguages],
-    preferredGenres: [...u.preferredGenres],
-    excludedGenres: [...u.excludedGenres],
-    minRating: u.minRating,
-    yearFrom: u.yearFrom,
-    yearTo: u.yearTo,
-    maxDuration: u.maxDuration,
+    likes_language: [...user.likes_language],
+    dislikes_language: [...user.dislikes_language],
+    likes_genre: [...user.likes_genre],
+    dislikes_genre: [...user.dislikes_genre],
+    min_rating: user.limits.min_rating,
+    year_from: user.limits.year_from,
+    year_to: user.limits.year_to,
+    max_duration_minutes: user.limits.max_duration_minutes,
   };
 }
 
@@ -39,14 +38,37 @@ function optionalNumber(value: string): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
+function limitsFromForm(current: UserLimits, form: PrefFields): UserLimits {
+  const limits: UserLimits = { ...current };
+  const assign = (
+    key: "min_rating" | "year_from" | "year_to" | "max_duration_minutes",
+    value: number | undefined,
+  ) => {
+    if (value == null) delete limits[key];
+    else limits[key] = value;
+  };
+  assign("min_rating", form.min_rating);
+  assign("year_from", form.year_from);
+  assign("year_to", form.year_to);
+  assign("max_duration_minutes", form.max_duration_minutes);
+  if (limits.min_rating == null) {
+    delete limits.rating_tolerance;
+    delete limits.rating_required;
+  }
+  return limits;
+}
+
 export default function PreferencesForm() {
   const { currentUser, updateUser } = useApp();
   const [form, setForm] = useState<PrefFields>(() => fromUser(currentUser));
   const [dirty, setDirty] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setForm(fromUser(currentUser));
     setDirty(false);
+    setError(null);
   }, [currentUser]);
 
   const patch = <K extends keyof PrefFields>(key: K, value: PrefFields[K]) => {
@@ -55,11 +77,8 @@ export default function PreferencesForm() {
   };
 
   return (
-    <Paper
-      elevation={0}
-      sx={{ border: "1px solid", borderColor: "divider", borderRadius: 3, p: 3, height: 500, overflow: "auto" }}
-    >
-      <Typography variant="h6" sx={{ fontWeight: 700, mb: 2.5 }}>
+    <Box sx={{ flex: 1, minHeight: 0, overflow: "auto", p: 3 }}>
+      <Typography variant="h6" sx={{ mb: 2.5 }}>
         Taste profile
       </Typography>
 
@@ -67,35 +86,35 @@ export default function PreferencesForm() {
         <RankedSelector
           label="Preferred languages"
           all={LANGUAGES}
-          selected={form.preferredLanguages}
-          excluded={form.excludedLanguages}
+          selected={form.likes_language}
+          excluded={form.dislikes_language}
           maxItems={5}
-          onChange={(next) => patch("preferredLanguages", next)}
+          onChange={(next) => patch("likes_language", next)}
         />
 
         <ExcludeSelector
           label="Excluded languages"
           all={LANGUAGES}
-          selected={form.excludedLanguages}
-          blocked={form.preferredLanguages}
-          onChange={(next) => patch("excludedLanguages", next)}
+          selected={form.dislikes_language}
+          blocked={form.likes_language}
+          onChange={(next) => patch("dislikes_language", next)}
         />
 
         <RankedSelector
           label="Preferred genres"
           all={GENRES}
-          selected={form.preferredGenres}
-          excluded={form.excludedGenres}
+          selected={form.likes_genre}
+          excluded={form.dislikes_genre}
           maxItems={5}
-          onChange={(next) => patch("preferredGenres", next)}
+          onChange={(next) => patch("likes_genre", next)}
         />
 
         <ExcludeSelector
           label="Excluded genres"
           all={GENRES}
-          selected={form.excludedGenres}
-          blocked={form.preferredGenres}
-          onChange={(next) => patch("excludedGenres", next)}
+          selected={form.dislikes_genre}
+          blocked={form.likes_genre}
+          onChange={(next) => patch("dislikes_genre", next)}
         />
 
         <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
@@ -103,8 +122,8 @@ export default function PreferencesForm() {
             label="Min rating"
             type="number"
             size="small"
-            value={form.minRating ?? ""}
-            onChange={(e) => patch("minRating", optionalNumber(e.target.value))}
+            value={form.min_rating ?? ""}
+            onChange={(e) => patch("min_rating", optionalNumber(e.target.value))}
             slotProps={{ htmlInput: { min: 0, max: 10, step: 0.1 } }}
             sx={{ flex: 1 }}
           />
@@ -112,42 +131,67 @@ export default function PreferencesForm() {
             label="Year from"
             type="number"
             size="small"
-            value={form.yearFrom ?? ""}
-            onChange={(e) => patch("yearFrom", optionalNumber(e.target.value))}
-            slotProps={{ htmlInput: { min: 1900, max: 2100 } }}
+            value={form.year_from ?? ""}
+            onChange={(e) => patch("year_from", optionalNumber(e.target.value))}
+            slotProps={{ htmlInput: { min: 1800, max: 3000 } }}
             sx={{ flex: 1 }}
           />
           <TextField
             label="Year to"
             type="number"
             size="small"
-            value={form.yearTo ?? ""}
-            onChange={(e) => patch("yearTo", optionalNumber(e.target.value))}
-            slotProps={{ htmlInput: { min: 1900, max: 2100 } }}
+            value={form.year_to ?? ""}
+            onChange={(e) => patch("year_to", optionalNumber(e.target.value))}
+            slotProps={{ htmlInput: { min: 1800, max: 3000 } }}
             sx={{ flex: 1 }}
           />
           <TextField
             label="Max duration (min)"
             type="number"
             size="small"
-            value={form.maxDuration ?? ""}
-            onChange={(e) => patch("maxDuration", optionalNumber(e.target.value))}
-            slotProps={{ htmlInput: { min: 1, max: 400 } }}
+            value={form.max_duration_minutes ?? ""}
+            onChange={(e) => patch("max_duration_minutes", optionalNumber(e.target.value))}
+            slotProps={{ htmlInput: { min: 1, max: 1440 } }}
             sx={{ flex: 1 }}
           />
         </Stack>
       </Stack>
 
-      <Stack direction="row" spacing={1} sx={{ mt: 3 }}>
+      {error && (
+        <Typography variant="body2" color="error" sx={{ mt: 2 }}>
+          {error}
+        </Typography>
+      )}
+
+      <Stack direction="row" spacing={1} sx={{ mt: error ? 1 : 3 }}>
         <Button
           variant="contained"
           size="small"
           startIcon={<CheckIcon />}
-          onClick={() => {
-            updateUser({ ...currentUser, ...form });
-            setDirty(false);
+          onClick={async () => {
+            if (form.year_from != null && form.year_to != null && form.year_from > form.year_to) {
+              setError("Year from is after year to");
+              return;
+            }
+            setSaving(true);
+            setError(null);
+            try {
+              await updateUser({
+                ...currentUser,
+                likes_language: form.likes_language,
+                dislikes_language: form.dislikes_language,
+                likes_genre: form.likes_genre,
+                dislikes_genre: form.dislikes_genre,
+                limits: limitsFromForm(currentUser.limits, form),
+              });
+              setDirty(false);
+            } catch (err: unknown) {
+              setError(err instanceof Error ? err.message : "Request failed");
+            } finally {
+              setSaving(false);
+            }
           }}
-          disabled={!dirty}
+          disabled={saving || !dirty}
         >
           Save preferences
         </Button>
@@ -158,13 +202,14 @@ export default function PreferencesForm() {
           onClick={() => {
             setForm(fromUser(currentUser));
             setDirty(false);
+            setError(null);
           }}
-          disabled={!dirty}
+          disabled={saving || !dirty}
           color="inherit"
         >
           Cancel
         </Button>
       </Stack>
-    </Paper>
+    </Box>
   );
 }

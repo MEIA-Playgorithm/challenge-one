@@ -3,7 +3,6 @@ import {
   Box,
   Chip,
   InputAdornment,
-  Paper,
   Stack,
   Tab,
   Tabs,
@@ -12,18 +11,21 @@ import {
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { useApp } from "../context/AppContext";
-import { ACTORS, DIRECTORS, WRITERS, COMPANIES, COUNTRIES } from "../mocks/data";
+import type { User } from "../types/User";
+import { useCatalog } from "../api/useCatalog";
+import type { Movie } from "../types/Movie";
 import type { CreditCategory, CreditItem } from "../types/Person";
 import type { PreferenceStatus } from "../types/Movie";
 import { PREFERENCE_STATUS_LABELS } from "../types/Movie";
+import { useDebouncedValue } from "../lib/useDebouncedValue";
 import StatusToggle from "./StatusToggle";
 
-const CATEGORIES: { value: CreditCategory; label: string; items: CreditItem[] }[] = [
-  { value: "actor", label: "Actors", items: ACTORS },
-  { value: "director", label: "Directors", items: DIRECTORS },
-  { value: "writer", label: "Writers", items: WRITERS },
-  { value: "company", label: "Studios", items: COMPANIES },
-  { value: "country", label: "Countries", items: COUNTRIES },
+const CATEGORY_FIELDS: { value: CreditCategory; label: string; field: CreditCategory }[] = [
+  { value: "star", label: "Actors", field: "star" },
+  { value: "director", label: "Directors", field: "director" },
+  { value: "writer", label: "Writers", field: "writer" },
+  { value: "production_company", label: "Studios", field: "production_company" },
+  { value: "country_origin", label: "Countries", field: "country_origin" },
 ];
 
 type StatusFilter = "all" | PreferenceStatus | "unrated";
@@ -37,38 +39,65 @@ const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
   { value: "skip", label: PREFERENCE_STATUS_LABELS.skip },
 ];
 
+function profileMark(user: User, item: CreditItem): "preferred" | "excluded" | null {
+  if (item.category === "director" && user.limits.disliked_directors.includes(item.name)) return "excluded";
+  if (item.category === "star" && user.limits.disliked_stars.includes(item.name)) return "excluded";
+  if (item.category === "director" && user.prefers.director.includes(item.name)) return "preferred";
+  if (item.category === "writer" && user.prefers.writer.includes(item.name)) return "preferred";
+  if (item.category === "star" && user.prefers.star.includes(item.name)) return "preferred";
+  if (item.category === "country_origin" && user.prefers.country_origin.includes(item.name)) return "preferred";
+  return null;
+}
+
+function creditsFor(movies: Movie[], category: CreditCategory, field: CreditCategory): CreditItem[] {
+  const names = new Set<string>();
+  for (const movie of movies) {
+    const values = movie[field];
+    if (!Array.isArray(values)) continue;
+    for (const name of values) {
+      if (name) names.add(name);
+    }
+  }
+  return [...names]
+    .sort((a, b) => a.localeCompare(b))
+    .map((name) => ({ id: `${category}:${name}`, name, category }));
+}
+
 export default function CreditsWishlist() {
-  const { creditStatuses, setCreditStatus } = useApp();
-  const [category, setCategory] = useState<CreditCategory>("actor");
+  const { currentUser, creditStatuses, setCreditStatus } = useApp();
+  const { movies, loading, error } = useCatalog();
+  const [category, setCategory] = useState<CreditCategory>("star");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [query, setQuery] = useState("");
+  const debouncedQuery = useDebouncedValue(query);
 
-  const catalog = CATEGORIES.find((c) => c.value === category)!.items;
+  const groups = useMemo(
+    () =>
+      CATEGORY_FIELDS.map((entry) => ({
+        ...entry,
+        items: creditsFor(movies, entry.value, entry.field),
+      })),
+    [movies],
+  );
+  const catalog = groups.find((entry) => entry.value === category)?.items ?? [];
 
   const items = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = debouncedQuery.trim().toLowerCase();
     return catalog.filter((item) => {
       const status = creditStatuses[item.id] ?? null;
       if (statusFilter === "unrated" && status !== null) return false;
-      if (statusFilter !== "all" && statusFilter !== "unrated" && status !== statusFilter) {
-        return false;
-      }
+      if (statusFilter !== "all" && statusFilter !== "unrated" && status !== statusFilter) return false;
       if (!q) return true;
       return item.name.toLowerCase().includes(q);
     });
-  }, [catalog, query, statusFilter, creditStatuses]);
+  }, [catalog, debouncedQuery, statusFilter, creditStatuses]);
 
-  const ratedInCategory = catalog.filter((i) => creditStatuses[i.id]).length;
+  const ratedInCategory = catalog.filter((item) => creditStatuses[item.id]).length;
 
   return (
-    <Paper
-      elevation={0}
-      sx={{ border: "1px solid", borderColor: "divider", borderRadius: 3, overflow: "hidden" }}
-    >
-      <Box sx={{ p: 3, pb: 1.5 }}>
-        <Typography variant="h6" sx={{ fontWeight: 700 }}>
-          People & origins
-        </Typography>
+    <Box sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      <Box sx={{ p: 3, pb: 1.5, flexShrink: 0 }}>
+        <Typography variant="h6">People & origins</Typography>
 
         <TextField
           size="small"
@@ -97,19 +126,14 @@ export default function CreditsWishlist() {
         }}
         variant="scrollable"
         scrollButtons="auto"
-        sx={{ px: 2, borderBottom: 1, borderColor: "divider" }}
+        sx={{ px: 2, borderBottom: 1, borderColor: "divider", flexShrink: 0 }}
       >
-        {CATEGORIES.map((c) => (
-          <Tab
-            key={c.value}
-            value={c.value}
-            label={c.label}
-            sx={{ textTransform: "none", minHeight: 48 }}
-          />
+        {groups.map((entry) => (
+          <Tab key={entry.value} value={entry.value} label={entry.label} />
         ))}
       </Tabs>
 
-      <Box sx={{ px: 2, py: 1.5, display: "flex", flexWrap: "wrap", gap: 0.75, alignItems: "center" }}>
+      <Box sx={{ px: 2, py: 1.5, display: "flex", flexWrap: "wrap", gap: 0.75, alignItems: "center", flexShrink: 0 }}>
         <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5 }}>
           {ratedInCategory}/{catalog.length} rated
         </Typography>
@@ -125,41 +149,64 @@ export default function CreditsWishlist() {
         ))}
       </Box>
 
-      <Stack
-        spacing={0}
-        divider={<Box sx={{ borderBottom: 1, borderColor: "divider" }} />}
-        sx={{ overflow: "auto", height: 500 }}
-      >
-        {items.length === 0 && (
-          <Box sx={{ p: 4, textAlign: "center" }}>
-            <Typography variant="body2" color="text.secondary">
-              No entries match this filter.
-            </Typography>
-          </Box>
-        )}
-        {items.map((item) => {
-          const status = creditStatuses[item.id] ?? null;
-          return (
-            <Box
-              key={item.id}
-              sx={{
-                px: 3,
-                py: 1.5,
-                display: "flex",
-                gap: 2,
-                alignItems: "center",
-                justifyContent: "space-between",
-                bgcolor: status ? "action.hover" : "transparent",
-              }}
-            >
-              <Typography variant="body1" sx={{ fontWeight: status ? 600 : 400 }}>
-                {item.name}
+      {loading && (
+        <Box sx={{ px: 3, py: 3 }}>
+          <Typography variant="body2" color="text.secondary">
+            Loading…
+          </Typography>
+        </Box>
+      )}
+
+      {!loading && error && (
+        <Box sx={{ px: 3, py: 3 }}>
+          <Typography variant="body2" color="error">
+            {error}
+          </Typography>
+        </Box>
+      )}
+
+      {!loading && !error && (
+        <Stack
+          spacing={0}
+          divider={<Box sx={{ borderBottom: 1, borderColor: "divider" }} />}
+          sx={{ flex: 1, minHeight: 0, overflow: "auto" }}
+        >
+          {items.length === 0 && (
+            <Box sx={{ px: 3, py: 3 }}>
+              <Typography variant="body2" color="text.secondary">
+                No entries match this filter.
               </Typography>
-              <StatusToggle value={status} onChange={(next) => setCreditStatus(item.id, next)} />
             </Box>
-          );
-        })}
-      </Stack>
-    </Paper>
+          )}
+          {items.map((item) => {
+            const status = creditStatuses[item.id] ?? null;
+            const mark = profileMark(currentUser, item);
+            return (
+              <Box
+                key={item.id}
+                sx={{
+                  px: 3,
+                  py: 1.5,
+                  display: "flex",
+                  gap: 2,
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  bgcolor: status ? "action.hover" : "transparent",
+                }}
+              >
+                <Stack direction="row" spacing={1} sx={{ alignItems: "center", minWidth: 0 }}>
+                  <Typography variant="body1" sx={{ fontWeight: status ? 600 : 400 }}>
+                    {item.name}
+                  </Typography>
+                  {mark === "preferred" && <Chip label="Preferred" size="small" color="primary" />}
+                  {mark === "excluded" && <Chip label="Excluded" size="small" color="error" variant="outlined" />}
+                </Stack>
+                <StatusToggle value={status} onChange={(next) => setCreditStatus(item.id, next)} />
+              </Box>
+            );
+          })}
+        </Stack>
+      )}
+    </Box>
   );
 }
