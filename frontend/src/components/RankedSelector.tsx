@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Box, Chip, Divider, IconButton, List, ListItem, Typography } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import AddIcon from "@mui/icons-material/Add";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import {
   DndContext,
@@ -54,7 +53,7 @@ function SortableRow({
         alignItems: "center",
         gap: 0.5,
         py: 0.25,
-        bgcolor: index === 0 ? "rgba(46, 230, 166, 0.12)" : "transparent",
+        bgcolor: index === 0 ? "action.hover" : "transparent",
         borderRadius: 1,
         px: 0.5,
         opacity: isDragging ? 0.35 : 1,
@@ -70,10 +69,7 @@ function SortableRow({
       >
         <DragIndicatorIcon sx={{ fontSize: 16 }} />
       </IconButton>
-      <Typography
-        variant="caption"
-        sx={{ fontWeight: 700, width: 18, color: index === 0 ? "primary.main" : "text.secondary" }}
-      >
+      <Typography variant="caption" sx={{ fontWeight: 600, width: 18, color: "text.secondary" }}>
         {index + 1}
       </Typography>
       <Typography variant="body2" sx={{ flex: 1 }}>
@@ -147,7 +143,6 @@ export default function RankedSelector({
                 key={item}
                 label={item}
                 size="small"
-                icon={<AddIcon />}
                 onClick={() => add(item)}
                 disabled={selected.length >= maxItems}
                 variant="outlined"
@@ -193,14 +188,13 @@ export default function RankedSelector({
                       py: 0.5,
                       width: 220,
                       borderRadius: 1,
-                      bgcolor: "#14352c",
+                      bgcolor: "background.paper",
                       border: "1px solid",
-                      borderColor: "primary.main",
-                      boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+                      borderColor: "divider",
                     }}
                   >
-                    <DragIndicatorIcon sx={{ fontSize: 16, color: "primary.main" }} />
-                    <Typography variant="caption" sx={{ fontWeight: 700, width: 18, color: "primary.main" }}>
+                    <DragIndicatorIcon sx={{ fontSize: 16 }} />
+                    <Typography variant="caption" sx={{ fontWeight: 600, width: 18, color: "text.secondary" }}>
                       {activeIndex + 1}
                     </Typography>
                     <Typography variant="body2">{activeId}</Typography>

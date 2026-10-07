@@ -45,7 +45,7 @@ export default function StatusToggle({ value, onChange }: Props) {
           color={opt.color}
           aria-label={PREFERENCE_STATUS_LABELS[opt.value]}
         >
-          <Tooltip title={PREFERENCE_STATUS_LABELS[opt.value]} arrow>
+          <Tooltip title={PREFERENCE_STATUS_LABELS[opt.value]}>
             <span style={{ display: "flex", alignItems: "center" }}>{opt.icon}</span>
           </Tooltip>
         </ToggleButton>

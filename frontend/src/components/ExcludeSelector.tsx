@@ -1,5 +1,4 @@
 import { Box, Chip, Typography } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
 
 type Props = {
@@ -46,7 +45,6 @@ export default function ExcludeSelector({ label, all, selected, blocked = [], on
               key={item}
               label={item}
               size="small"
-              icon={<AddIcon />}
               onClick={() => onChange([...selected, item])}
               variant="outlined"
               sx={{ cursor: "pointer" }}
