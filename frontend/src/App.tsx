@@ -10,13 +10,13 @@ const App = () => {
             spacing={2}
             sx={{
                 height: "100%",
-                overflow: "hidden",
+                overflow: {"xs": "auto", "md": "hidden"},
                 p: 2,
                 '& > *': {
                     display: "flex",
                     flexDirection: "column",
                     gap: 2,
-                    height: "100%",
+                    height: {"xs": "auto", "md": "100%"},
                     minHeight: 0,
                     minWidth: 0,
                     overflow: "hidden"
