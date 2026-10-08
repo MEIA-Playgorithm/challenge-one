@@ -1,105 +1,4 @@
-import { usersFromCsv } from "../lib/userKb";
-
-/** genre/2 values from the movie catalog, with whitespace collapsed the way the loader does. */
-export const GENRES = [
-  "Action",
-  "Action Epic",
-  "Adult Animation",
-  "Adventure",
-  "Adventure Epic",
-  "Animation",
-  "Anime",
-  "Biography",
-  "Buddy Comedy",
-  "Comedy",
-  "ComingofAge",
-  "Computer Animation",
-  "Cop Drama",
-  "Crime",
-  "Cyberpunk",
-  "Dark Comedy",
-  "Documentary",
-  "Drama",
-  "Epic",
-  "Family",
-  "Fantasy",
-  "Globetrotting Adventure",
-  "HandDrawn Animation",
-  "Heist",
-  "HighConcept Comedy",
-  "History",
-  "Holiday",
-  "Holiday Family",
-  "Horror",
-  "Jungle Adventure",
-  "Kaiju",
-  "Legal Drama",
-  "Mockumentary",
-  "Music",
-  "Musical",
-  "Mystery",
-  "OnePerson Army Action",
-  "Parody",
-  "Period Drama",
-  "Psychological Drama",
-  "Psychological Horror",
-  "Psychological Thriller",
-  "Quest",
-  "Road Trip",
-  "Romance",
-  "Romantic Comedy",
-  "Romantic Epic",
-  "Satire",
-  "SciFi",
-  "SciFi Epic",
-  "Sea Adventure",
-  "Slapstick",
-  "Slasher Horror",
-  "Splatter Horror",
-  "Sport",
-  "Superhero",
-  "Supernatural Fantasy",
-  "Suspense Mystery",
-  "Swashbuckler",
-  "Sword Sandal",
-  "Thriller",
-  "Tragedy",
-  "True Crime",
-  "War",
-  "Western",
-  "Wuxia",
-];
-
-/** language/2 values from the movie catalog. */
-export const LANGUAGES = [
-  "Arabic",
-  "Cantonese",
-  "Czech",
-  "Danish",
-  "English",
-  "French",
-  "German",
-  "Hebrew",
-  "Hindi",
-  "Italian",
-  "Japanese",
-  "Korean",
-  "Latin",
-  "Mandarin",
-  "Persian",
-  "Portuguese",
-  "Russian",
-  "Sinhala",
-  "Sioux",
-  "Soninke",
-  "Spanish",
-  "Swedish",
-  "Tamil",
-  "Tupi",
-  "Turkish",
-  "Urdu",
-  "Wolof",
-];
+import type { Audience, EmotionalTone, Era, Level, Pace, Popularity, Theme, User, WatchedMovie } from "../types/User";
 
 /** Same rows as swi-prolog/knowledge_base_users.csv. */
 const USERS_CSV = `user_id,age,watched,wishlist,preferred_genres,disliked_genres,preferred_languages,disliked_languages,preferred_directors,preferred_writers,preferred_stars,preferred_countries,preferred_subgenres,preferred_pace,preferred_complexity,preferred_violence,preferred_humor,preferred_psychological_intensity,preferred_emotional_tones,preferred_themes,preferred_audience,preferred_eras,preferred_popularity,max_duration_minutes,year_from,year_to,required_languages,disliked_directors,disliked_stars,session_min_age,min_rating,rating_tolerance,rating_required,allow_rewatch
@@ -114,5 +13,60 @@ joao,58,tt0082247=3,tt0065150,Western|Adventure|War,Horror,English|Spanish,Japan
 mariana,22,tt5883570=0,tt0105793,Comedy|Music|Musical,Horror,English|Hindi,German,Penelope Spheeris,Mike Myers,Mike Myers,United States,Buddy Comedy,medium,low|medium,low,high,low,lighthearted,music,niche,recent,less_popular,120,2020,2026,English|Hindi,Alfred Hitchcock,Anthony Perkins,22,7,0,true,false
 tiago,46,tt0062639=0,tt0064451,Action|Thriller|Drama,Musical,Mandarin|French,English,King Hu,Songling Pu,Feng Hsu,Taiwan,Wuxia,fast,medium|high,medium,low,medium|high,tense|reflective,exploration|psychology,niche,modern,less_popular,210,2000,2019,Mandarin|French,Shirish Kunder,Akshay Kumar,46,7.5,0,true,false
 `;
+
+function list(value: string) {
+    return value ? value.split("|") : [];
+}
+
+function watched(value: string): WatchedMovie[] {
+    return list(value).map((item) => {
+        const [movie_id, rating] = item.split("=");
+        return { movie_id, rating: Number(rating) as WatchedMovie["rating"] };
+    });
+}
+
+function usersFromCsv(csv: string): User[] {
+    const [header, ...rows] = csv.trim().split("\n");
+    const columns = header.split(",");
+    return rows.map((row) => {
+        const values = Object.fromEntries(columns.map((column, index) => [column, row.split(",")[index]]));
+        return {
+            user_id: values.user_id,
+            age: Number(values.age),
+            watched: watched(values.watched),
+            wishlist: list(values.wishlist),
+            preferred_genres: list(values.preferred_genres),
+            disliked_genres: list(values.disliked_genres),
+            preferred_languages: list(values.preferred_languages),
+            disliked_languages: list(values.disliked_languages),
+            preferred_directors: list(values.preferred_directors),
+            preferred_writers: list(values.preferred_writers),
+            preferred_stars: list(values.preferred_stars),
+            preferred_countries: list(values.preferred_countries),
+            preferred_subgenres: list(values.preferred_subgenres),
+            preferred_pace: list(values.preferred_pace) as Pace[],
+            preferred_complexity: list(values.preferred_complexity) as Level[],
+            preferred_violence: list(values.preferred_violence) as Level[],
+            preferred_humor: list(values.preferred_humor) as Level[],
+            preferred_psychological_intensity: list(values.preferred_psychological_intensity) as Level[],
+            preferred_emotional_tones: list(values.preferred_emotional_tones) as EmotionalTone[],
+            preferred_themes: list(values.preferred_themes) as Theme[],
+            preferred_audience: list(values.preferred_audience) as Audience[],
+            preferred_eras: list(values.preferred_eras) as Era[],
+            preferred_popularity: list(values.preferred_popularity) as Popularity[],
+            max_duration_minutes: Number(values.max_duration_minutes),
+            year_from: Number(values.year_from),
+            year_to: Number(values.year_to),
+            required_languages: list(values.required_languages),
+            disliked_directors: list(values.disliked_directors),
+            disliked_stars: list(values.disliked_stars),
+            session_min_age: Number(values.session_min_age),
+            min_rating: Number(values.min_rating),
+            rating_tolerance: Number(values.rating_tolerance),
+            rating_required: values.rating_required === "true",
+            allow_rewatch: values.allow_rewatch === "true",
+        };
+    });
+}
 
 export const MOCK_USERS = usersFromCsv(USERS_CSV);
