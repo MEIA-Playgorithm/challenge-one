@@ -18,6 +18,10 @@ function list(value: string) {
     return value ? value.split("|") : [];
 }
 
+function optionalNumber(value: string) {
+    return value ? Number(value) : null;
+}
+
 function watched(value: string): WatchedMovie[] {
     return list(value).map((item) => {
         const [movie_id, rating] = item.split("=");
@@ -54,14 +58,14 @@ function usersFromCsv(csv: string): User[] {
             preferred_audience: list(values.preferred_audience) as Audience[],
             preferred_eras: list(values.preferred_eras) as Era[],
             preferred_popularity: list(values.preferred_popularity) as Popularity[],
-            max_duration_minutes: Number(values.max_duration_minutes),
-            year_from: Number(values.year_from),
-            year_to: Number(values.year_to),
+            max_duration_minutes: optionalNumber(values.max_duration_minutes),
+            year_from: optionalNumber(values.year_from),
+            year_to: optionalNumber(values.year_to),
             required_languages: list(values.required_languages),
             disliked_directors: list(values.disliked_directors),
             disliked_stars: list(values.disliked_stars),
-            session_min_age: Number(values.session_min_age),
-            min_rating: Number(values.min_rating),
+            session_min_age: optionalNumber(values.session_min_age),
+            min_rating: optionalNumber(values.min_rating),
             rating_tolerance: Number(values.rating_tolerance),
             rating_required: values.rating_required === "true",
             allow_rewatch: values.allow_rewatch === "true",
@@ -70,3 +74,108 @@ function usersFromCsv(csv: string): User[] {
 }
 
 export const MOCK_USERS = usersFromCsv(USERS_CSV);
+
+/** Main genres in swi-prolog/knowledge_base_movies.csv, without the known subgenres. */
+export const GENRES = [
+    "Action",
+    "Adventure",
+    "Animation",
+    "Biography",
+    "Comedy",
+    "Crime",
+    "Documentary",
+    "Drama",
+    "Epic",
+    "Family",
+    "Fantasy",
+    "History",
+    "Holiday",
+    "Horror",
+    "Music",
+    "Musical",
+    "Mystery",
+    "Romance",
+    "SciFi",
+    "Sport",
+    "Thriller",
+    "Tragedy",
+    "War",
+    "Western",
+];
+
+/** Same list as known_subgenre/1 in swi-prolog/rules_movies.pl. */
+export const SUBGENRES = [
+    "Action Epic",
+    "Adult Animation",
+    "Adventure Epic",
+    "Anime",
+    "Buddy Comedy",
+    "ComingofAge",
+    "Computer Animation",
+    "Cop Drama",
+    "Cyberpunk",
+    "Dark Comedy",
+    "Globetrotting Adventure",
+    "HandDrawn Animation",
+    "Heist",
+    "HighConcept Comedy",
+    "Holiday Family",
+    "Jungle Adventure",
+    "Kaiju",
+    "Legal Drama",
+    "Mockumentary",
+    "OnePerson Army Action",
+    "Parody",
+    "Period Drama",
+    "Psychological Drama",
+    "Psychological Horror",
+    "Psychological Thriller",
+    "Quest",
+    "Road Trip",
+    "Romantic Comedy",
+    "Romantic Epic",
+    "Satire",
+    "SciFi Epic",
+    "Sea Adventure",
+    "Slapstick",
+    "Slasher Horror",
+    "Splatter Horror",
+    "Superhero",
+    "Supernatural Fantasy",
+    "Suspense Mystery",
+    "Swashbuckler",
+    "Sword Sandal",
+    "True Crime",
+    "Wuxia",
+];
+
+/** Languages in swi-prolog/knowledge_base_movies.csv. */
+export const LANGUAGES = [
+    "Arabic",
+    "Cantonese",
+    "Czech",
+    "Danish",
+    "English",
+    "French",
+    "German",
+    "Hebrew",
+    "Hindi",
+    "Italian",
+    "Japanese",
+    "Korean",
+    "Latin",
+    "Mandarin",
+    "Persian",
+    "Portuguese",
+    "Russian",
+    "Sinhala",
+    "Sioux",
+    "Soninke",
+    "Spanish",
+    "Swedish",
+    "Tamil",
+    "Tupi",
+    "Turkish",
+    "Urdu",
+    "Wolof",
+];
