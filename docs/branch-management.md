@@ -15,7 +15,7 @@ git pull origin development
 - Create the branch from `development`:
 
 ```bash
-git switch -c feature/123_nome-da-feature
+git switch -c feature/123_feature-name
 ```
 
 ## During development
@@ -45,7 +45,7 @@ git diff
 - Push the branch to the remote repository:
 
 ```bash
-git push -u origin feature/123_nome-da-feature
+git push -u origin feature/123_feature-name
 ```
 
 - Open a Pull Request targeting `development` and link it to the corresponding issue.
@@ -58,8 +58,8 @@ git push -u origin feature/123_nome-da-feature
 - Delete the remote and local branches when they are no longer needed:
 
 ```bash
-git push origin --delete feature/123_nome-da-feature
-git branch -d feature/123_nome-da-feature
+git push origin --delete feature/123_feature-name
+git branch -d feature/123_feature-name
 ```
 
 - Do not commit directly to `main` or `development`; always use Pull Requests.
