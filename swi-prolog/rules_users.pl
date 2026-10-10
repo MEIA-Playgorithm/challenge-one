@@ -161,19 +161,51 @@ regra 63
     se [user_limit(U, disliked_stars, S) e star(M, S)]
     entao [cria_facto(exclusion_reason(U, M, disliked_star(S)))].
 
+% Dados ausentes ou inválidos não comprovam o cumprimento do limite.
+% recolhe/3 inclui os dados disponíveis nas justificações.
 regra 64
     se [user(U) e movie(M, _)
-        e recolhe(C-V, user_limit(U, C, V), _)
+        e user_limit(U, max_duration_minutes, Max)
         e recolhe(D, duration(M, D), _)
-        e recolhe(Y, year(M, Y), _)
-        e recolhe(L, language(M, L), _)
-        e recolhe(R, rating_imdb(M, R), _)
-        e teste(failed_requirement(U, M, Reason))]
-    entao [cria_facto(exclusion_reason(U, M, Reason))].
+        e teste(\+ (movie_minutes(M, N), N =< Max))]
+    entao [cria_facto(exclusion_reason(U, M, duration_limit(Max)))].
 
 regra 65
     se [exclusion_reason(U, M, _)]
     entao [cria_facto(excluded_movie(U, M))].
+
+regra 66
+    se [user(U) e movie(M, _)
+        e user_limit(U, year_from, Min)
+        e recolhe(Y, year(M, Y), _)
+        e teste(\+ (facto(_, year(M, Year)), number(Year), Year >= Min))]
+    entao [cria_facto(exclusion_reason(U, M, year_from(Min)))].
+
+regra 67
+    se [user(U) e movie(M, _)
+        e user_limit(U, year_to, Max)
+        e recolhe(Y, year(M, Y), _)
+        e teste(\+ (facto(_, year(M, Year)), number(Year), Year =< Max))]
+    entao [cria_facto(exclusion_reason(U, M, year_to(Max)))].
+
+regra 68
+    se [user(U) e movie(M, _)
+        e recolhe(L, user_limit(U, required_languages, L), Raw)
+        e teste(sort(Raw, Languages))
+        e teste(Languages \= [])
+        e recolhe(Lang, language(M, Lang), _)
+        e teste(\+ (member(Language, Languages), facto(_, language(M, Language))))]
+    entao [cria_facto(exclusion_reason(U, M, required_languages(Languages)))].
+
+regra 69
+    se [user(U) e movie(M, _)
+        e user_limit(U, min_rating, Min)
+        e recolhe(T, user_limit(U, rating_tolerance, T), _)
+        e recolhe(Required, user_limit(U, rating_required, Required), _)
+        e recolhe(R, rating_imdb(M, R), _)
+        e teste(effective_tolerance(U, Tolerance))
+        e teste(\+ (movie_rating(M, Rating), Rating >= Min-Tolerance))]
+    entao [cria_facto(exclusion_reason(U, M, rating_limit(Min, Tolerance)))].
 
 % Interfaces de consulta sobre os factos inferidos pelo motor.
 matches_preferences(U, M) :- facto(_, matches_preferences(U, M)).
