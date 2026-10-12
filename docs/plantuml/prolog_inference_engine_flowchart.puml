@@ -1,0 +1,73 @@
+@startuml prolog_inference_engine_flowchart
+title Prolog inference engine - movie recommendation
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam ArrowColor #475569
+skinparam activity {
+  BackgroundColor #EFF6FF
+  BorderColor #2563EB
+  FontColor #0F172A
+  DiamondBackgroundColor #FEF3C7
+  DiamondBorderColor #D97706
+  StartColor #2563EB
+  EndColor #2563EB
+}
+
+start
+
+partition "Startup" {
+  :Start Prolog or API;
+  :Load filmes_bc.pl;
+  :load_users;
+  :load_movies;
+  :Transform movie data into facto/2;
+  :Initialize ultimo_facto/1;
+}
+
+partition "sp_exp2.pl Engine" {
+  repeat
+    :Find applicable rule;
+    if (Are conditions verified?) then (yes)
+      :Conclude RHS;
+      :cria_facto;
+      :Store justifica/3;
+      :Update facto/2 and ultimo_facto/1;
+    else (no)
+      :Ignore rule in this iteration;
+    endif
+  repeat while (Were new facts created?) is (yes)
+}
+
+partition "Movie Rules" {
+  :Infer pace, complexity, violence,
+humor and psychological_intensity;
+  :Infer emotional_tone and themes;
+  :Infer audience, mainstream and niche;
+  :Classify era and popularity;
+  :Create same_* relationships between movies;
+  :Calculate similar_movie and similarity_score;
+}
+
+partition "User Recommendation" {
+  :Receive user_id;
+  :Iterate through existing movies;
+  if (Is the movie excluded?) then (yes)
+    :Exclude because watched, rejected genre,
+rejected language, or age;
+  else (no)
+    :Generate preference_reason;
+    :Sum weights;
+    :Create user_recommendation/4;
+  endif
+}
+
+partition "API Response" {
+  :Rank recommendations by score;
+  :Convert reasons to JSON;
+  :Return movie, score and explanations;
+}
+
+stop
+@enduml
