@@ -1,6 +1,5 @@
 import type { Audience, EmotionalTone, Era, Level, Pace, Popularity, Theme, User, WatchedMovie } from "../types/User";
 
-/** Same rows as swi-prolog/knowledge_base_users.csv. */
 const USERS_CSV = `user_id,age,watched,wishlist,preferred_genres,disliked_genres,preferred_languages,disliked_languages,preferred_directors,preferred_writers,preferred_stars,preferred_countries,preferred_subgenres,preferred_pace,preferred_complexity,preferred_violence,preferred_humor,preferred_psychological_intensity,preferred_emotional_tones,preferred_themes,preferred_audience,preferred_eras,preferred_popularity,max_duration_minutes,year_from,year_to,required_languages,disliked_directors,disliked_stars,session_min_age,min_rating,rating_tolerance,rating_required,allow_rewatch
 ana,25,tt0087469=4|tt7798634=1,tt0372784,Action|Adventure,Horror,English,Japanese,Christopher Nolan,Bob Kane,Christian Bale,United States,Action Epic,fast,medium,medium,medium,medium,exciting,justice|exploration,mainstream,modern,very_popular,150,2000,2026,English,Alfred Hitchcock,Anthony Perkins,25,8,0,true,false
 bruno,32,tt7798634=0,tt0054215,Horror|Mystery|Thriller,Musical,English,Japanese,Alfred Hitchcock,Joseph Stefano,Anthony Perkins,United States,Psychological Horror,fast,high,high,low,high,dark|tense,psychology|crime,mainstream,modern,popular,130,2000,2026,English,Shirish Kunder,Akshay Kumar,32,8,0,true,false
@@ -75,7 +74,6 @@ function usersFromCsv(csv: string): User[] {
 
 export const MOCK_USERS = usersFromCsv(USERS_CSV);
 
-/** Main genres in swi-prolog/knowledge_base_movies.csv, without the known subgenres. */
 export const GENRES = [
     "Action",
     "Adventure",
@@ -103,7 +101,6 @@ export const GENRES = [
     "Western",
 ];
 
-/** Same list as known_subgenre/1 in swi-prolog/rules_movies.pl. */
 export const SUBGENRES = [
     "Action Epic",
     "Adult Animation",
@@ -149,7 +146,6 @@ export const SUBGENRES = [
     "Wuxia",
 ];
 
-/** Languages in swi-prolog/knowledge_base_movies.csv. */
 export const LANGUAGES = [
     "Arabic",
     "Cantonese",
