@@ -37,7 +37,7 @@ const UserParameters = () => {
             </Tabs>
             <Box sx={{ flex: 1, minHeight: 0, p: 2, overflow: "auto" }}>
                 {selectedTab === "preferences" && <Preferences key={currentUser.user_id} />}
-                {selectedTab === "movies" && <Movies />}
+                {selectedTab === "movies" && <Movies key={currentUser.user_id} />}
                 {selectedTab === "people-and-origins" && <PeopleAndOrigins />}
             </Box>
         </Paper>

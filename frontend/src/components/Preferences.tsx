@@ -2,7 +2,6 @@ import { useState } from "react";
 import {
     Autocomplete,
     Box,
-    Button,
     Divider,
     FormControlLabel,
     Slider,
@@ -11,17 +10,16 @@ import {
     TextField,
     Typography,
 } from "@mui/material";
-import CheckIcon from "@mui/icons-material/Check";
-import CloseIcon from "@mui/icons-material/Close";
 import { useApp } from "../context/AppContext";
 import { AUDIENCES, EMOTIONAL_TONES, ERAS, LEVELS, PACES, POPULARITIES, THEMES, type User } from "../types/User";
 import { GENRES, LANGUAGES, SUBGENRES } from "../mocks/data";
 import { toast } from "sonner";
-import { formatLabel } from "../lib/utils";
+import { formatLabel, withValues } from "../lib/utils";
 import PreferenceSection from "./PreferenceSection";
 import SentimentSelector from "./SentimentSelector";
 import ChoiceGroup from "./ChoiceGroup";
 import ChoiceChips from "./ChoiceChips";
+import SaveBar from "./SaveBar";
 
 const PREFERENCE_KEYS = [
     "preferred_genres",
@@ -53,7 +51,6 @@ const PREFERENCE_KEYS = [
 type PreferenceFields = Pick<User, (typeof PREFERENCE_KEYS)[number]>;
 type LimitKey = "max_duration_minutes" | "year_from" | "year_to" | "session_min_age";
 
-// Same bounds as user_limit_column/2 in swi-prolog/user_bc.pl.
 const LIMIT_RANGES: Record<LimitKey, [number, number]> = {
     max_duration_minutes: [1, 1440],
     year_from: [1800, 3000],
@@ -68,8 +65,6 @@ const fromUser = (user: User) =>
 
 const sameValue = (a: unknown, b: unknown) =>
     Array.isArray(a) && Array.isArray(b) ? a.length === b.length && a.every((item) => b.includes(item)) : a === b;
-
-const withValues = (options: string[], values: string[]) => [...new Set([...options, ...values])];
 
 const toNumber = (text: string) => (text.trim() === "" ? null : Number(text));
 
@@ -411,49 +406,12 @@ const Preferences = () => {
                 </PreferenceSection>
             </Stack>
 
-            <Box
-                sx={{
-                    position: "sticky",
-                    bottom: -16,
-                    zIndex: 1,
-                    mx: -2,
-                    mb: -2,
-                    px: 2,
-                    py: 1.5,
-                    borderTop: 1,
-                    borderColor: "divider",
-                    bgcolor: "background.paper",
-                }}
-            >
-                <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                    <Typography
-                        variant="body2"
-                        color={hasErrors ? "error" : dirty ? "primary" : "text.secondary"}
-                        sx={{ flex: 1 }}
-                    >
-                        {hasErrors ? "Fix the highlighted limits to save" : dirty ? "Unsaved changes" : "All changes saved"}
-                    </Typography>
-                    <Button
-                        variant="text"
-                        size="small"
-                        color="inherit"
-                        startIcon={<CloseIcon />}
-                        disabled={!dirty}
-                        onClick={() => setForm(fromUser(currentUser))}
-                    >
-                        Reset
-                    </Button>
-                    <Button
-                        variant="contained"
-                        size="small"
-                        startIcon={<CheckIcon />}
-                        disabled={!dirty || hasErrors}
-                        onClick={save}
-                    >
-                        Save
-                    </Button>
-                </Stack>
-            </Box>
+            <SaveBar
+                dirty={dirty}
+                error={hasErrors ? "Fix the highlighted limits to save" : undefined}
+                onReset={() => setForm(fromUser(currentUser))}
+                onSave={save}
+            />
         </Stack>
     );
 };
