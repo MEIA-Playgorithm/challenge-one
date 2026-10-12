@@ -20,7 +20,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const createUser = (user: User) => {
         const userId = user.user_id.trim();
         if (!userId) return "Name is required";
-        if (users.some((item) => item.user_id === userId)) return "Name already exists";
+        if (users.some((item) => item.user_id === userId)) return "Please choose another name, this one is already taken.";
         const saved = { ...user, user_id: userId };
         setUsers((prev) => [...prev, saved]);
         setCurrentUser(saved);
@@ -30,7 +30,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const updateUser = (previousId: string, user: User) => {
         const userId = user.user_id.trim();
         if (!userId) return "Name is required";
-        if (users.some((item) => item.user_id === userId && item.user_id !== previousId)) return "Name already exists";
+        if (users.some((item) => item.user_id === userId && item.user_id !== previousId)) return "Please choose another name, this one is already taken.";
         const saved = { ...user, user_id: userId };
         setUsers((prev) => prev.map((item) => (item.user_id === previousId ? saved : item)));
         setCurrentUser(saved);
