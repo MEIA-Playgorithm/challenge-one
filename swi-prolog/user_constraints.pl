@@ -20,22 +20,6 @@ session_age(U,Age) :-
     ( facto(_,user_limit(U,session_min_age,A)) -> Age=A
     ; facto(_,user_age(U,Age)) ).
 
-% Falta de dados não comprova o cumprimento de um limite explícito.
-failed_requirement(U,M,duration_limit(Max)) :-
-    facto(_,user_limit(U,max_duration_minutes,Max)),
-    \+ (movie_minutes(M,N),N=<Max).
-failed_requirement(U,M,year_from(Min)) :-
-    facto(_,user_limit(U,year_from,Min)),
-    \+ (facto(_,year(M,Y)),number(Y),Y>=Min).
-failed_requirement(U,M,year_to(Max)) :-
-    facto(_,user_limit(U,year_to,Max)),
-    \+ (facto(_,year(M,Y)),number(Y),Y=<Max).
-failed_requirement(U,M,required_languages(Languages)) :-
-    required_languages(U,Languages), Languages\=[],
-    \+ (member(L,Languages),facto(_,language(M,L))).
-failed_requirement(U,M,rating_limit(Min,Tolerance)) :-
-    facto(_,user_limit(U,min_rating,Min)), effective_tolerance(U,Tolerance),
-    \+ (movie_rating(M,R),R>=Min-Tolerance).
 required_languages(U,Languages) :-
     findall(L,facto(_,user_limit(U,required_languages,L)),Raw),sort(Raw,Languages).
 effective_tolerance(U,T) :-
