@@ -16,6 +16,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import { useApp } from "../context/AppContext";
 import { AUDIENCES, EMOTIONAL_TONES, ERAS, LEVELS, PACES, POPULARITIES, THEMES, type User } from "../types/User";
 import { GENRES, LANGUAGES, SUBGENRES } from "../mocks/data";
+import { toast } from "sonner";
 import { formatLabel } from "../lib/utils";
 import PreferenceSection from "./PreferenceSection";
 import SentimentSelector from "./SentimentSelector";
@@ -125,6 +126,7 @@ const Preferences = () => {
 
     const save = () => {
         updateUser(currentUser.user_id, { ...currentUser, ...form });
+        toast.success("Preferences saved");
     };
 
     return (
