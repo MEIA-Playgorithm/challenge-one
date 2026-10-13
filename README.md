@@ -35,3 +35,5 @@ The issue ID comes from the **GitHub Issue Board**.
 - [Branch management](docs/branch-management.md)
 - [Conventional Commits](docs/conventional-commits.md)
 - [Frontend setup](frontend/README.md)
+- [SWI-Prolog engine and API](swi-prolog/README.md)
+- [Knowledge base service](knowledge_base/README.md)

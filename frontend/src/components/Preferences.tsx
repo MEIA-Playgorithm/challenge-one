@@ -1,16 +1,23 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
     Autocomplete,
     Box,
     Button,
+    ButtonGroup,
+    Checkbox,
+    CircularProgress,
     Divider,
     FormControlLabel,
+    ListItemText,
+    Menu,
+    MenuItem,
     Slider,
     Stack,
     Switch,
     TextField,
     Typography,
 } from "@mui/material";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import { useApp } from "../context/AppContext";
@@ -92,9 +99,22 @@ const limitErrors = (form: PreferenceFields) => {
     return errors;
 };
 
-const Preferences = () => {
+// Tempo sem alterações antes de gravar: dá tempo para continuar a editar e para cancelar.
+const AUTOSAVE_DELAY_MS = 5000;
+
+type Props = {
+    autosave: boolean;
+    onAutosaveChange: (autosave: boolean) => void;
+};
+
+const Preferences = ({ autosave, onAutosaveChange }: Props) => {
     const { currentUser, updateUser } = useApp();
     const [form, setForm] = useState<PreferenceFields>(() => fromUser(currentUser));
+    const [saving, setSaving] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
+    const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+    // Milissegundos que faltam para a gravação automática; null quando não está agendada.
+    const [remaining, setRemaining] = useState<number | null>(null);
 
     const patch = (changes: Partial<PreferenceFields>) => setForm((current) => ({ ...current, ...changes }));
 
@@ -123,9 +143,40 @@ const Preferences = () => {
     const setMinRating = (value: number) =>
         patch(value ? { min_rating: value } : { min_rating: null, rating_tolerance: 0, rating_required: false });
 
-    const save = () => {
-        updateUser(currentUser.user_id, { ...currentUser, ...form });
+    // O formulário que a gravação automática já tentou gravar: nunca o repete, mesmo que
+    // o que volta do servidor seja diferente do que enviámos (evita gravar em ciclo).
+    const lastSaved = useRef<PreferenceFields | null>(null);
+
+    const save = async () => {
+        lastSaved.current = form;
+        setSaving(true);
+        setSaveError(await updateUser(currentUser.user_id, { ...currentUser, ...form }));
+        setSaving(false);
     };
+
+    // Uma alteração nova apaga o erro anterior, para o autosave voltar a tentar.
+    useEffect(() => setSaveError(null), [form]);
+
+    const autosaveDue = autosave && dirty && !hasErrors && !saving && !saveError && form !== lastSaved.current;
+
+    // Cada alteração reinicia a contagem. Se houver alterações durante a gravação,
+    // `dirty` volta a ser verdadeiro no fim e a contagem recomeça, uma gravação de cada vez.
+    useEffect(() => {
+        if (!autosaveDue) {
+            setRemaining(null);
+            return;
+        }
+        const deadline = Date.now() + AUTOSAVE_DELAY_MS;
+        setRemaining(AUTOSAVE_DELAY_MS);
+        const timer = setInterval(() => {
+            const left = deadline - Date.now();
+            if (left > 0) return setRemaining(left);
+            clearInterval(timer);
+            setRemaining(null);
+            save();
+        }, 100);
+        return () => clearInterval(timer);
+    }, [autosaveDue, form]);
 
     return (
         <Stack sx={{ minHeight: "100%" }}>
@@ -426,10 +477,19 @@ const Preferences = () => {
                 <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                     <Typography
                         variant="body2"
-                        color={hasErrors ? "error" : dirty ? "primary" : "text.secondary"}
+                        color={hasErrors || saveError ? "error" : dirty ? "primary" : "text.secondary"}
                         sx={{ flex: 1 }}
                     >
-                        {hasErrors ? "Fix the highlighted limits to save" : dirty ? "Unsaved changes" : "All changes saved"}
+                        {saveError ??
+                            (hasErrors
+                                ? "Fix the highlighted limits to save"
+                                : saving
+                                  ? "Saving..."
+                                  : remaining !== null
+                                    ? `Saving in ${Math.ceil(remaining / 1000)}s`
+                                    : dirty
+                                      ? "Unsaved changes"
+                                      : "All changes saved")}
                     </Typography>
                     <Button
                         variant="text"
@@ -441,15 +501,51 @@ const Preferences = () => {
                     >
                         Reset
                     </Button>
-                    <Button
-                        variant="contained"
-                        size="small"
-                        startIcon={<CheckIcon />}
-                        disabled={!dirty || hasErrors}
-                        onClick={save}
+                    <ButtonGroup variant="contained" size="small" disabled={saving}>
+                        <Button
+                            startIcon={
+                                remaining !== null ? (
+                                    <CircularProgress
+                                        variant="determinate"
+                                        value={(remaining / AUTOSAVE_DELAY_MS) * 100}
+                                        size={18}
+                                        thickness={6}
+                                        color="inherit"
+                                        aria-label="Time until autosave"
+                                    />
+                                ) : (
+                                    <CheckIcon />
+                                )
+                            }
+                            disabled={!dirty || hasErrors || saving}
+                            onClick={save}
+                        >
+                            Save
+                        </Button>
+                        <Button size="small" aria-label="Save options" onClick={(event) => setMenuAnchor(event.currentTarget.parentElement)}>
+                            <ArrowDropDownIcon />
+                        </Button>
+                    </ButtonGroup>
+                    {/* O tema dá width 100% e flex 1 a todos os Paper; aqui o menu tem de ter o tamanho do conteúdo. */}
+                    <Menu
+                        anchorEl={menuAnchor}
+                        open={Boolean(menuAnchor)}
+                        onClose={() => setMenuAnchor(null)}
+                        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+                        transformOrigin={{ vertical: "bottom", horizontal: "right" }}
+                        slotProps={{ paper: { sx: { width: "auto", flex: "none" } } }}
                     >
-                        Save
-                    </Button>
+                        <MenuItem
+                            dense
+                            onClick={() => {
+                                onAutosaveChange(!autosave);
+                                setMenuAnchor(null);
+                            }}
+                        >
+                            <Checkbox size="small" checked={autosave} disableRipple sx={{ p: 0, mr: 1.5 }} />
+                            <ListItemText primary="Autosave" secondary="Saves 5 seconds after your last change" />
+                        </MenuItem>
+                    </Menu>
                 </Stack>
             </Box>
         </Stack>

@@ -31,6 +31,7 @@ const UserPanel = () => {
     const [error, setError] = useState<string | null>(null);
     const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
     const [confirmOpen, setConfirmOpen] = useState(false);
+    const [saving, setSaving] = useState(false);
 
     const selectUser = (user: User) => {
         setCurrentUser(user);
@@ -43,11 +44,13 @@ const UserPanel = () => {
         setMode("view");
     };
 
-    const save = () => {
+    const save = async () => {
+        setSaving(true);
         const message =
             mode === "create"
-                ? createUser(emptyUser(form.user_id, form.age))
-                : updateUser(currentUser.user_id, { ...currentUser, ...form } as User);
+                ? await createUser(emptyUser(form.user_id, form.age))
+                : await updateUser(currentUser.user_id, { ...currentUser, ...form } as User);
+        setSaving(false);
         if (message) {
             setError(message);
             return;
@@ -176,7 +179,7 @@ const UserPanel = () => {
                                 size="small"
                                 startIcon={<CheckIcon />}
                                 onClick={save}
-                                disabled={!form.user_id.trim() || form.age <= 0}
+                                disabled={saving || !form.user_id.trim() || form.age <= 0}
                             >
                                 Save
                             </Button>
@@ -191,6 +194,11 @@ const UserPanel = () => {
                 <DialogTitle>Delete {confirmDelete}?</DialogTitle>
                 <DialogContent>
                     <DialogContentText>This removes {confirmDelete} from the list.</DialogContentText>
+                    {error && (
+                        <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+                            {error}
+                        </Typography>
+                    )}
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setConfirmOpen(false)} color="inherit">
@@ -198,9 +206,14 @@ const UserPanel = () => {
                     </Button>
                     <Button
                         color="error"
-                        onClick={() => {
-                            if (confirmDelete) deleteUser(confirmDelete);
-                            setConfirmOpen(false);
+                        disabled={saving}
+                        onClick={async () => {
+                            if (!confirmDelete) return;
+                            setSaving(true);
+                            const message = await deleteUser(confirmDelete);
+                            setSaving(false);
+                            setError(message);
+                            if (!message) setConfirmOpen(false);
                         }}
                     >
                         Delete

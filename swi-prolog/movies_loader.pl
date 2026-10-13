@@ -1,4 +1,14 @@
-:- use_module(library(csv)).
+:- use_module(csv_source).
+
+% CSV (URL ou ficheiro): variável de ambiente MOVIES_CSV ou ../knowledge_base/movies.csv.
+:- prolog_load_context(directory, Dir),
+   directory_file_path(Dir, '../knowledge_base/movies.csv', Default),
+   asserta(default_movies_csv(Default)).
+:- dynamic default_movies_csv/1.
+movies_csv(File) :-
+    (   getenv('MOVIES_CSV', File) -> true
+    ;   default_movies_csv(File)
+    ).
 
 :- dynamic movie/2.
 :- dynamic year/2.
@@ -41,10 +51,8 @@ load_movies :-
     retractall(nomination(_, _)),
     retractall(oscar(_, _)),
 
-    source_file(load_movies, Source),
-    file_directory_name(Source, Directory),
-    directory_file_path(Directory, 'knowledge_base_movies.csv', CsvFile),
-    csv_read_file(
+    movies_csv(CsvFile),
+    read_csv(
         CsvFile,
         [_Header | Rows],
         [functor(movie_data), arity(19)]

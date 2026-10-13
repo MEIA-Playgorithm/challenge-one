@@ -1,10 +1,10 @@
 FROM swipl:stable
 
-WORKDIR /app
+WORKDIR /app/swi-prolog
 
-COPY *.pl *.csv ./
-COPY api/consulta.pl ./api/consulta.pl
+COPY swi-prolog/*.pl ./
+COPY swi-prolog/api ./api
 
 EXPOSE 8080
 
-CMD ["swipl", "-q", "-s", "api/consulta.pl", "-g", "consulta:start(8081), thread_get_message(stop)"]
+CMD ["swipl", "-q", "-s", "api/server.pl", "-g", "server:start(8080), thread_get_message(stop)"]

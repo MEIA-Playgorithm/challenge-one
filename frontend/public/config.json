@@ -1,0 +1,7 @@
+{
+  "knowledgeBaseUrl": "http://localhost:8090",
+  "engines": {
+    "prolog": { "label": "SWI-Prolog", "baseUrl": "http://localhost:8081" },
+    "drools": { "label": "Drools", "baseUrl": "http://localhost:8082" }
+  }
+}

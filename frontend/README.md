@@ -15,8 +15,11 @@ recommendation experience. It lets users:
 
 ## Setup with Docker
 
-The deployment scripts build the frontend image and start it in the
-background. Run the commands from this directory.
+The deployment scripts run the root `docker-compose.yml`, which builds and
+starts the frontend (port 4173), the knowledge base (port 8090) and the Prolog API
+(port 8081) in the background. The frontend reads its settings (service URLs, default
+engine) from `public/config.json` at runtime; in Docker that file is mounted as a
+volume, so editing it needs only a container restart, not a rebuild.
 
 ### Unix (Linux/macOS)
 
@@ -39,12 +42,12 @@ cd frontend
 deploy.bat
 ```
 
-Once the container is running, open [http://localhost:8080](http://localhost:8080).
+Once the container is running, open [http://localhost:4173](http://localhost:4173).
 
 To stop the container:
 
 ```bash
-docker compose down
+docker compose down   # from the repository root
 ```
 
 ## Local development

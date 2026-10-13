@@ -1,0 +1,371 @@
+{
+  "info": {
+    "_postman_id": "f9b9a7a0-4d4c-4a3b-9c7e-1f5b5d7c8e90",
+    "name": "Playgorithm API",
+    "description": "Endpoints atualmente disponíveis na API SWI-Prolog.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "userId",
+      "value": "ana"
+    },
+    {
+      "key": "movieId",
+      "value": "tt0087469"
+    },
+    {
+      "key": "knowledgeBaseUrl",
+      "value": "http://localhost:8090"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/health",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "List movies",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/filmes?limit=10&offset=0",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "filmes"
+          ],
+          "query": [
+            {
+              "key": "limit",
+              "value": "10"
+            },
+            {
+              "key": "offset",
+              "value": "0"
+            },
+            {
+              "key": "genre",
+              "value": "Action",
+              "disabled": true,
+              "description": "Nome exato do género, ex.: Action"
+            },
+            {
+              "key": "pace",
+              "value": "fast",
+              "disabled": true,
+              "description": "slow | medium | fast | unknown"
+            },
+            {
+              "key": "complexity",
+              "value": "high",
+              "disabled": true,
+              "description": "low | medium | high | unknown"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get movie",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/filme?id={{movieId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "filme"
+          ],
+          "query": [
+            {
+              "key": "id",
+              "value": "{{movieId}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Similar movie recommendations",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/recomendacoes?id={{movieId}}&min_score=0&limit=10",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "recomendacoes"
+          ],
+          "query": [
+            {
+              "key": "id",
+              "value": "{{movieId}}"
+            },
+            {
+              "key": "min_score",
+              "value": "0"
+            },
+            {
+              "key": "limit",
+              "value": "10"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "User recommendations",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/recomendacoes_utilizador?user_id={{userId}}&limit=10&offset=0",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "recomendacoes_utilizador"
+          ],
+          "query": [
+            {
+              "key": "user_id",
+              "value": "{{userId}}"
+            },
+            {
+              "key": "limit",
+              "value": "10"
+            },
+            {
+              "key": "offset",
+              "value": "0"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Reload knowledge base",
+      "item": [
+        {
+          "name": "Reload all",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reload",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reload"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reload users",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reload/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reload",
+                "users"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reload movies",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reload/movies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reload",
+                "movies"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Knowledge base",
+      "item": [
+        {
+          "name": "Users CSV",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{knowledgeBaseUrl}}/users.csv",
+              "host": [
+                "{{knowledgeBaseUrl}}"
+              ],
+              "path": [
+                "users.csv"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Movies CSV",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{knowledgeBaseUrl}}/movies.csv",
+              "host": [
+                "{{knowledgeBaseUrl}}"
+              ],
+              "path": [
+                "movies.csv"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{knowledgeBaseUrl}}/users",
+              "host": [
+                "{{knowledgeBaseUrl}}"
+              ],
+              "path": [
+                "users"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get user",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{knowledgeBaseUrl}}/users/{{userId}}",
+              "host": [
+                "{{knowledgeBaseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{userId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{knowledgeBaseUrl}}/users",
+              "host": [
+                "{{knowledgeBaseUrl}}"
+              ],
+              "path": [
+                "users"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"teste\",\n  \"age\": \"30\",\n  \"preferred_genres\": \"Action\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update user",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{knowledgeBaseUrl}}/users/teste",
+              "host": [
+                "{{knowledgeBaseUrl}}"
+              ],
+              "path": [
+                "users",
+                "teste"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"teste\",\n  \"age\": \"31\",\n  \"preferred_genres\": \"Action|Drama\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete user",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{knowledgeBaseUrl}}/users/teste",
+              "host": [
+                "{{knowledgeBaseUrl}}"
+              ],
+              "path": [
+                "users",
+                "teste"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
