@@ -14,9 +14,12 @@ public class MovieRecommendationConsole {
         System.out.println();
 
         UserPreferences preferences = readPreferences(scanner);
+        List<Movie> movies = SampleMovieCatalog.movies();
         RecommendationResult result = new DroolsRecommendationService()
-            .evaluate(preferences, SampleMovieCatalog.movies());
+            .evaluate(preferences, movies);
 
+        System.out.println();
+        System.out.println("Loaded " + movies.size() + " movie facts from the Prolog CSV catalog.");
         printRecommendations(result.recommendations());
         printHelp();
         commandLoop(scanner, result);
@@ -100,8 +103,10 @@ public class MovieRecommendationConsole {
                 printTrace(result.traceEvents());
             } else if (command.startsWith("why-not ")) {
                 explainWhyNot(result, command.substring("why-not ".length()).trim());
+            } else if (command.startsWith("how ")) {
+                explainHow(result, command.substring("how ".length()).trim());
             } else if (command.startsWith("why ")) {
-                explainWhy(result, command.substring("why ".length()).trim());
+                System.out.println("'why' is reserved for goal/question explanations. Use how <movie> for the inference path.");
             } else {
                 System.out.println("Unknown command. Type help to see the available commands.");
             }
@@ -112,7 +117,7 @@ public class MovieRecommendationConsole {
         System.out.println();
         System.out.println("Knowledge-base commands");
         System.out.println("- recommend             show the inferred recommendations");
-        System.out.println("- why <movie title/id>  explain how a movie was recommended");
+        System.out.println("- how <movie title/id>  explain how a movie was recommended");
         System.out.println("- why-not <title/id>    explain why a movie was not recommended");
         System.out.println("- trace                 show the fired rule trace");
         System.out.println("- facts                 list the sample movie facts");
@@ -143,7 +148,7 @@ public class MovieRecommendationConsole {
         }
     }
 
-    private static void explainWhy(RecommendationResult result, String query) {
+    private static void explainHow(RecommendationResult result, String query) {
         result.findRecommendation(query).ifPresentOrElse(
             recommendation -> {
                 System.out.println();
@@ -170,7 +175,7 @@ public class MovieRecommendationConsole {
         result.findMovie(query).ifPresentOrElse(
             movie -> {
                 if (result.findRecommendation(movie.getId()).isPresent()) {
-                    System.out.println(movie.getTitle() + " was recommended. Use why " + movie.getTitle() + " to inspect it.");
+                    System.out.println(movie.getTitle() + " was recommended. Use how " + movie.getTitle() + " to inspect it.");
                     return;
                 }
 

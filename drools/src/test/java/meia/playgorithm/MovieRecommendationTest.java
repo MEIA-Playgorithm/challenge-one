@@ -159,6 +159,45 @@ public class MovieRecommendationTest {
         assertEquals(2, run(preferences, interstellar, darkKnight, inception).size());
     }
 
+    @Test
+    void shouldLoadTheSameMovieCatalogUsedByProlog() {
+        List<Movie> movies = SampleMovieCatalog.movies();
+
+        assertEquals(100, movies.size());
+        Movie batman = movies.stream()
+            .filter(movie -> movie.getId().equals("tt0372784"))
+            .findFirst()
+            .orElseThrow();
+
+        assertEquals("Batman Begins", batman.getTitle());
+        assertEquals("fast", batman.getPace());
+        assertEquals("medium", batman.getComplexity());
+        assertEquals("medium", batman.getViolence());
+        assertEquals("low", batman.getHumor());
+        assertEquals("high", batman.getPsychologicalIntensity());
+        assertEquals("mainstream", batman.getAudience());
+        assertEquals("modern", batman.getEra());
+        assertEquals("very_popular", batman.getPopularity());
+        assertTrue(batman.getSubgenres().contains("Action Epic"));
+        assertTrue(batman.getSubgenres().contains("Superhero"));
+        assertTrue(batman.getEmotionalTones().contains("sad"));
+        assertTrue(batman.getEmotionalTones().contains("exciting"));
+        assertTrue(batman.getThemes().contains("justice"));
+    }
+
+    @Test
+    void shouldLoadUserProfilesUsedByThePrologApiContract() {
+        UserPreferences ana = SampleUserCatalog.find("ana").orElseThrow();
+
+        assertEquals(25, ana.getAge());
+        assertTrue(ana.getWishlistMovieIds().contains("tt0372784"));
+        assertTrue(ana.getLikedGenres().contains("Action"));
+        assertTrue(ana.getRequiredLanguages().contains("English"));
+        assertTrue(ana.getPreferredDirectors().contains("Christopher Nolan"));
+        assertTrue(ana.getPreferredThemes().contains("justice"));
+        assertTrue(ana.isRatingRequired());
+    }
+
     private List<Recommendation> run(UserPreferences preferences, Movie... movies) {
         return runEngine(preferences, movies).recommendations();
     }
