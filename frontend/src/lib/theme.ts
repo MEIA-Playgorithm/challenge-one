@@ -1,13 +1,17 @@
 import { createTheme } from "@mui/material";
 
+const palette = {
+    primary: { main: "#c4a06a", contrastText: "#1c140c" },
+    secondary: { main: "#efe6d6", contrastText: "#1c140c" },
+    background: { default: "#141210", paper: "#1c1916" },
+    text: { primary: "#f3efe6", secondary: "#a39a8c" },
+    divider: "rgba(243, 239, 230, 0.12)",
+};
+
 const theme = createTheme({
     palette: {
         mode: "dark",
-        primary: { main: "#c4a06a", contrastText: "#1c140c" },
-        secondary: { main: "#efe6d6", contrastText: "#1c140c" },
-        background: { default: "#141210", paper: "#1c1916" },
-        text: { primary: "#f3efe6", secondary: "#a39a8c" },
-        divider: "rgba(243, 239, 230, 0.12)",
+        ...palette,
     },
     typography: {
         fontFamily: 'system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
@@ -40,6 +44,11 @@ const theme = createTheme({
                     height: "100%",
                     margin: 0,
                     overflow: "hidden",
+                },
+                '.toast:not([data-type]), .toast[data-type="loading"]': {
+                    backgroundColor: `${palette.background.default} !important`,
+                    color: `${palette.text.primary} !important`,
+                    border: `1px solid ${palette.divider} !important`,
                 },
             },
         },

@@ -1,10 +1,12 @@
 import { Box, Paper, Tab, Tabs } from "@mui/material";
 import { useState } from "react";
+import { useApp } from "../context/AppContext";
 import Preferences from "./Preferences";
 import Movies from "./Movies";
 import PeopleAndOrigins from "./PeopleAndOrigins";
 
 const UserParameters = () => {
+    const { currentUser } = useApp();
     const [selectedTab, setSelectedTab] = useState<string>("preferences");
 
     const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
@@ -34,8 +36,8 @@ const UserParameters = () => {
                 />
             </Tabs>
             <Box sx={{ flex: 1, minHeight: 0, p: 2, overflow: "auto" }}>
-                {selectedTab === "preferences" && <Preferences />}
-                {selectedTab === "movies" && <Movies />}
+                {selectedTab === "preferences" && <Preferences key={currentUser.user_id} />}
+                {selectedTab === "movies" && <Movies key={currentUser.user_id} />}
                 {selectedTab === "people-and-origins" && <PeopleAndOrigins />}
             </Box>
         </Paper>

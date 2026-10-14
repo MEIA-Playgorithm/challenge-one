@@ -1,24 +1,33 @@
-export type Pace = "slow" | "medium" | "fast";
-export type Level = "low" | "medium" | "high";
-export type EmotionalTone = "tense" | "dark" | "sad" | "lighthearted" | "romantic" | "reflective" | "exciting";
-export type Theme =
-    | "love"
-    | "family"
-    | "growing_up"
-    | "crime"
-    | "justice"
-    | "war"
-    | "history"
-    | "technology"
-    | "supernatural"
-    | "exploration"
-    | "psychology"
-    | "music"
-    | "sport"
-    | "life_story";
-export type Audience = "mainstream" | "niche";
-export type Era = "classic" | "modern" | "recent";
-export type Popularity = "very_popular" | "popular" | "less_popular";
+export const PACES = ["slow", "medium", "fast"] as const;
+export const LEVELS = ["low", "medium", "high"] as const;
+export const EMOTIONAL_TONES = ["tense", "dark", "sad", "lighthearted", "romantic", "reflective", "exciting"] as const;
+export const THEMES = [
+    "love",
+    "family",
+    "growing_up",
+    "crime",
+    "justice",
+    "war",
+    "history",
+    "technology",
+    "supernatural",
+    "exploration",
+    "psychology",
+    "music",
+    "sport",
+    "life_story",
+] as const;
+export const AUDIENCES = ["mainstream", "niche"] as const;
+export const ERAS = ["classic", "modern", "recent"] as const;
+export const POPULARITIES = ["very_popular", "popular", "less_popular"] as const;
+
+export type Pace = (typeof PACES)[number];
+export type Level = (typeof LEVELS)[number];
+export type EmotionalTone = (typeof EMOTIONAL_TONES)[number];
+export type Theme = (typeof THEMES)[number];
+export type Audience = (typeof AUDIENCES)[number];
+export type Era = (typeof ERAS)[number];
+export type Popularity = (typeof POPULARITIES)[number];
 export type WatchedMovieRating = 0 | 1 | 2 | 3 | 4 | 5;
 
 export type WatchedMovie = {
@@ -50,14 +59,14 @@ export type User = {
     preferred_audience: Audience[];
     preferred_eras: Era[];
     preferred_popularity: Popularity[];
-    max_duration_minutes: number;
-    year_from: number;
-    year_to: number;
+    max_duration_minutes: number | null;
+    year_from: number | null;
+    year_to: number | null;
     required_languages: string[];
     disliked_directors: string[];
     disliked_stars: string[];
-    session_min_age: number;
-    min_rating: number;
+    session_min_age: number | null;
+    min_rating: number | null;
     rating_tolerance: number;
     rating_required: boolean;
     allow_rewatch: boolean;
@@ -88,14 +97,14 @@ export function emptyUser(userId: string, age: number): User {
         preferred_audience: [],
         preferred_eras: [],
         preferred_popularity: [],
-        max_duration_minutes: 0,
-        year_from: 0,
-        year_to: 0,
+        max_duration_minutes: null,
+        year_from: null,
+        year_to: null,
         required_languages: [],
         disliked_directors: [],
         disliked_stars: [],
-        session_min_age: 0,
-        min_rating: 0,
+        session_min_age: null,
+        min_rating: null,
         rating_tolerance: 0,
         rating_required: false,
         allow_rewatch: false,

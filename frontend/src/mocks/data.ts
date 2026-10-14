@@ -1,6 +1,5 @@
 import type { Audience, EmotionalTone, Era, Level, Pace, Popularity, Theme, User, WatchedMovie } from "../types/User";
 
-/** Same rows as swi-prolog/knowledge_base_users.csv. */
 const USERS_CSV = `user_id,age,watched,wishlist,preferred_genres,disliked_genres,preferred_languages,disliked_languages,preferred_directors,preferred_writers,preferred_stars,preferred_countries,preferred_subgenres,preferred_pace,preferred_complexity,preferred_violence,preferred_humor,preferred_psychological_intensity,preferred_emotional_tones,preferred_themes,preferred_audience,preferred_eras,preferred_popularity,max_duration_minutes,year_from,year_to,required_languages,disliked_directors,disliked_stars,session_min_age,min_rating,rating_tolerance,rating_required,allow_rewatch
 ana,25,tt0087469=4|tt7798634=1,tt0372784,Action|Adventure,Horror,English,Japanese,Christopher Nolan,Bob Kane,Christian Bale,United States,Action Epic,fast,medium,medium,medium,medium,exciting,justice|exploration,mainstream,modern,very_popular,150,2000,2026,English,Alfred Hitchcock,Anthony Perkins,25,8,0,true,false
 bruno,32,tt7798634=0,tt0054215,Horror|Mystery|Thriller,Musical,English,Japanese,Alfred Hitchcock,Joseph Stefano,Anthony Perkins,United States,Psychological Horror,fast,high,high,low,high,dark|tense,psychology|crime,mainstream,modern,popular,130,2000,2026,English,Shirish Kunder,Akshay Kumar,32,8,0,true,false
@@ -16,6 +15,10 @@ tiago,46,tt0062639=0,tt0064451,Action|Thriller|Drama,Musical,Mandarin|French,Eng
 
 function list(value: string) {
     return value ? value.split("|") : [];
+}
+
+function optionalNumber(value: string) {
+    return value ? Number(value) : null;
 }
 
 function watched(value: string): WatchedMovie[] {
@@ -54,14 +57,14 @@ function usersFromCsv(csv: string): User[] {
             preferred_audience: list(values.preferred_audience) as Audience[],
             preferred_eras: list(values.preferred_eras) as Era[],
             preferred_popularity: list(values.preferred_popularity) as Popularity[],
-            max_duration_minutes: Number(values.max_duration_minutes),
-            year_from: Number(values.year_from),
-            year_to: Number(values.year_to),
+            max_duration_minutes: optionalNumber(values.max_duration_minutes),
+            year_from: optionalNumber(values.year_from),
+            year_to: optionalNumber(values.year_to),
             required_languages: list(values.required_languages),
             disliked_directors: list(values.disliked_directors),
             disliked_stars: list(values.disliked_stars),
-            session_min_age: Number(values.session_min_age),
-            min_rating: Number(values.min_rating),
+            session_min_age: optionalNumber(values.session_min_age),
+            min_rating: optionalNumber(values.min_rating),
             rating_tolerance: Number(values.rating_tolerance),
             rating_required: values.rating_required === "true",
             allow_rewatch: values.allow_rewatch === "true",
@@ -70,3 +73,105 @@ function usersFromCsv(csv: string): User[] {
 }
 
 export const MOCK_USERS = usersFromCsv(USERS_CSV);
+
+export const GENRES = [
+    "Action",
+    "Adventure",
+    "Animation",
+    "Biography",
+    "Comedy",
+    "Crime",
+    "Documentary",
+    "Drama",
+    "Epic",
+    "Family",
+    "Fantasy",
+    "History",
+    "Holiday",
+    "Horror",
+    "Music",
+    "Musical",
+    "Mystery",
+    "Romance",
+    "SciFi",
+    "Sport",
+    "Thriller",
+    "Tragedy",
+    "War",
+    "Western",
+];
+
+export const SUBGENRES = [
+    "Action Epic",
+    "Adult Animation",
+    "Adventure Epic",
+    "Anime",
+    "Buddy Comedy",
+    "ComingofAge",
+    "Computer Animation",
+    "Cop Drama",
+    "Cyberpunk",
+    "Dark Comedy",
+    "Globetrotting Adventure",
+    "HandDrawn Animation",
+    "Heist",
+    "HighConcept Comedy",
+    "Holiday Family",
+    "Jungle Adventure",
+    "Kaiju",
+    "Legal Drama",
+    "Mockumentary",
+    "OnePerson Army Action",
+    "Parody",
+    "Period Drama",
+    "Psychological Drama",
+    "Psychological Horror",
+    "Psychological Thriller",
+    "Quest",
+    "Road Trip",
+    "Romantic Comedy",
+    "Romantic Epic",
+    "Satire",
+    "SciFi Epic",
+    "Sea Adventure",
+    "Slapstick",
+    "Slasher Horror",
+    "Splatter Horror",
+    "Superhero",
+    "Supernatural Fantasy",
+    "Suspense Mystery",
+    "Swashbuckler",
+    "Sword Sandal",
+    "True Crime",
+    "Wuxia",
+];
+
+export const LANGUAGES = [
+    "Arabic",
+    "Cantonese",
+    "Czech",
+    "Danish",
+    "English",
+    "French",
+    "German",
+    "Hebrew",
+    "Hindi",
+    "Italian",
+    "Japanese",
+    "Korean",
+    "Latin",
+    "Mandarin",
+    "Persian",
+    "Portuguese",
+    "Russian",
+    "Sinhala",
+    "Sioux",
+    "Soninke",
+    "Spanish",
+    "Swedish",
+    "Tamil",
+    "Tupi",
+    "Turkish",
+    "Urdu",
+    "Wolof",
+];
