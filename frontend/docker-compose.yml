@@ -1,0 +1,7 @@
+services:
+  frontend:
+    container_name: playgorithm-frontend
+    build: .
+    ports:
+      - "4173:80"
+    restart: unless-stopped
