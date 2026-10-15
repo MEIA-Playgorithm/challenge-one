@@ -1,4 +1,4 @@
-/** Main genres in swi-prolog/knowledge_base_movies.csv, without the known subgenres. */
+/** Main genres in knowledge_base/movies.csv, without the known subgenres. */
 export const GENRES = [
     "Action",
     "Adventure",
@@ -72,7 +72,7 @@ export const SUBGENRES = [
     "Wuxia",
 ];
 
-/** Languages in swi-prolog/knowledge_base_movies.csv. */
+/** Languages in knowledge_base/movies.csv. */
 export const LANGUAGES = [
     "Arabic",
     "Cantonese",

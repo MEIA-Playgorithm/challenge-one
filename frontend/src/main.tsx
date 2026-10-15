@@ -5,6 +5,7 @@ import { AppProvider } from "./context/AppContext";
 import App from "./App";
 import { loadConfig } from "./lib/config";
 import theme from "./lib/theme";
+import { Toaster } from "sonner";
 
 const root = createRoot(document.getElementById("root")!);
 
@@ -15,6 +16,7 @@ loadConfig()
             <StrictMode>
                 <ThemeProvider theme={theme}>
                     <CssBaseline />
+                    <Toaster position="top-center" richColors expand theme="dark" />
                     <AppProvider>
                         <App />
                     </AppProvider>

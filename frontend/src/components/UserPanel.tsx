@@ -21,6 +21,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import { useApp } from "../context/AppContext";
 import { emptyUser, type User } from "../types/User";
 import { avatarColor, initials } from "../lib/utils";
+import { toast } from "sonner";
 
 type Mode = "view" | "edit" | "create";
 
@@ -28,7 +29,6 @@ const UserPanel = () => {
     const { users, currentUser, setCurrentUser, createUser, updateUser, deleteUser } = useApp();
     const [mode, setMode] = useState<Mode>("view");
     const [form, setForm] = useState({ user_id: "", age: 0 });
-    const [error, setError] = useState<string | null>(null);
     const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -36,15 +36,21 @@ const UserPanel = () => {
     const selectUser = (user: User) => {
         setCurrentUser(user);
         setMode("view");
-        setError(null);
     };
 
     const cancel = () => {
-        setError(null);
         setMode("view");
     };
 
+    const canSave = form.user_id.trim() !== "";
+
     const save = async () => {
+        if (!canSave || saving) return;
+        if (mode === "edit" && form.user_id.trim() === currentUser.user_id && form.age === currentUser.age) {
+            toast("No changes to save");
+            return;
+        }
+
         setSaving(true);
         const message =
             mode === "create"
@@ -52,11 +58,11 @@ const UserPanel = () => {
                 : await updateUser(currentUser.user_id, { ...currentUser, ...form } as User);
         setSaving(false);
         if (message) {
-            setError(message);
+            toast.error(message);
             return;
         }
-        setError(null);
         setMode("view");
+        toast.success(mode === "create" ? "User created" : "User saved");
     };
 
     const editing = mode === "edit" || mode === "create";
@@ -65,7 +71,7 @@ const UserPanel = () => {
         <Paper sx={{ flex: "0 0 auto", overflow: "visible" }}>
             <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
                 <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: "wrap", gap: 1 }}>
-                    {users.map((user) => {
+                    {users.slice().sort((a, b) => a.user_id.toLowerCase().localeCompare(b.user_id.toLowerCase())).map((user) => {
                         const selected = mode !== "create" && user.user_id === currentUser.user_id;
                         return (
                             <Chip
@@ -89,11 +95,10 @@ const UserPanel = () => {
                             label="New"
                             onClick={() => {
                                 setForm({ user_id: "", age: 0 });
-                                setError(null);
                                 setMode("create");
                             }}
                             variant={mode === "create" ? "filled" : "outlined"}
-                            color={mode === "create" ? "secondary" : "default"}
+                            color={mode === "create" ? "primary" : "default"}
                         />
                     </Tooltip>
                 </Stack>
@@ -118,7 +123,7 @@ const UserPanel = () => {
                                 {currentUser.user_id}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                                Age {currentUser.age}
+                                {currentUser.age ? `Age ${currentUser.age}` : "No age set"}
                             </Typography>
                         </Box>
                         <Button
@@ -126,7 +131,6 @@ const UserPanel = () => {
                             size="small"
                             onClick={() => {
                                 setForm({ user_id: currentUser.user_id, age: currentUser.age });
-                                setError(null);
                                 setMode("edit");
                             }}
                         >
@@ -146,7 +150,14 @@ const UserPanel = () => {
                         </Button>
                     </Stack>
                 ) : (
-                    <Stack spacing={2}>
+                    <Stack
+                        component="form"
+                        spacing={2}
+                        onSubmit={(event) => {
+                            event.preventDefault();
+                            save();
+                        }}
+                    >
                         <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                             {mode === "create" ? "New User" : "Edit User"}
                         </Typography>
@@ -168,22 +179,17 @@ const UserPanel = () => {
                                 sx={{ width: 120 }}
                             />
                         </Stack>
-                        {error && (
-                            <Typography variant="body2" color="error">
-                                {error}
-                            </Typography>
-                        )}
                         <Stack direction="row" spacing={1}>
                             <Button
+                                type="submit"
                                 variant="contained"
                                 size="small"
                                 startIcon={<CheckIcon />}
-                                onClick={save}
-                                disabled={saving || !form.user_id.trim() || form.age <= 0}
+                                disabled={saving || !canSave}
                             >
                                 Save
                             </Button>
-                            <Button variant="text" size="small" startIcon={<CloseIcon />} onClick={cancel} color="inherit">
+                            <Button type="button" variant="text" size="small" startIcon={<CloseIcon />} onClick={cancel} color="inherit">
                                 Cancel
                             </Button>
                         </Stack>
@@ -194,11 +200,6 @@ const UserPanel = () => {
                 <DialogTitle>Delete {confirmDelete}?</DialogTitle>
                 <DialogContent>
                     <DialogContentText>This removes {confirmDelete} from the list.</DialogContentText>
-                    {error && (
-                        <Typography variant="body2" color="error" sx={{ mt: 1 }}>
-                            {error}
-                        </Typography>
-                    )}
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setConfirmOpen(false)} color="inherit">
@@ -212,8 +213,9 @@ const UserPanel = () => {
                             setSaving(true);
                             const message = await deleteUser(confirmDelete);
                             setSaving(false);
-                            setError(message);
-                            if (!message) setConfirmOpen(false);
+                            if (message) return toast.error(message);
+                            toast.success(`Deleted ${confirmDelete}`);
+                            setConfirmOpen(false);
                         }}
                     >
                         Delete

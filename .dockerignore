@@ -1,7 +1,11 @@
 .git
+.idea
 **/node_modules
 **/dist
+**/target
 **/*.tsbuildinfo
 **/.env
 **/.env.*
-drools/target
+*.log
+hs_err_pid*
+replay_pid*

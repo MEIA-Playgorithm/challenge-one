@@ -13,7 +13,8 @@ export const avatarColor = (id: string) => {
     return avatarTones[index % avatarTones.length];
 };
 
-// The movie catalog stores names with punctuation stripped.
+export const withValues = (options: string[], values: string[]) => [...new Set([...options, ...values])];
+
 const catalogWords: Record<string, string> = {
     SciFi: "Sci-Fi",
     ComingofAge: "Coming-of-Age",

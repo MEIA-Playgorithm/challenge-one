@@ -8,7 +8,7 @@ import PeopleAndOrigins from "./PeopleAndOrigins";
 const UserParameters = () => {
     const { currentUser } = useApp();
     const [selectedTab, setSelectedTab] = useState<string>("preferences");
-    // Fica aqui (e não em Preferences) para não se perder ao mudar de utilizador.
+    // Fica aqui para não se perder ao mudar de separador ou de utilizador.
     const [autosave, setAutosave] = useState(false);
 
     const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
@@ -39,7 +39,7 @@ const UserParameters = () => {
             </Tabs>
             <Box sx={{ flex: 1, minHeight: 0, p: 2, overflow: "auto" }}>
                 {selectedTab === "preferences" && <Preferences key={currentUser.user_id} autosave={autosave} onAutosaveChange={setAutosave} />}
-                {selectedTab === "movies" && <Movies />}
+                {selectedTab === "movies" && <Movies key={currentUser.user_id} autosave={autosave} onAutosaveChange={setAutosave} />}
                 {selectedTab === "people-and-origins" && <PeopleAndOrigins />}
             </Box>
         </Paper>

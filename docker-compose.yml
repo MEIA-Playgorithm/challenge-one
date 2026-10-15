@@ -33,3 +33,17 @@ services:
       knowledge-base:
         condition: service_healthy
     init: true
+
+  drools:
+    build:
+      context: .
+      dockerfile: drools/Dockerfile
+    ports:
+      - "8082:8080"
+    environment:
+      MOVIES_CSV: http://knowledge-base:8090/movies.csv
+      USERS_CSV: http://knowledge-base:8090/users.csv
+    depends_on:
+      knowledge-base:
+        condition: service_healthy
+    init: true

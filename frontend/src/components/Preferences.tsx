@@ -1,33 +1,25 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import {
     Autocomplete,
     Box,
-    Button,
-    ButtonGroup,
-    Checkbox,
-    CircularProgress,
     Divider,
     FormControlLabel,
-    ListItemText,
-    Menu,
-    MenuItem,
     Slider,
     Stack,
     Switch,
     TextField,
     Typography,
 } from "@mui/material";
-import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
-import CheckIcon from "@mui/icons-material/Check";
-import CloseIcon from "@mui/icons-material/Close";
 import { useApp } from "../context/AppContext";
+import { useSave } from "../hooks/useSave";
 import { AUDIENCES, EMOTIONAL_TONES, ERAS, LEVELS, PACES, POPULARITIES, THEMES, type User } from "../types/User";
-import { GENRES, LANGUAGES, SUBGENRES } from "../mocks/data";
-import { formatLabel } from "../lib/utils";
+import { GENRES, LANGUAGES, SUBGENRES } from "../lib/options";
+import { formatLabel, withValues } from "../lib/utils";
 import PreferenceSection from "./PreferenceSection";
 import SentimentSelector from "./SentimentSelector";
 import ChoiceGroup from "./ChoiceGroup";
 import ChoiceChips from "./ChoiceChips";
+import SaveBar from "./SaveBar";
 
 const PREFERENCE_KEYS = [
     "preferred_genres",
@@ -59,7 +51,6 @@ const PREFERENCE_KEYS = [
 type PreferenceFields = Pick<User, (typeof PREFERENCE_KEYS)[number]>;
 type LimitKey = "max_duration_minutes" | "year_from" | "year_to" | "session_min_age";
 
-// Same bounds as user_limit_column/2 in swi-prolog/user_bc.pl.
 const LIMIT_RANGES: Record<LimitKey, [number, number]> = {
     max_duration_minutes: [1, 1440],
     year_from: [1800, 3000],
@@ -74,8 +65,6 @@ const fromUser = (user: User) =>
 
 const sameValue = (a: unknown, b: unknown) =>
     Array.isArray(a) && Array.isArray(b) ? a.length === b.length && a.every((item) => b.includes(item)) : a === b;
-
-const withValues = (options: string[], values: string[]) => [...new Set([...options, ...values])];
 
 const toNumber = (text: string) => (text.trim() === "" ? null : Number(text));
 
@@ -99,9 +88,6 @@ const limitErrors = (form: PreferenceFields) => {
     return errors;
 };
 
-// Tempo sem alterações antes de gravar: dá tempo para continuar a editar e para cancelar.
-const AUTOSAVE_DELAY_MS = 5000;
-
 type Props = {
     autosave: boolean;
     onAutosaveChange: (autosave: boolean) => void;
@@ -110,11 +96,6 @@ type Props = {
 const Preferences = ({ autosave, onAutosaveChange }: Props) => {
     const { currentUser, updateUser } = useApp();
     const [form, setForm] = useState<PreferenceFields>(() => fromUser(currentUser));
-    const [saving, setSaving] = useState(false);
-    const [saveError, setSaveError] = useState<string | null>(null);
-    const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
-    // Milissegundos que faltam para a gravação automática; null quando não está agendada.
-    const [remaining, setRemaining] = useState<number | null>(null);
 
     const patch = (changes: Partial<PreferenceFields>) => setForm((current) => ({ ...current, ...changes }));
 
@@ -143,40 +124,13 @@ const Preferences = ({ autosave, onAutosaveChange }: Props) => {
     const setMinRating = (value: number) =>
         patch(value ? { min_rating: value } : { min_rating: null, rating_tolerance: 0, rating_required: false });
 
-    // O formulário que a gravação automática já tentou gravar: nunca o repete, mesmo que
-    // o que volta do servidor seja diferente do que enviámos (evita gravar em ciclo).
-    const lastSaved = useRef<PreferenceFields | null>(null);
-
-    const save = async () => {
-        lastSaved.current = form;
-        setSaving(true);
-        setSaveError(await updateUser(currentUser.user_id, { ...currentUser, ...form }));
-        setSaving(false);
-    };
-
-    // Uma alteração nova apaga o erro anterior, para o autosave voltar a tentar.
-    useEffect(() => setSaveError(null), [form]);
-
-    const autosaveDue = autosave && dirty && !hasErrors && !saving && !saveError && form !== lastSaved.current;
-
-    // Cada alteração reinicia a contagem. Se houver alterações durante a gravação,
-    // `dirty` volta a ser verdadeiro no fim e a contagem recomeça, uma gravação de cada vez.
-    useEffect(() => {
-        if (!autosaveDue) {
-            setRemaining(null);
-            return;
-        }
-        const deadline = Date.now() + AUTOSAVE_DELAY_MS;
-        setRemaining(AUTOSAVE_DELAY_MS);
-        const timer = setInterval(() => {
-            const left = deadline - Date.now();
-            if (left > 0) return setRemaining(left);
-            clearInterval(timer);
-            setRemaining(null);
-            save();
-        }, 100);
-        return () => clearInterval(timer);
-    }, [autosaveDue, form]);
+    const { saving, error, remaining, save } = useSave(
+        form,
+        dirty && !hasErrors,
+        () => updateUser(currentUser.user_id, { ...currentUser, ...form }),
+        autosave,
+        "Preferences saved"
+    );
 
     return (
         <Stack sx={{ minHeight: "100%" }}>
@@ -460,94 +414,17 @@ const Preferences = ({ autosave, onAutosaveChange }: Props) => {
                 </PreferenceSection>
             </Stack>
 
-            <Box
-                sx={{
-                    position: "sticky",
-                    bottom: -16,
-                    zIndex: 1,
-                    mx: -2,
-                    mb: -2,
-                    px: 2,
-                    py: 1.5,
-                    borderTop: 1,
-                    borderColor: "divider",
-                    bgcolor: "background.paper",
-                }}
-            >
-                <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                    <Typography
-                        variant="body2"
-                        color={hasErrors || saveError ? "error" : dirty ? "primary" : "text.secondary"}
-                        sx={{ flex: 1 }}
-                    >
-                        {saveError ??
-                            (hasErrors
-                                ? "Fix the highlighted limits to save"
-                                : saving
-                                  ? "Saving..."
-                                  : remaining !== null
-                                    ? `Saving in ${Math.ceil(remaining / 1000)}s`
-                                    : dirty
-                                      ? "Unsaved changes"
-                                      : "All changes saved")}
-                    </Typography>
-                    <Button
-                        variant="text"
-                        size="small"
-                        color="inherit"
-                        startIcon={<CloseIcon />}
-                        disabled={!dirty}
-                        onClick={() => setForm(fromUser(currentUser))}
-                    >
-                        Reset
-                    </Button>
-                    <ButtonGroup variant="contained" size="small" disabled={saving}>
-                        <Button
-                            startIcon={
-                                remaining !== null ? (
-                                    <CircularProgress
-                                        variant="determinate"
-                                        value={(remaining / AUTOSAVE_DELAY_MS) * 100}
-                                        size={18}
-                                        thickness={6}
-                                        color="inherit"
-                                        aria-label="Time until autosave"
-                                    />
-                                ) : (
-                                    <CheckIcon />
-                                )
-                            }
-                            disabled={!dirty || hasErrors || saving}
-                            onClick={save}
-                        >
-                            Save
-                        </Button>
-                        <Button size="small" aria-label="Save options" onClick={(event) => setMenuAnchor(event.currentTarget.parentElement)}>
-                            <ArrowDropDownIcon />
-                        </Button>
-                    </ButtonGroup>
-                    {/* O tema dá width 100% e flex 1 a todos os Paper; aqui o menu tem de ter o tamanho do conteúdo. */}
-                    <Menu
-                        anchorEl={menuAnchor}
-                        open={Boolean(menuAnchor)}
-                        onClose={() => setMenuAnchor(null)}
-                        anchorOrigin={{ vertical: "top", horizontal: "right" }}
-                        transformOrigin={{ vertical: "bottom", horizontal: "right" }}
-                        slotProps={{ paper: { sx: { width: "auto", flex: "none" } } }}
-                    >
-                        <MenuItem
-                            dense
-                            onClick={() => {
-                                onAutosaveChange(!autosave);
-                                setMenuAnchor(null);
-                            }}
-                        >
-                            <Checkbox size="small" checked={autosave} disableRipple sx={{ p: 0, mr: 1.5 }} />
-                            <ListItemText primary="Autosave" secondary="Saves 5 seconds after your last change" />
-                        </MenuItem>
-                    </Menu>
-                </Stack>
-            </Box>
+            <SaveBar
+                dirty={dirty}
+                blocked={hasErrors ? "Fix the highlighted limits to save" : undefined}
+                saving={saving}
+                error={error}
+                remaining={remaining}
+                autosave={autosave}
+                onAutosaveChange={onAutosaveChange}
+                onReset={() => setForm(fromUser(currentUser))}
+                onSave={save}
+            />
         </Stack>
     );
 };

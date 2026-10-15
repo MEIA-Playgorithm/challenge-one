@@ -20,6 +20,7 @@
         <drools-version>10.2.0</drools-version>
         <slf4j-version>2.0.17</slf4j-version>
 
+        <jackson-version>2.19.2</jackson-version>
         <junit-version>5.13.4</junit-version>
 
         <logback-version>1.5.25</logback-version>
@@ -45,6 +46,13 @@
         <dependency>
             <groupId>org.drools</groupId>
             <artifactId>drools-ruleunits-engine</artifactId>
+        </dependency>
+
+        <!-- JSON API support -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson-version}</version>
         </dependency>
 
         <!-- JUnit 5 -->
