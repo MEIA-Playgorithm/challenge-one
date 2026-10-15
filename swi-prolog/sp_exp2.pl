@@ -62,7 +62,7 @@ pergunta_facto(Facto, Contexto) :-
       ( Resposta == sim -> regista_facto_utilizador(Facto) ; fail ) ).
 
 le_resposta(Facto, Contexto, Resposta) :-
-    ( texto_pergunta(Facto, Texto) ->
+    ( current_predicate(texto_pergunta/2), texto_pergunta(Facto, Texto) ->
 		format('~a (sim/nao/porque, terminar com .)~n', [Texto])
 	; format('É verdade ~q? (sim/nao/porque, terminar com .)~n', [Facto])
 	),
