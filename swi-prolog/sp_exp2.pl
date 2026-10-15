@@ -10,6 +10,9 @@
 :-op(600,xfy,e).
 
 :-dynamic justifica/3.
+:- dynamic perguntavel/1, resposta_utilizador/2.
+:- multifile perguntavel/1.
+:- dynamic(regra/1).
 
 
 carrega_bc:-
@@ -19,10 +22,73 @@ carrega_bc:-
 
 arranca_motor :-
     ultimo_facto(Before),
-    forall((regra ID se LHS entao RHS, verifica_condicoes(LHS, Evidence)),
+    forall((regra ID se LHS entao RHS,
+            verifica_condicoes(LHS, Evidence, contexto(ID, LHS, RHS))),
            concluir(RHS, ID, Evidence)),
     ultimo_facto(After),
     ( After =:= Before -> true ; arranca_motor ).
+
+% Interação apenas no motor; como/1 e whynot/1 continuam a usar os
+% verificadores originais, sem perguntas.
+% A BC pode declarar, por exemplo: perguntavel(likes_genre(_, _)).
+% Só se pergunta por factos completamente instanciados: as condições
+% anteriores devem fornecer os valores das variáveis.
+% Ao reiniciar a BC, limpar também retractall(resposta_utilizador(_, _)).
+verifica_condicoes([X e Y], Evidence, Contexto) :-
+    !,
+    verifica_condicao(X, First, Contexto),
+    verifica_condicoes([Y], Rest, Contexto),
+    append(First, Rest, Evidence).
+verifica_condicoes([X], Evidence, Contexto) :-
+    verifica_condicao(X, Evidence, Contexto).
+
+verifica_condicao(X, Evidence, Contexto) :-
+    ( ground(X), condicao_perguntavel(X) ->
+        ( facto(N, X) -> Evidence = [N]
+        ; pergunta_facto(X, Contexto), facto(N, X), Evidence = [N] )
+    ; verifica_condicao(X, Evidence) ).
+
+% Os operadores do motor nãosão perguntas, mesmo com uma declaração ampla.
+condicao_perguntavel(X) :-
+    callable(X),
+    functor(X, Nome, Aridade),
+    \+ memberchk(Nome/Aridade, [(nao)/1, avalia/1, teste/1, recolhe/3]),
+    once(perguntavel(X)).
+
+pergunta_facto(Facto, Contexto) :-
+    ( resposta_utilizador(Facto, Resposta) -> Resposta == sim
+    ; le_resposta(Facto, Contexto, Resposta),
+      assertz(resposta_utilizador(Facto, Resposta)),
+      ( Resposta == sim -> regista_facto_utilizador(Facto) ; fail ) ).
+
+le_resposta(Facto, Contexto, Resposta) :-
+    ( current_predicate(texto_pergunta/2), texto_pergunta(Facto, Texto) ->
+		format('~a (sim/nao/porque, terminar com .)~n', [Texto])
+	; format('É verdade ~q? (sim/nao/porque, terminar com .)~n', [Facto])
+	),
+    read(Entrada),
+    ( Entrada == porque ->
+        porque(Facto, Contexto), le_resposta(Facto, Contexto, Resposta)
+    ; Entrada == sim -> Resposta = sim
+    ; Entrada == nao -> Resposta = nao
+    ; Entrada == end_of_file ->
+        throw(error(unexpected_end_of_file, le_resposta/3))
+    ; writeln('Resposta inválida. Use sim, nao ou porque.'),
+      le_resposta(Facto, Contexto, Resposta) ).
+
+% Explicação durante a pergunta: não afirma que a regra já foi satisfeita.
+porque(Facto, contexto(ID, LHS, RHS)) :-
+    format('Estou a avaliar a regra ~w.~n', [ID]),
+    format('Condições: ~q~n', [LHS]),
+    format('Preciso de saber se ~q para verificar esta condição.~n', [Facto]),
+    format('Se todas as condições forem satisfeitas, as ações serão: ~q~n', [RHS]).
+
+% Facto de entrada: sem justifica/3, como os restantes factos iniciais.
+regista_facto_utilizador(Facto) :-
+    retract(ultimo_facto(Anterior)),
+    N is Anterior + 1,
+    assertz(ultimo_facto(N)),
+    assertz(facto(N, Facto)).
 
 verifica_condicoes([X e Y], Evidence) :-
     !,

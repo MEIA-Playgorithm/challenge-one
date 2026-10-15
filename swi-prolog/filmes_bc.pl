@@ -8,6 +8,7 @@
 
 :- ensure_loaded(rules_movies).
 :- ensure_loaded(rules_users).
+:- ensure_loaded(rules_dialog).
 
 % Só os predicados de dados do CSV são importados, não as regras Prolog.
 predicado_filme(Predicate) :-
