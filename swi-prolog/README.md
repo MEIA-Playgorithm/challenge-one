@@ -214,7 +214,7 @@ More queries are in [ENGINE.md](ENGINE.md).
 | `movies_loader.pl`, `user_bc.pl` | Turn the movies CSV and the users CSV into facts |
 | `filmes_bc.pl` | Joins the facts and handles reloading |
 | `rules_movies.pl` | Rules 1–33: classify the movies |
-| `rules_users.pl` | Rules 34–65: user preferences, exclusions and limits |
+| `rules_users.pl` | Rules 34–69: user preferences, exclusions and limits |
 | `user_constraints.pl` | Helper functions for the rules |
 | `rules_dialog.pl` | Dialogue in engine 2: choose one of seven experiences, follow-up questions and "why?" |
 | `sp_exp1.pl`, `sp_exp2.pl` | The two inference engines |

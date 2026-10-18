@@ -31,7 +31,7 @@ loads the movies as independent facts, one per attribute:
 `Id, Title, Vote, Year, Duration, RatingMPA, RatingIMDB, Budget, Director, Writer, Star, Genre, Country, FilmingLocation, Company, Language, Win, Nomination, Oscar`
 
 `user_bc.pl` loads the users and `rules_users.pl` interprets them. Rules 1–33 (`rules_movies.pl`) classify
-the movies. Rules 34–65 (`rules_users.pl`) match users with movies. Both engines (`sp_exp1.pl` and
+the movies. Rules 34–69 (`rules_users.pl`) match users with movies. Both engines (`sp_exp1.pl` and
 `sp_exp2.pl`) run the same rules.
 
 ---
@@ -416,7 +416,7 @@ user_id,age,watched,wishlist,preferred_genres,disliked_genres,preferred_language
 familia,35,,,Animation|Family,Horror,English,,100,2000,2026,English|Portuguese,8,7,0.5,false
 ```
 
-Rules 62–65 add the rejections of people, the failed limits and the final exclusion.
+Rules 62–69 add the rejections of people, the failed limits and the final exclusion.
 `user_constraints.pl` holds the normalisation, the checks and the calculation.
 `facto(_,exclusion_reason(User,Movie,Reason))` shows the cause of an exclusion, and
 `recommendation_explanation(User,Movie,Status,Checks,Unmet)` explains the eligible movies. In the API,
@@ -465,7 +465,7 @@ and `arranca_motor.` in the console, or call `POST /api/reload/users` if the API
 
 ## The user rules
 
-`rules_users.pl` holds rules 34–65 in the form `regra N se [...] entao [cria_facto(...)].`, sharing the
+`rules_users.pl` holds rules 34–69 in the form `regra N se [...] entao [cria_facto(...)].`, sharing the
 engine with the movie rules 1–33. `rules_user.pl` is kept as a compatibility file. Loading also copies the
 `user_fact/1` data into numbered `facto/2` facts, so the conclusions can be justified with the survey data.
 
@@ -551,7 +551,8 @@ facto(N, prefers(ines, pace, fast)).
 
 Rules 34–37 infer the reasons for exclusion, rules 38–60 infer the reasons and their weights, and rule 61
 identifies the user–movie pairs with matching preferences. Rules 62–64 add the rejections of actors and
-directors and the mandatory limits, and rule 65 concludes the final exclusion. These queries need
+directors and the duration limit, rule 65 concludes the final exclusion, and rules 66–69 add the year,
+language and rating limits. These queries need
 `arranca_motor` to have finished.
 
 ```prolog

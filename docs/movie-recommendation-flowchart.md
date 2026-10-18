@@ -43,44 +43,42 @@ Suggested ranking hierarchy:
 
 ## The role of Prolog and Drools
 
-Prolog can be used to represent facts and logical queries: movies, genres, actors, ratings, user restrictions, and similarity relationships.
+The two engines are independent implementations of the same recommendation logic. Each one reads the movies and
+the users from the knowledge base service, applies the same exclusions and scoring, and answers the same HTTP
+API. They never exchange results: the frontend asks one or both and shows the answers side by side, so the
+results can be compared.
 
-Drools can be used to apply business rules with weights, exclusions, scoring, tolerance margins, and explanations. The same conceptual base should be maintained across both engines so that the results can be compared.
+- **Prolog** states the rules as production rules over facts (`swi-prolog/rules_movies.pl` and
+  `swi-prolog/rules_users.pl`), and explains its conclusions with `como` and `whynot` in the console.
+- **Drools** states them as forward-chaining rules over the facts in a rule unit (`rules.drl`), and exposes the
+  explanations (`how`, `why-not`, `trace`) as endpoints.
 
 ## Sample flowchart
 
 ```mermaid
 flowchart TD
-    A([Start]) --> B[Load movie catalogue]
-    B --> C[Load user profile]
-    C --> D[Normalise preferences and restrictions]
+    A([Start]) --> B[Frontend: choose a user and one or both engines]
+    B --> C[Knowledge base serves movies.csv and users.csv]
+    C --> D[Each engine reads the CSV files and builds its facts]
 
-    D --> E[Send facts to Prolog]
-    D --> F[Send facts to Drools]
+    D --> E{For each movie: does it violate a mandatory criterion?}
+    E -- Yes --> F[Exclude the movie and store the reason]
+    E -- No --> G[Add the points of every matching preference]
 
-    E --> G[Infer logical relationships]
-    G --> G1[Similarity, compatible genre, watched movie, restrictions]
+    G --> H[Apply the group limits to the score]
+    H --> I{Is the rating below the minimum, within the tolerance?}
+    I -- Yes --> J[Mark as alternative]
+    I -- No --> K[Mark as main]
 
-    F --> H[Apply business rules]
-    H --> H1[Weights, tolerances, exclusions, bonuses, penalties]
+    J --> L[Rank: main first, then score, rating and id]
+    K --> L
+    L --> M{Are there eligible movies?}
 
-    G1 --> I[Merge inference results]
-    H1 --> I
-
-    I --> J{Does the movie violate a mandatory criterion?}
-    J -- Yes --> K[Exclude movie and store justification]
-    J -- No --> L[Calculate recommendation score]
-
-    L --> M[Calculate confidence]
-    M --> N[Rank candidates]
-    N --> O{Are there eligible candidates?}
-
-    O -- No --> P[Show reasons for no recommendation]
-    O -- Yes --> Q[Select Top N]
-    Q --> R[Generate explanation]
-    R --> S[Present recommendations]
-    P --> T([End])
-    S --> T
+    M -- No --> N[Return an empty list]
+    M -- Yes --> O[Return the page with reasons and score breakdown]
+    N --> P[Frontend shows each engine's answer]
+    O --> P
+    P --> Q([End])
 ```
 
 ## Example rules extracted
