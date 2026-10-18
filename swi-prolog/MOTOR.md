@@ -136,14 +136,13 @@ whynot(pace(tt0372784, slow)).
 As consultas de filmes acima funcionam nos dois motores. A segunda versão suporta também condições `nao` nas regras e preserva as justificações.
 A negação verifica ausência no momento de execução; ligar primeiro as variáveis com condições positivas. Recarregar os factos antes de recalcular após alterações nos dados; o motor não retira automaticamente conclusões anteriores.
 
-### Perguntar «porquê?» durante o diálogo
+### Escolher a experiência e perguntar «porquê?» durante o diálogo
 
-O comando `porque.` é uma resposta a uma pergunta do motor durante
-`arranca_motor.`, não uma consulta autónoma no prompt `?-`. Mostra a regra
-em avaliação, as suas condições e as ações que poderá executar. Depois repete
-a pergunta, sem registar uma resposta nem concluir um facto.
+O diálogo de [rules_dialog.pl](rules_dialog.pl) começa por uma escolha entre
+sete experiências e coloca depois apenas as perguntas do ramo escolhido.
+Esta interação requer `sp_exp2.pl` e um utilizador atual existente na base.
 
-Na pasta `swi-prolog`, iniciar uma sessão nova com o segundo motor:
+Na pasta `swi-prolog`, iniciar uma sessão nova:
 
 ```bash
 swipl -q -s sp_exp2.pl
@@ -152,60 +151,113 @@ swipl -q -s sp_exp2.pl
 No prompt Prolog, carregar a base e selecionar a Ana:
 
 ```prolog
-carrega_bc.
-'filmes_bc.pl'.
+consult(filmes_bc).
+retractall(resposta_utilizador(_, _)).
 
 % A Ana já existe como user(ana) nos factos carregados do CSV.
-% Este predicado acrescenta um facto de entrada com numeração automática.
 regista_facto_utilizador(utilizador_atual(ana)).
 arranca_motor.
 ```
 
-`filmes_bc.pl` já carrega `rules_dialog.pl`. Não é necessário inserir regras
-com `assertz/1`. Além das mensagens de inferência, aparecerá:
+`filmes_bc.pl` já carrega `rules_dialog.pl`. Além das mensagens de inferência,
+aparecerá a pergunta inicial:
 
 ```text
-ana, apetece-te uma história que te emocione? (sim/nao/porque, terminar com .)
+ana, que experiência te apetece ter com o filme de hoje?
+Opções: [emocao,comedia,acao,misterio,terror,ficcao_cientifica,fantasia]. Escreve uma opção ou porque, terminando com ponto.
 ```
 
-Responder `porque.` mostra a regra `dialogo_1` e volta à mesma pergunta.
-Responder então `sim.` permite concluir `perfil_sessao(ana, emocional)`.
-Surge depois a pergunta sobre temas realistas; nessa pergunta, `porque.`
-explica a regra `dialogo_2`. Se responderes novamente `sim.`, o motor conclui
-`sugerir_genero(ana, 'Drama')` e pergunta se aceitas um final triste, pela
-regra `dialogo_3`. Um terceiro `sim.` permite concluir `sugerir_tom(ana, triste)`.
+Escrever uma das opções exatamente como apresentada, por exemplo `comedia.`.
+Nesta pergunta, `sim.` e `nao.` não são escolhas válidas. Uma opção inválida
+origina uma mensagem e a repetição da pergunta, sem guardar uma escolha.
 
-| Resposta | Efeito |
-| --- | --- |
-| `porque.` | Explica a regra atual e repete a pergunta. |
-| `sim.` | Guarda a resposta e acrescenta o facto perguntado à base. |
-| `nao.` | Guarda a resposta, sem acrescentar o facto; esta condição falha. |
+#### Usar `porque.` antes de responder
 
-Todas as respostas terminam com ponto. As respostas ficam guardadas por facto
-e utilizador em `resposta_utilizador/2`, evitando repetir perguntas nas passagens
-seguintes do motor. Uma resposta `nao.` não cria um facto de negação explícita.
+`porque.` é uma resposta durante a interação de `arranca_motor.`, não uma
+consulta autónoma no prompt `?-`. Funciona tanto na escolha inicial como nas
+perguntas de seguimento. Mostra a regra em avaliação, as condições, a informação
+necessária e as ações previstas se todas as condições forem satisfeitas.
+Depois repete a pergunta, sem registar uma escolha ou resposta afirmativa.
 
-Depois de terminar, consultar as respostas e as explicações das conclusões:
+Na pergunta inicial, `porque.` explica a regra `dialogo_experiencia`.
+Escolher `comedia.` regista `escolha(experiencia(ana), comedia)` na memória de
+trabalho e permite inferir `experiencia_sessao(ana, comedia)` e
+`sugerir_genero(ana, 'Comedy')`. Surge então:
+
+```text
+ana, preferes humor ligado a uma história romântica? (sim/nao/porque, terminar com .)
+```
+
+Aqui, `porque.` explica a regra `dialogo_comedia_2`. Responder `sim.` permite
+inferir também `sugerir_genero(ana, 'Romantic Comedy')`. Responder `nao.` mantém
+a sugestão de comédia, mas não acrescenta a de comédia romântica.
+
+| Resposta | Onde usar | Efeito |
+| --- | --- | --- |
+| `comedia.` ou outra opção apresentada | Escolha inicial | Guarda a escolha e seleciona o ramo. |
+| `porque.` | Qualquer pergunta | Explica a regra atual e repete a pergunta. |
+| `sim.` | Pergunta de seguimento | Guarda a resposta e acrescenta o facto perguntado. |
+| `nao.` | Pergunta de seguimento | Guarda a resposta sem acrescentar o facto; a condição falha. |
+
+Todas as entradas terminam com ponto. Os nomes das opções usam minúsculas,
+sem acentos; ficção científica escreve-se `ficcao_cientifica.`.
+
+#### Percursos disponíveis em `rules_dialog.pl`
+
+| Escolha | Sugestão inicial | Pergunta de seguimento e resultado de `sim.` |
+| --- | --- | --- |
+| `emocao.` | Seleciona o ramo emocional. | História que emocione → `perfil_sessao(U, emocional)`; temas realistas → `'Drama'`; aceitar final triste → `sugerir_tom(U, triste)`. |
+| `comedia.` | `'Comedy'` | Humor ligado a uma história romântica → `'Romantic Comedy'`. |
+| `acao.` | `'Action'` | Acompanhar uma aventura → `'Adventure'`. |
+| `misterio.` | `'Mystery'` | Suspense e tensão → `'Thriller'`. |
+| `terror.` | `'Horror'` | Elementos sobrenaturais → `preferencia_sessao(U, sobrenatural)`. |
+| `ficcao_cientifica.` | `'SciFi'` | Sociedades dominadas pela tecnologia → `'Cyberpunk'`. |
+| `fantasia.` | `'Fantasy'` | Missão ou jornada → `'Quest'`. |
+
+Os géneros da tabela são conclusões `sugerir_genero(U, Genero)`.
+No ramo emocional, cada pergunta depende da resposta afirmativa à anterior:
+`dialogo_1` infere o perfil emocional, `dialogo_2` sugere Drama e `dialogo_3`
+sugere o tom triste. Uma resposta negativa interrompe essa cadeia.
+Nos outros ramos, a escolha já permite sugerir o género inicial; a pergunta
+seguinte acrescenta uma sugestão ou preferência, se a resposta for afirmativa.
+
+#### Consultar a escolha, as respostas e as explicações
+
+Depois de concluir o exemplo de comédia:
 
 ```prolog
-resposta_utilizador(procura_historia_emocional(ana), Resposta).
+% Escolha fornecida e experiência inferida.
+facto(_, escolha(experiencia(ana), Experiencia)).
+facto(_, experiencia_sessao(ana, Experiencia)).
 
-% Se respondeste sim às três perguntas:
-facto(N, sugerir_tom(ana, triste)), como(N).
+% Resposta à pergunta de seguimento.
+resposta_utilizador(prefere_romance_com_humor(ana), Resposta).
 
-% Se a sugestão de Drama não foi concluída:
-whynot(sugerir_genero(ana, 'Drama')).
+% Se respondeste sim, explicar a sugestão adicional.
+facto(N, sugerir_genero(ana, 'Romantic Comedy')), como(N).
+
+% Se respondeste nao, investigar a ausência dessa sugestão.
+whynot(sugerir_genero(ana, 'Romantic Comedy')).
+
+% Repetir a inferência não volta a colocar as perguntas respondidas.
+arranca_motor.
 ```
 
-`porque.` explica apenas a regra em avaliação; `como/1` percorre a cadeia das
-conclusões já obtidas. `whynot/1` investiga uma conclusão ausente sem fazer
-novas perguntas. Estas regras de diálogo produzem sugestões de género e tom;
-não alteram, por si só, a pontuação de `user_recommendation/4`.
+A escolha inicial fica em `facto/2`, como `escolha(experiencia(U), Valor)`.
+As respostas de seguimento ficam em `resposta_utilizador/2`, por facto e
+utilizador; as afirmativas também acrescentam o facto à memória de trabalho.
+Uma resposta `nao.` não cria um facto de negação explícita. Estes dados ficam
+em memória e não são guardados automaticamente no CSV.
+
+`porque.` explica a regra em avaliação; `como/1` percorre as justificações das
+conclusões já obtidas. `whynot/1` investiga uma conclusão ausente sem fazer novas
+perguntas. As sugestões de género, tom e preferências de sessão ainda não
+alteram a pontuação de `user_recommendation/4`.
 
 #### Repetir o diálogo ou mudar de utilizador
 
-Para começar de novo, repor os factos dos CSV e limpar as respostas. Depois
-selecionar um utilizador existente, por exemplo a Inês:
+Para escolher outra experiência ou começar com outro utilizador, repor os
+factos dos CSV e limpar as respostas. Por exemplo, selecionar a Inês:
 
 ```prolog
 carrega_factos_filmes.
@@ -214,31 +266,58 @@ regista_facto_utilizador(utilizador_atual(ines)).
 arranca_motor.
 ```
 
-Esta reposição remove os factos de entrada adicionados na sessão e as conclusões
-anteriores, incluindo a seleção da Ana. Limpar apenas as respostas não basta:
-os factos afirmativos e as conclusões continuariam na base. Para repetir com a
-Ana, usar `ana` em vez de `ines`.
+A reposição remove a escolha anterior, a seleção da Ana, os factos acrescentados
+pela interação e as conclusões inferidas. Limpar apenas `resposta_utilizador/2`
+não basta: a escolha e os factos afirmativos continuariam na base. Para repetir
+com a Ana, usar `ana` em vez de `ines`.
 
-#### Definir perguntas e textos
+#### Definir escolhas, perguntas e textos
 
-Em `rules_dialog.pl`, `perguntavel/1` identifica os factos que podem ser
-perguntados e `texto_pergunta/2` fornece o texto apresentado:
+`opcoes_pergunta/2` define os valores aceites na escolha inicial e
+`texto_pergunta/2` fornece o texto apresentado:
 
 ```prolog
-perguntavel(procura_historia_emocional(_)).
+opcoes_pergunta(experiencia(_),
+    [emocao, comedia, acao, misterio, terror, ficcao_cientifica, fantasia]).
 
-texto_pergunta(procura_historia_emocional(U), Texto) :-
+texto_pergunta(experiencia(U), Texto) :-
     format(atom(Texto),
-           '~w, apetece-te uma história que te emocione?', [U]).
+           '~w, que experiência te apetece ter com o filme de hoje?', [U]).
 ```
 
-O motor só pergunta por uma condição completamente instanciada, cujo facto
-ainda não existe e cuja resposta não está guardada. Na regra `dialogo_1`,
-`user(U)` e `utilizador_atual(U)` precedem a pergunta para identificar a pessoa
-da sessão. Nas regras seguintes, `perfil_sessao(U, emocional)` e
-`sugerir_genero(U, 'Drama')` preenchem `U`. Sem um facto `utilizador_atual(U)`,
-o diálogo não começa. Quando não houver texto correspondente em
-`texto_pergunta/2`, o motor usa a pergunta genérica `É verdade ...?`.
+A condição `escolha(experiencia(U), Experiencia)` é interpretada pelo motor.
+A chave `experiencia(U)` deve estar completamente instanciada; o valor
+`Experiencia` é preenchido com a opção selecionada. Na regra inicial, `user(U)`
+e `utilizador_atual(U)` identificam primeiro a pessoa. Sem utilizador atual,
+o diálogo não começa.
+
+Para perguntas de seguimento, `perguntavel/1` declara a informação que pode ser
+pedida e `texto_pergunta/2` define a frase:
+
+```prolog
+perguntavel(prefere_romance_com_humor(_)).
+
+texto_pergunta(prefere_romance_com_humor(U), Texto) :-
+    format(atom(Texto),
+           '~w, preferes humor ligado a uma história romântica?', [U]).
+```
+
+O motor só faz estas perguntas quando a condição está completamente instanciada,
+o facto ainda não existe e não há uma resposta guardada. As condições de
+experiência e os factos inferidos anteriores controlam quais as perguntas
+alcançadas. Sem texto específico, o motor usa uma pergunta genérica.
+
+#### Validar o diálogo
+
+Na pasta `swi-prolog`, executar:
+
+```bash
+swipl -q -s tests_dialog.pl -g run_tests -t halt
+```
+
+Os testes cobrem os sete ramos, as respostas negativas, opções inválidas,
+`porque.` na escolha inicial e numa pergunta de seguimento, a proveniência da
+conclusão emocional e a ausência de novas perguntas ao repetir a inferência.
 
 ## Formato do CSV de utilizadores
 

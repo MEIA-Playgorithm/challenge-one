@@ -12,6 +12,7 @@
 :-dynamic justifica/3.
 :- dynamic perguntavel/1, resposta_utilizador/2.
 :- multifile perguntavel/1.
+:- multifile opcoes_pergunta/2.
 :- dynamic(regra/1).
 
 
@@ -42,6 +43,16 @@ verifica_condicoes([X e Y], Evidence, Contexto) :-
 verifica_condicoes([X], Evidence, Contexto) :-
     verifica_condicao(X, Evidence, Contexto).
 
+% A chave está instanciada; o valor é preenchido pela escolha do utilizador.
+verifica_condicao(escolha(Chave, Valor), [N], Contexto) :-
+    !,
+    ground(Chave),
+    ( facto(N, escolha(Chave, Guardado)) -> Valor = Guardado
+    ; opcoes_pergunta(Chave, Opcoes),
+      le_escolha(Chave, Opcoes, Contexto, Selecionado),
+      regista_facto_utilizador(escolha(Chave, Selecionado)),
+      facto(N, escolha(Chave, Selecionado)),
+      Valor = Selecionado ).
 verifica_condicao(X, Evidence, Contexto) :-
     ( ground(X), condicao_perguntavel(X) ->
         ( facto(N, X) -> Evidence = [N]
@@ -52,7 +63,7 @@ verifica_condicao(X, Evidence, Contexto) :-
 condicao_perguntavel(X) :-
     callable(X),
     functor(X, Nome, Aridade),
-    \+ memberchk(Nome/Aridade, [(nao)/1, avalia/1, teste/1, recolhe/3]),
+    \+ memberchk(Nome/Aridade, [(nao)/1, avalia/1, teste/1, recolhe/3, escolha/2]),
     once(perguntavel(X)).
 
 pergunta_facto(Facto, Contexto) :-
@@ -60,6 +71,21 @@ pergunta_facto(Facto, Contexto) :-
     ; le_resposta(Facto, Contexto, Resposta),
       assertz(resposta_utilizador(Facto, Resposta)),
       ( Resposta == sim -> regista_facto_utilizador(Facto) ; fail ) ).
+
+le_escolha(Chave, Opcoes, Contexto, Resposta) :-
+    ( current_predicate(texto_pergunta/2), texto_pergunta(Chave, Texto)
+    -> format('~a~n', [Texto])
+    ; format('Escolhe uma opção para ~q.~n', [Chave]) ),
+    format('Opções: ~w. Escreve uma opção ou porque, terminando com ponto.~n', [Opcoes]),
+    read(Entrada),
+    ( Entrada == porque ->
+        porque(escolha(Chave, _), Contexto),
+        le_escolha(Chave, Opcoes, Contexto, Resposta)
+    ; Entrada == end_of_file ->
+        throw(error(unexpected_end_of_file, le_escolha/4))
+    ; ground(Entrada), memberchk(Entrada, Opcoes) -> Resposta = Entrada
+    ; writeln('Opção inválida. Escolhe uma das opções apresentadas.'),
+      le_escolha(Chave, Opcoes, Contexto, Resposta) ).
 
 le_resposta(Facto, Contexto, Resposta) :-
     ( current_predicate(texto_pergunta/2), texto_pergunta(Facto, Texto) ->
