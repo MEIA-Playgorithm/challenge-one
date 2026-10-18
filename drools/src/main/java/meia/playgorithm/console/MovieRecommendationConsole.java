@@ -1,4 +1,12 @@
-package meia.playgorithm;
+package meia.playgorithm.console;
+
+import meia.playgorithm.catalog.MovieCatalog;
+import meia.playgorithm.engine.DroolsRecommendationService;
+import meia.playgorithm.model.Movie;
+import meia.playgorithm.model.Recommendation;
+import meia.playgorithm.model.RecommendationResult;
+import meia.playgorithm.model.TraceEvent;
+import meia.playgorithm.model.UserPreferences;
 
 import java.util.List;
 import java.util.Scanner;
@@ -14,7 +22,7 @@ public class MovieRecommendationConsole {
         System.out.println();
 
         UserPreferences preferences = readPreferences(scanner);
-        List<Movie> movies = SampleMovieCatalog.movies();
+        List<Movie> movies = MovieCatalog.movies();
         RecommendationResult result = new DroolsRecommendationService()
             .evaluate(preferences, movies);
 

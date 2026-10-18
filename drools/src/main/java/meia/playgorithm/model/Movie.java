@@ -1,4 +1,4 @@
-package meia.playgorithm;
+package meia.playgorithm.model;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;

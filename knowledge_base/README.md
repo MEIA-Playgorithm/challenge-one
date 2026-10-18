@@ -17,9 +17,26 @@ em texto (listas separadas por `|`). O serviço não valida o conteúdo: quem o 
 são os motores, ao recarregar (`POST /api/reload/users` devolve 422 se o CSV for inválido).
 Depois de gravar, é preciso pedir esse reload a cada motor; o front fá-lo.
 
-Executar: `docker compose up --build` (porta 8090), ou localmente
-`DATA_DIR=knowledge_base PORT=8090 python knowledge_base/server.py`.
-Só usa a biblioteca standard do Python.
+Organização (FastAPI; Swagger em `/docs`, esquema em `/openapi.json`):
+
+```
+server.py                              arranque: app, CORS, erros e controllers
+app/config.py                          DATA_DIR e PORT
+app/dependencies.py                    uma instância de cada repositório
+app/core/errors.py                     ApiError e handlers (corpo {"error": ...})
+app/repositories/csv_repository.py     leitura de um CSV (base)
+app/repositories/movies_repository.py  só leitura
+app/repositories/users_repository.py   leitura e CRUD, escrita atómica
+app/controllers/files_controller.py    GET /users.csv, /movies.csv
+app/controllers/users_controller.py    CRUD de /users
+```
+
+Executar: `docker compose up --build` (porta 8090), ou localmente:
+
+```
+uv pip install -r knowledge_base/requirements.txt   # ou: pip install -r ...
+DATA_DIR=knowledge_base PORT=8090 python knowledge_base/server.py
+```
 
 Os motores recebem o URL em `MOVIES_CSV` e `USERS_CSV`, por exemplo
 `http://knowledge-base:8090/users.csv`. Aceitam também um caminho de ficheiro.

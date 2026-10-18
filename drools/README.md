@@ -80,10 +80,11 @@ From this folder:
 The root `docker-compose.yml` runs the Drools API with the rest of the stack
 (frontend, knowledge base, Prolog). Like Prolog, it reads `users.csv` and
 `movies.csv` from the knowledge base service (`USERS_CSV` and `MOVIES_CSV`, URLs
-or file paths) on every request. Without those variables it falls back to
-`knowledge_base/*.csv` relative to the working directory. `POST /api/reload`
-(and `/users`, `/movies`) exist for contract compatibility with Prolog and have
-nothing to reload.
+or file paths) at startup and on `POST /api/reload` (`/users`, `/movies`), like
+Prolog. A reload replies `{"status","reloaded","movies","users"}`; if a CSV is
+invalid it replies `422` and keeps the previous data. Without those variables it
+falls back to `knowledge_base/*.csv` relative to the working directory. Each
+request is logged to stderr (`docker compose logs drools`).
 
 From the repository root:
 
@@ -141,7 +142,7 @@ Prolog-compatible `GET /api/...` routes are the preferred integration surface.
 
 | Course topic / PDF | Implementation evidence |
 | --- | --- |
-| Expert-system architecture: knowledge base, working memory, inference engine, explanation module, and interface (`04-ArquitSP.pdf`) | `rules.drl` is the knowledge base; `MovieRecommendationUnit` exposes Drools working-memory data stores; `DroolsRecommendationService` runs the inference engine; `MovieRecommendationConsole` and `MovieRecommendationApi` are interfaces; `Recommendation`, `TraceEvent`, `how`, `why-not`, `trace`, and `facts` form the explanation module. |
+| Expert-system architecture: knowledge base, working memory, inference engine, explanation module, and interface (`04-ArquitSP.pdf`) | `rules.drl` is the knowledge base; `MovieRecommendationUnit` exposes Drools working-memory data stores; `DroolsRecommendationService` runs the inference engine; `MovieRecommendationConsole` and `ApiServer` are interfaces; `Recommendation`, `TraceEvent`, `how`, `why-not`, `trace`, and `facts` form the explanation module. |
 | Forward chaining / data-driven inference (`05-EstratRac.pdf`) | Drools fires rules from inserted facts: user preferences and movie facts are inserted into `MovieRecommendationUnit`, then `instance.fire()` derives exclusions, preference reasons, recommendations, and trace events. |
 | Conflict resolution and rule priority (`05-EstratRac.pdf`) | `rules.drl` uses `salience`: exclusion rules run first, preference rules run next, and the recommendation creation rule runs last. This keeps mandatory constraints ahead of scoring. |
 | Separation between knowledge and control (`01-IntrodSBC_and_SP.pdf`, `03-ReprCon.pdf`) | Recommendation knowledge is declarative in `rules.drl`; Java classes hold facts and execution plumbing. Domain knowledge is not hard-coded inside the console. |
@@ -156,14 +157,14 @@ Prolog-compatible `GET /api/...` routes are the preferred integration surface.
 
 ## Code map
 
-| File | Role |
+Java packages under `src/main/java/meia/playgorithm`:
+
+| Package / file | Role |
 | --- | --- |
-| `src/main/resources/meia/playgorithm/rules.drl` | Drools knowledge base: exclusions, scoring reasons, recommendation creation, and queries. |
-| `src/main/java/meia/playgorithm/MovieRecommendationUnit.java` | RuleUnit working memory: movies, preferences, recommendations, and trace events. |
-| `src/main/java/meia/playgorithm/DroolsRecommendationService.java` | Executes the Drools inference engine and returns inferred results. |
-| `src/main/java/meia/playgorithm/MovieRecommendationConsole.java` | Interactive interface for asking the knowledge base for recommendations and explanations. |
-| `src/main/java/meia/playgorithm/MovieRecommendationApi.java` | REST interface with recommendations, fact inspection, health check, OpenAPI, Swagger UI, and explanation routes. |
-| `src/main/java/meia/playgorithm/SampleMovieCatalog.java` | Loads the Prolog movie CSV into Drools movie facts. |
-| `src/main/java/meia/playgorithm/TraceEvent.java` | Observable explanation fact emitted by rules. |
-| `src/main/java/meia/playgorithm/Recommendation.java` | Final recommendation fact with score, status, reasons, unmet preferences, and score breakdown. |
-| `src/test/java/meia/playgorithm/MovieRecommendationTest.java` | Automated validation of exclusions, alternatives, scoring, compatibility, and trace events. |
+| `model/` | Facts and results: `Movie`, `UserPreferences`, `Recommendation` (score, status, reasons, unmet preferences, score breakdown), `RecommendationResult`, `TraceEvent` (observable explanation fact), `PreferenceReason`. |
+| `engine/` | `MovieRecommendationUnit` (RuleUnit working memory) and `DroolsRecommendationService` (runs the inference engine). The knowledge base is `src/main/resources/meia/playgorithm/engine/rules.drl`: exclusions, scoring reasons, recommendation creation, and queries. |
+| `catalog/` | `MovieCatalog` and `UserCatalog` hold the knowledge base CSVs in memory (`reload()` re-reads them); `CsvSource` reads a URL or a file. |
+| `api/` | REST interface: `ApiServer` starts the HTTP server and routes requests. `api/controller/` holds the controllers (`HealthController`, `MovieController`, `UserRecommendationController`, `ExplanationController`, `ReloadController`, `DocsController`, `DebugController` for the JSON `POST` aliases), `api/http/` the shared helpers `Http` and `ApiException`, and `api/view/` `JsonViews` (JSON representation of the model). |
+| `Application` | Entry point: starts the API; `Application console` starts the interactive console. |
+| `console/` | `MovieRecommendationConsole`: interactive interface for recommendations and explanations. |
+| `src/test/java/meia/playgorithm/engine/MovieRecommendationTest.java` | Automated validation of exclusions, alternatives, scoring, compatibility, and trace events. |

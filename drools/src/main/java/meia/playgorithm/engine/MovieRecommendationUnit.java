@@ -1,4 +1,9 @@
-package meia.playgorithm;
+package meia.playgorithm.engine;
+
+import meia.playgorithm.model.Movie;
+import meia.playgorithm.model.Recommendation;
+import meia.playgorithm.model.TraceEvent;
+import meia.playgorithm.model.UserPreferences;
 
 import org.drools.ruleunits.api.DataStore;
 import org.drools.ruleunits.api.DataSource;

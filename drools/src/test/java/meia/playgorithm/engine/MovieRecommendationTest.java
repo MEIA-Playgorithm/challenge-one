@@ -1,4 +1,11 @@
-package meia.playgorithm;
+package meia.playgorithm.engine;
+
+import meia.playgorithm.catalog.MovieCatalog;
+import meia.playgorithm.catalog.UserCatalog;
+import meia.playgorithm.model.Movie;
+import meia.playgorithm.model.Recommendation;
+import meia.playgorithm.model.TraceEvent;
+import meia.playgorithm.model.UserPreferences;
 
 import org.drools.ruleunits.api.RuleUnitInstance;
 import org.drools.ruleunits.api.RuleUnitProvider;
@@ -161,7 +168,7 @@ public class MovieRecommendationTest {
 
     @Test
     void shouldLoadTheSameMovieCatalogUsedByProlog() {
-        List<Movie> movies = SampleMovieCatalog.movies();
+        List<Movie> movies = MovieCatalog.movies();
 
         assertEquals(100, movies.size());
         Movie batman = movies.stream()
@@ -187,7 +194,7 @@ public class MovieRecommendationTest {
 
     @Test
     void shouldLoadUserProfilesUsedByThePrologApiContract() {
-        UserPreferences ana = SampleUserCatalog.find("ana").orElseThrow();
+        UserPreferences ana = UserCatalog.find("ana").orElseThrow();
 
         assertEquals(25, ana.getAge());
         assertTrue(ana.getWishlistMovieIds().contains("tt0372784"));

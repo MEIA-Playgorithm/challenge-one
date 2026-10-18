@@ -1,8 +1,10 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import type { User } from "../types/User";
+import type { Movie } from "../types/Movie";
 import { config, type EngineId } from "../lib/config";
 import * as usersApi from "../api/users";
+import { getMovies } from "../api/movies";
 import { reloadUsers } from "../api/recommendations";
 
 // Estado do último reload de um motor. `version` muda a cada reload concluído.
@@ -14,6 +16,8 @@ type AppContextType = {
     setEngines: (engines: EngineId[]) => void;
     engineStatus: Record<EngineId, EngineStatus>;
     users: User[];
+    movies: Movie[];
+    movieById: Map<string, Movie>;
     currentUser: User;
     setCurrentUser: (user: User) => void;
     createUser: (user: User) => Promise<string | null>;
@@ -30,6 +34,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         () => Object.fromEntries(engineIds.map((id) => [id, { reloading: false, error: null, version: 0 }])) as Record<EngineId, EngineStatus>
     );
     const [users, setUsers] = useState<User[]>([]);
+    const [movies, setMovies] = useState<Movie[]>([]);
     const [currentUserId, setCurrentUserId] = useState<string | undefined>();
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
@@ -58,7 +63,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
 
     useEffect(() => {
-        refresh()
+        Promise.all([refresh(), getMovies().then(setMovies)])
             .catch((err: Error) => setLoadError(err.message))
             .finally(() => setLoading(false));
     }, []);
@@ -119,6 +124,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 setEngines,
                 engineStatus,
                 users,
+                movies,
+                movieById: new Map(movies.map((movie) => [movie.id, movie])),
                 currentUser,
                 setCurrentUser: (user) => setCurrentUserId(user.user_id),
                 createUser,

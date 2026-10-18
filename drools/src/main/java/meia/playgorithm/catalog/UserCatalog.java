@@ -1,4 +1,6 @@
-package meia.playgorithm;
+package meia.playgorithm.catalog;
+
+import meia.playgorithm.model.UserPreferences;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -8,14 +10,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public final class SampleUserCatalog {
+public final class UserCatalog {
 
     private static final List<Path> CSV_CANDIDATES = List.of(
         Path.of("../knowledge_base/users.csv"),
         Path.of("knowledge_base/users.csv")
     );
 
-    private SampleUserCatalog() {
+    private UserCatalog() {
     }
 
     public static Optional<UserPreferences> find(String userId) {
@@ -25,34 +27,54 @@ public final class SampleUserCatalog {
     }
 
     public static List<UserPreferences> users() {
-        return usersFromCsv(findCatalogSource());
+        return usersFromLines(currentLines());
     }
 
-    private static String findCatalogSource() {
-        return CsvSource.find("USERS_CSV", CSV_CANDIDATES);
+    // Linhas do CSV em memória: lidas no arranque e em reload(); cada pedido constrói
+    // objetos novos a partir delas, porque as regras alteram os filmes.
+    private static List<String> csvLines;
+
+    /** Relê o CSV; se for inválido lança IllegalStateException e mantém as linhas anteriores. */
+    public static synchronized void reload() {
+        List<String> loaded = readLines();
+        usersFromLines(loaded);
+        csvLines = loaded;
     }
 
-    private static List<UserPreferences> usersFromCsv(String source) {
-        try {
-            List<String> lines = CsvSource.readLines(source);
-            if (lines.size() < 2) {
-                return List.of();
-            }
-
-            List<String> headers = parseCsvLine(lines.get(0));
-            Map<String, Integer> indexes = indexes(headers);
-            List<UserPreferences> users = new ArrayList<>();
-
-            for (int i = 1; i < lines.size(); i++) {
-                if (!lines.get(i).isBlank()) {
-                    users.add(userFromRow(parseCsvLine(lines.get(i)), indexes));
-                }
-            }
-
-            return users;
-        } catch (IOException exception) {
-            throw new IllegalStateException("Could not load user catalog from " + source, exception);
+    private static synchronized List<String> currentLines() {
+        if (csvLines == null) {
+            reload();
         }
+        return csvLines;
+    }
+
+    private static List<String> readLines() {
+        try {
+            return CsvSource.readLines(CsvSource.find("USERS_CSV", CSV_CANDIDATES));
+        } catch (IOException exception) {
+            throw new IllegalStateException("Could not read users CSV: " + exception.getMessage(), exception);
+        }
+    }
+
+    private static List<UserPreferences> usersFromLines(List<String> lines) {
+        if (lines.size() < 2) {
+            return List.of();
+        }
+
+        List<String> headers = parseCsvLine(lines.get(0));
+        Map<String, Integer> indexes = indexes(headers);
+        if (!indexes.containsKey("user_id")) {
+            throw new IllegalStateException("Invalid users CSV: missing column user_id");
+        }
+        List<UserPreferences> users = new ArrayList<>();
+
+        for (int i = 1; i < lines.size(); i++) {
+            if (!lines.get(i).isBlank()) {
+                users.add(userFromRow(parseCsvLine(lines.get(i)), indexes));
+            }
+        }
+
+        return users;
     }
 
     private static UserPreferences userFromRow(List<String> row, Map<String, Integer> indexes) {

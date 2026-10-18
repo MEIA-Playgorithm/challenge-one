@@ -3,7 +3,6 @@ import { Autocomplete, Divider, Stack, TextField } from "@mui/material";
 import { useApp } from "../context/AppContext";
 import { useSave } from "../hooks/useSave";
 import type { User } from "../types/User";
-import { MOVIES, MOVIES_BY_ID } from "../mocks/movies";
 import { withValues } from "../lib/utils";
 import PreferenceSection from "./PreferenceSection";
 import WatchedMovieRow from "./WatchedMovieRow";
@@ -11,15 +10,7 @@ import SaveBar from "./SaveBar";
 
 type MovieFields = Pick<User, "watched" | "wishlist">;
 
-const MOVIE_IDS = MOVIES.map((movie) => movie.id);
-
 const fromUser = ({ watched, wishlist }: User): MovieFields => ({ watched, wishlist });
-
-const movieLabel = (id: string) => {
-    const movie = MOVIES_BY_ID.get(id);
-    if (!movie) return id;
-    return movie.year === null ? movie.title : `${movie.title} (${movie.year})`;
-};
 
 type Props = {
     autosave: boolean;
@@ -27,7 +18,13 @@ type Props = {
 };
 
 const Movies = ({ autosave, onAutosaveChange }: Props) => {
-    const { currentUser, updateUser } = useApp();
+    const { currentUser, updateUser, movies, movieById } = useApp();
+    const movieIds = movies.map((movie) => movie.id);
+    const movieLabel = (id: string) => {
+        const movie = movieById.get(id);
+        if (!movie) return id;
+        return movie.year === null ? movie.title : `${movie.title} (${movie.year})`;
+    };
     const [form, setForm] = useState<MovieFields>(() => fromUser(currentUser));
 
     const patch = (changes: Partial<MovieFields>) => setForm((current) => ({ ...current, ...changes }));
@@ -58,7 +55,7 @@ const Movies = ({ autosave, onAutosaveChange }: Props) => {
                     <Autocomplete
                         size="small"
                         blurOnSelect
-                        options={MOVIE_IDS.filter((id) => !watchedIds.has(id))}
+                        options={movieIds.filter((id) => !watchedIds.has(id))}
                         value={null}
                         onChange={(_, id) => {
                             if (id) patch({ watched: [...form.watched, { movie_id: id, rating: 0 }] });
@@ -87,7 +84,7 @@ const Movies = ({ autosave, onAutosaveChange }: Props) => {
                         multiple
                         size="small"
                         filterSelectedOptions
-                        options={withValues(MOVIE_IDS, form.wishlist)}
+                        options={withValues(movieIds, form.wishlist)}
                         value={form.wishlist}
                         onChange={(_, value) => patch({ wishlist: value })}
                         getOptionLabel={movieLabel}

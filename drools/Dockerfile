@@ -20,4 +20,4 @@ EXPOSE 8080
 
 USER app
 
-CMD ["java", "-cp", "target/classes:target/dependency/*", "meia.playgorithm.MovieRecommendationApi"]
+CMD ["java", "-cp", "target/classes:target/dependency/*", "meia.playgorithm.Application"]

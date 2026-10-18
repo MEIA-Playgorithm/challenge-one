@@ -1,4 +1,4 @@
-package meia.playgorithm;
+package meia.playgorithm.catalog;
 
 import java.io.IOException;
 import java.net.URI;

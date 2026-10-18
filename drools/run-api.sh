@@ -22,4 +22,4 @@ for jar in $(find "$M2_REPO" -name '*.jar'); do
   CP="$CP:$jar"
 done
 
-java -cp "$CP" meia.playgorithm.MovieRecommendationApi
+java -cp "$CP" meia.playgorithm.Application

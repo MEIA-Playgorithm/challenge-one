@@ -1,4 +1,6 @@
-package meia.playgorithm;
+package meia.playgorithm.catalog;
+
+import meia.playgorithm.model.Movie;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -10,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public final class SampleMovieCatalog {
+public final class MovieCatalog {
 
     private static final List<Path> CSV_CANDIDATES = List.of(
         Path.of("../knowledge_base/movies.csv"),
@@ -32,42 +34,62 @@ public final class SampleMovieCatalog {
         "Suspense Mystery", "Swashbuckler", "Sword Sandal", "True Crime", "Wuxia"
     );
 
-    private SampleMovieCatalog() {
+    private MovieCatalog() {
     }
 
     public static List<Movie> movies() {
-        return moviesFromCsv(findCatalogSource());
+        return moviesFromLines(currentLines());
     }
 
     public static int count() {
         return movies().size();
     }
 
-    private static String findCatalogSource() {
-        return CsvSource.find("MOVIES_CSV", CSV_CANDIDATES);
+    // Linhas do CSV em memória: lidas no arranque e em reload(); cada pedido constrói
+    // objetos novos a partir delas, porque as regras alteram os filmes.
+    private static List<String> csvLines;
+
+    /** Relê o CSV; se for inválido lança IllegalStateException e mantém as linhas anteriores. */
+    public static synchronized void reload() {
+        List<String> loaded = readLines();
+        moviesFromLines(loaded);
+        csvLines = loaded;
     }
 
-    private static List<Movie> moviesFromCsv(String source) {
-        try {
-            List<String> lines = CsvSource.readLines(source);
-            if (lines.size() < 2) {
-                return List.of();
-            }
-
-            List<String> headers = parseCsvLine(lines.get(0));
-            Map<String, Integer> indexes = indexes(headers);
-            List<Movie> movies = new ArrayList<>();
-
-            for (int i = 1; i < lines.size(); i++) {
-                if (!lines.get(i).isBlank()) {
-                    movies.add(movieFromRow(parseCsvLine(lines.get(i)), indexes));
-                }
-            }
-
-            return movies;
-        } catch (IOException exception) {
-            throw new IllegalStateException("Could not load movie catalog from " + source, exception);
+    private static synchronized List<String> currentLines() {
+        if (csvLines == null) {
+            reload();
         }
+        return csvLines;
+    }
+
+    private static List<String> readLines() {
+        try {
+            return CsvSource.readLines(CsvSource.find("MOVIES_CSV", CSV_CANDIDATES));
+        } catch (IOException exception) {
+            throw new IllegalStateException("Could not read movies CSV: " + exception.getMessage(), exception);
+        }
+    }
+
+    private static List<Movie> moviesFromLines(List<String> lines) {
+        if (lines.size() < 2) {
+            return List.of();
+        }
+
+        List<String> headers = parseCsvLine(lines.get(0));
+        Map<String, Integer> indexes = indexes(headers);
+        if (!indexes.containsKey("id")) {
+            throw new IllegalStateException("Invalid movies CSV: missing column id");
+        }
+        List<Movie> movies = new ArrayList<>();
+
+        for (int i = 1; i < lines.size(); i++) {
+            if (!lines.get(i).isBlank()) {
+                movies.add(movieFromRow(parseCsvLine(lines.get(i)), indexes));
+            }
+        }
+
+        return movies;
     }
 
     private static Movie movieFromRow(List<String> row, Map<String, Integer> indexes) {

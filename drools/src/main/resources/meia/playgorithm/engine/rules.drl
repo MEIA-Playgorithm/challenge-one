@@ -1,6 +1,11 @@
-package meia.playgorithm;
+package meia.playgorithm.engine;
 
 unit MovieRecommendationUnit;
+
+import meia.playgorithm.model.Movie;
+import meia.playgorithm.model.Recommendation;
+import meia.playgorithm.model.TraceEvent;
+import meia.playgorithm.model.UserPreferences;
 
 rule "Exclude already watched movies"
 salience 100

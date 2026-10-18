@@ -1,7 +1,7 @@
 import { Box, IconButton, Rating, Stack, Typography } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import type { WatchedMovie, WatchedMovieRating } from "../types/User";
-import { MOVIES_BY_ID } from "../mocks/movies";
+import { useApp } from "../context/AppContext";
 import { formatLabel } from "../lib/utils";
 
 const RATING_LABELS = ["Watched, no opinion", "Didn't like at all", "Didn't like", "It was okay", "Liked", "Liked a lot"];
@@ -13,7 +13,8 @@ type Props = {
 };
 
 const WatchedMovieRow = ({ item, onRate, onRemove }: Props) => {
-    const movie = MOVIES_BY_ID.get(item.movie_id);
+    const { movieById } = useApp();
+    const movie = movieById.get(item.movie_id);
     const title = movie?.title ?? item.movie_id;
     const details = movie
         ? [

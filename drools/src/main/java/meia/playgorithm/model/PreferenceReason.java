@@ -1,4 +1,4 @@
-package meia.playgorithm;
+package meia.playgorithm.model;
 
 public record PreferenceReason(String type, String value, int weight) {
 
