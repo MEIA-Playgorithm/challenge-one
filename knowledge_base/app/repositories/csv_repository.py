@@ -24,10 +24,6 @@ class CsvRepository:
         except FileNotFoundError:
             raise ApiError(404, "Ficheiro não encontrado")
 
-    def all(self):
-        with self.lock:
-            return self._read()[1]
-
     def get(self, key):
         with self.lock:
             rows = self._read()[1]

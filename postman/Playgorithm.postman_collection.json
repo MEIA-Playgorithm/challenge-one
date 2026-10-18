@@ -233,6 +233,22 @@
       "name": "Knowledge base",
       "item": [
         {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{knowledgeBaseUrl}}/health",
+              "host": [
+                "{{knowledgeBaseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            }
+          }
+        },
+        {
           "name": "Users CSV",
           "request": {
             "method": "GET",
@@ -260,22 +276,6 @@
               ],
               "path": [
                 "movies.csv"
-              ]
-            }
-          }
-        },
-        {
-          "name": "List users",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{knowledgeBaseUrl}}/users",
-              "host": [
-                "{{knowledgeBaseUrl}}"
-              ],
-              "path": [
-                "users"
               ]
             }
           }

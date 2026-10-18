@@ -11,11 +11,6 @@ router = APIRouter(prefix="/users", tags=["users"])
 UserBody = dict[str, Any]
 
 
-@router.get("", summary="Lista os utilizadores")
-def list_users(users: Users):
-    return users.all()
-
-
 @router.post("", status_code=201, summary="Cria um utilizador (409 se o user_id já existe)")
 def create_user(user: UserBody, users: Users):
     return users.create(user)
