@@ -207,5 +207,6 @@ Mais perguntas possíveis em [MOTOR.md](MOTOR.md).
 | `rules_movies.pl` | Regras 1–33: classificam os filmes |
 | `rules_users.pl` | Regras 34–65: preferências, exclusões e limites dos utilizadores |
 | `user_constraints.pl` | Funções auxiliares das regras |
+| `rules_dialog.pl` | Perguntas ao utilizador durante o motor 2 («porquê?»); ver [MOTOR.md](MOTOR.md) |
 | `sp_exp1.pl`, `sp_exp2.pl` | Os dois motores de inferência |
 | `rules_user.pl` | Só por compatibilidade; carrega `rules_users.pl` |
