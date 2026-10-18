@@ -1,76 +1,101 @@
-**A implementação está agora bastante mais alinhada com a entrevista.** As duas lacunas anteriores — distinguir filmes vistos de apreciados e permitir rever filmes — estão resolvidas. Ainda faltam algumas funcionalidades e há decisões de pontuação que precisam de validação pelo perito.
+# Implementation vs the expert interview
 
-**O que está correto atualmente**
+**The implementation is now much closer to the interview.** The two earlier gaps, telling watched movies from
+liked movies and allowing rewatches, are solved. Some features are still missing, and some scoring decisions
+need the expert's validation.
 
-| Elemento | Avaliação |
+## What is correct today
+
+| Item | Assessment |
 | --- | --- |
-| Duração máxima, intervalo de anos e idioma obrigatório | Implementados como requisitos que não podem ser compensados por pontuação. |
-| Rejeição de géneros, realizadores e atores | Implementada, com prioridade sobre as preferências positivas. |
-| Público da sessão | Considera a idade do espectador mais novo, quando definida. |
-| Classificação mínima e tolerância | Distingue opções principais de alternativas e desativa a tolerância quando o mínimo é obrigatório. |
-| Histórico com avaliação pessoal | `watched=filme=nota` distingue filmes vistos de filmes apreciados. |
-| Nota 0 | Representa ausência de avaliação; não é tratada como avaliação negativa. |
-| Semelhança com filmes apreciados | A regra 41 utiliza avaliações pessoais 4–5, em vez de qualquer filme visto. |
-| Pedido para rever | `allow_rewatch=true` permite filmes vistos, sem ultrapassar outras restrições. |
-| Explicações | Apresenta motivos positivos, requisitos cumpridos, preferências não satisfeitas e composição da pontuação. |
-| Validação do histórico | Rejeita notas inválidas e filmes repetidos no histórico do mesmo utilizador. |
+| Maximum duration, year range and required language | Implemented as requirements that a score cannot compensate for. |
+| Rejection of genres, directors and actors | Implemented, with priority over the positive preferences. |
+| Session audience | Uses the age of the youngest viewer, when it is set. |
+| Minimum rating and tolerance | Tells main options from alternatives, and turns the tolerance off when the minimum is mandatory. |
+| History with a personal rating | `watched=movie=rating` tells watched movies from liked movies. |
+| Rating 0 | Means no rating; it is not treated as a negative rating. |
+| Similarity to liked movies | Rule 41 uses personal ratings of 4–5, not any watched movie. |
+| Rewatch request | `allow_rewatch=true` allows watched movies, without overriding the other restrictions. |
+| Explanations | Shows positive reasons, satisfied requirements, unmet preferences and the score breakdown. |
+| History validation | Rejects invalid ratings and repeated movies in the same user's history. |
 
-O formato escolhido para o histórico é adequado.
+The chosen format for the history is appropriate.
 
-**O que ainda falta incluir**
+## What is still missing
 
-Legenda: as linhas com fundo amarelo e a indicação **Dados em falta** dependem de informação que ainda não existe no catálogo.
+Key: the rows with a yellow background and the mark **Missing data** depend on information that the catalogue
+does not have yet.
 
 <table>
-  <thead><tr><th>Elemento da entrevista</th><th>O que falta</th></tr></thead>
+  <thead><tr><th>Interview item</th><th>What is missing</th></tr></thead>
   <tbody>
-    <tr style="background-color: #fff3cd; color: #332701;"><td><strong>Conteúdo e linguagem imprópria</strong> — perguntas 8, 14 e 15<br><strong>Dados em falta</strong></td><td>Descritores fiáveis por filme e limites de conteúdo para a sessão. Idioma e classificação etária não descrevem integralmente o conteúdo.</td></tr>
-    <tr style="background-color: #fff3cd; color: #332701;"><td><strong>Plataformas acessíveis</strong> — perguntas 6 e 13<br><strong>Dados em falta</strong></td><td>Disponibilidade por plataforma, região e data, e plataformas disponíveis ao utilizador.</td></tr>
-    <tr style="background-color: #fff3cd; color: #332701;"><td><strong>Sagas apreciadas</strong> — pergunta 21<br><strong>Dados em falta</strong></td><td>Identificação das sagas e relação entre os títulos, além da preferência do utilizador.</td></tr>
-    <tr><td><strong>Avaliações de pessoas com gostos semelhantes</strong> — pergunta 21</td><td>Comparar avaliações pessoais entre utilizadores e definir quando existe semelhança suficiente. O novo histórico já fornece parte dos dados necessários.</td></tr>
-    <tr><td><strong>Classificação contextualizada por género</strong> — perguntas 4, 9 e 21</td><td>A nota IMDb continua a ser utilizada de forma absoluta, sem contextualização pelo género.</td></tr>
-    <tr><td><strong>Desempate por semelhança</strong> — pergunta 24</td><td>A ordenação usa pontuação, nota IMDb e ID; ainda não usa o grau de semelhança com filmes apreciados como desempate.</td></tr>
+    <tr style="background-color: #fff3cd; color: #332701;"><td><strong>Content and inappropriate language</strong> — questions 8, 14 and 15<br><strong>Missing data</strong></td><td>Reliable descriptors for each movie and content limits for the session. Language and age rating do not fully describe the content.</td></tr>
+    <tr style="background-color: #fff3cd; color: #332701;"><td><strong>Accessible platforms</strong> — questions 6 and 13<br><strong>Missing data</strong></td><td>Availability by platform, region and date, and the platforms available to the user.</td></tr>
+    <tr style="background-color: #fff3cd; color: #332701;"><td><strong>Sagas the user likes</strong> — question 21<br><strong>Missing data</strong></td><td>Identification of the sagas and the relation between titles, besides the user's preference.</td></tr>
+    <tr><td><strong>Ratings from people with similar tastes</strong> — question 21</td><td>Compare personal ratings between users and define when the similarity is enough. The new history already provides part of the data needed.</td></tr>
+    <tr><td><strong>Rating in the context of the genre</strong> — questions 4, 9 and 21</td><td>The IMDb rating is still used in absolute terms, with no context from the genre.</td></tr>
+    <tr><td><strong>Tie-break by similarity</strong> — question 24</td><td>The ordering uses score, IMDb rating and id; it does not yet use the degree of similarity to liked movies as a tie-breaker.</td></tr>
   </tbody>
 </table>
 
-Estas funcionalidades não são todas restrições de exclusão. Plataformas, sagas e opiniões de utilizadores semelhantes podem funcionar como fatores de valorização, conforme o pedido.
+These features are not all exclusion restrictions. Platforms, sagas and opinions from similar users can work
+as boosting factors, depending on the request.
 
-**O que deveria ser alterado ou validado**
+## What should be changed or validated
 
-1. **Aproveitar melhor as avaliações pessoais.**  
-   Atualmente, notas **4 e 5 têm o mesmo efeito**, e notas **0, 1, 2 e 3 não contribuem para a semelhança**. Isto é uma primeira implementação coerente, mas perde informação.
+1. **Make better use of the personal ratings.**
+   Today, ratings **4 and 5 have the same effect**, and ratings **0, 1, 2 and 3 add nothing to the
+   similarity**. This is a coherent first implementation, but it loses information.
 
-   Poderia haver uma contribuição gradual conforme a avaliação e a semelhança. Notas negativas poderiam reduzir a pontuação de sugestões semelhantes, mas isso seria uma extensão a validar — **não uma exclusão automática exigida pela entrevista**.
+   The contribution could grow gradually with the rating and the similarity. Negative ratings could lower the
+   score of similar suggestions, but that would be an extension to validate, **not an automatic exclusion
+   that the interview requires**.
 
-2. **Rever o peso da semelhança.**  
-   A contribuição é apenas de **1 ponto no máximo**, dentro do grupo secundário limitado a 9. Quando esse grupo já atingiu 9 pontos, a semelhança deixa de alterar a pontuação, embora apareça nos motivos. Convém mostrar esse efeito nas explicações ou dar à semelhança uma contribuição própria.
+2. **Review the weight of the similarity.**
+   Its contribution is at most **1 point**, inside the secondary group capped at 9. Once that group has
+   reached 9 points, the similarity no longer changes the score, although it still appears in the reasons.
+   Either show this effect in the explanations or give the similarity a contribution of its own.
 
-3. **Validar pesos e limiares com o perito.**  
-   Os valores `40/30/10/10/9`, a avaliação pessoal mínima de 4 e a similaridade mínima de 7 são decisões da implementação. A entrevista fundamenta a importância dos critérios, mas **não fornece estes números**.
+3. **Validate the weights and thresholds with the expert.**
+   The values `40/30/10/10/9`, the minimum personal rating of 4 and the minimum similarity of 7 are
+   decisions of the implementation. The interview supports the importance of the criteria, but **does not
+   give these numbers**.
 
-   A hierarquia género → classificação → realizador/atores também não fica garantida de forma absoluta por uma soma ponderada. É preciso confirmar se o perito pretende pesos relativos ou uma ordem estrita.
+   The hierarchy genre → rating → director/actors is also not guaranteed absolutely by a weighted sum. We
+   need to confirm whether the expert wants relative weights or a strict order.
 
-4. **Clarificar o significado de rejeitar um idioma.**  
-   A regra 36 exclui um filme que contenha qualquer idioma rejeitado, mesmo que tenha também um idioma aceite. Isto é adequado para “não quero ouvir esse idioma”, mas pode ser excessivo para “preciso de uma versão em português”. Para o segundo caso faltam dados sobre áudio e legendas.
+4. **Clarify what rejecting a language means.**
+   Rule 36 excludes a movie that has any rejected language, even if it also has an accepted one. That fits
+   "I do not want to hear this language", but it may be too much for "I need a Portuguese version". For the
+   second case we lack data about audio and subtitles.
 
-5. **Distinguir incumprimento de informação desconhecida.**  
-   Um filme que excede a duração máxima e outro cuja duração está ausente podem receber o mesmo motivo de exclusão. A explicação deveria distinguir:
-   - requisito efetivamente violado;
-   - requisito que não foi possível verificar.
+5. **Tell a failed requirement from unknown information.**
+   A movie that exceeds the maximum duration and a movie with no duration may get the same exclusion reason.
+   The explanation should tell apart:
+   - a requirement that was actually violated;
+   - a requirement that could not be checked.
 
-6. **Tratar alternativas dentro da mesma preferência.**  
-   Se o utilizador aceitar ritmo `slow|medium`, um filme lento não deveria necessariamente apresentar `medium` como uma preferência por cumprir. Deve definir-se se cada lista significa “qualquer um destes valores” ou vários gostos independentes.
+6. **Handle alternatives inside the same preference.**
+   If the user accepts the pace `slow|medium`, a slow movie should not necessarily show `medium` as an unmet
+   preference. We must define whether each list means "any of these values" or several independent tastes.
 
-7. **Separar perfil permanente de pedido da sessão.**  
-   O sistema já representa limites da sessão, mas guarda-os na mesma linha do perfil. Uma evolução útil seria separar gostos duradouros de condições como “hoje tenho 100 minutos” ou “hoje vou ver com crianças”. Isso também evita interpretar uma avaliação passada positiva como contradição com uma rejeição atual.
+7. **Separate the permanent profile from the session request.**
+   The system already represents session limits, but it stores them in the same row as the profile. A useful
+   next step is to separate lasting tastes from conditions such as "today I have 100 minutes" or "today I am
+   watching with children". This also avoids reading a past positive rating as a contradiction of a current
+   rejection.
 
-8. **Melhorar a validação de conflitos explícitos.**  
-   O carregador valida notas, duplicados e intervalos de anos, mas ainda não identifica sistematicamente condições como o mesmo ator simultaneamente preferido e rejeitado. Já uma nota 5 num filme de terror e a rejeição de terror para a sessão atual **não devem ser automaticamente consideradas um erro**.
+8. **Improve the validation of explicit conflicts.**
+   The loader validates ratings, duplicates and year ranges, but it does not yet systematically find
+   conditions such as the same actor being both preferred and rejected. A rating of 5 on a horror movie and
+   the rejection of horror for the current session **should not automatically be treated as an error**.
 
-**O que eliminaria ou manteria apenas como extensão**
+## What to remove, or keep only as an extension
 
-- **Não eliminaria nenhuma das novas restrições essenciais**, nem o histórico avaliado.
-- Consolidaria **`audience` e popularidade**, porque ambos dependem dos votos e podem valorizar duas vezes informação semelhante. `audience=mainstream/niche` também não representa o público da sessão.
-- Manteria **lista de desejos, argumentistas, países, ritmo, humor e complexidade** como extensões opcionais, sem as apresentar como regras confirmadas pelo perito.
-- Não usaria **violência inferida pelo género** como garantia de adequação do conteúdo.
-- Não transformaria **notas pessoais baixas** em rejeições obrigatórias de géneros, atores ou filmes semelhantes.
+- **Remove none of the new essential restrictions**, nor the rated history.
+- Consolidate **`audience` and popularity**, because both depend on the votes and may reward similar
+  information twice. `audience=mainstream/niche` also does not represent the session audience.
+- Keep **the wishlist, writers, countries, pace, humour and complexity** as optional extensions, without
+  presenting them as rules confirmed by the expert.
+- Do not use **violence inferred from the genre** as a guarantee that the content is suitable.
+- Do not turn **low personal ratings** into mandatory rejections of genres, actors or similar movies.

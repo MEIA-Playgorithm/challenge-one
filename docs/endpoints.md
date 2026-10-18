@@ -1,10 +1,10 @@
-# Endpoints por microserviço
+# Endpoints by service
 
-## Todos os endpoints
+## All endpoints
 
-X = o serviço implementa o endpoint. A última coluna diz se o frontend o chama.
+X = the service implements the endpoint. The last column says whether the frontend calls it.
 
-| Método | Endpoint | Prolog | Drools | Knowledge base | Frontend | Front chama |
+| Method | Endpoint | Prolog | Drools | Knowledge base | Frontend | Frontend calls it |
 | --- | --- | :-: | :-: | :-: | :-: | :-: |
 | GET | `/api/health` | X | X | — | — | — |
 | GET | `/api/filmes` | X | X | — | — | — |
@@ -21,105 +21,109 @@ X = o serviço implementa o endpoint. A última coluna diz se o frontend o chama
 | GET | `/swagger-ui/index.html` | — | X | — | — | — |
 | GET | `/redoc` | — | — | X | — | — |
 | GET | `/openapi.json` | — | X | X | — | — |
+| GET | `/health` | — | — | X | X | — |
 | GET | `/users.csv` | — | — | X | — | X |
 | GET | `/movies.csv` | — | — | X | — | X |
-| GET | `/users` | — | — | X | — | — |
 | POST | `/users` | — | — | X | — | X |
 | GET | `/users/{user_id}` | — | — | X | — | — |
 | PUT | `/users/{user_id}` | — | — | X | — | X |
 | DELETE | `/users/{user_id}` | — | — | X | — | X |
 | GET | `/config.json` | — | — | — | X | X |
 
-## O que a knowledge base já cobre
+## What the knowledge base already covers
 
-Para cada endpoint dos motores: o que devolve e o que a knowledge base devolve de equivalente. Cobre = devolve o mesmo
-conteúdo, e não só uma rota parecida.
+For each engine endpoint: what it returns, and what the knowledge base returns that is equivalent. "Covers"
+means it returns the same content, not only a similar route.
 
-| Endpoint dos motores | O que devolve | A KB cobre? | Equivalente na KB | O que a KB não dá | Valores dos motores face ao CSV |
+| Engine endpoint | What it returns | Does the knowledge base cover it? | Equivalent in the knowledge base | What the knowledge base does not give | Engine values compared with the CSV |
 | --- | --- | :-: | --- | --- | --- |
-| `GET /api/health` | `{"status": "ok"}` | Não | — (o healthcheck usa `GET /users.csv`) | O estado do serviço | — |
-| `GET /api/filmes` | Página de filmes (`total`, `offset`, `limit`, `items`) com 28 campos; filtros `genre`, `pace`, `complexity` | **Parcial** | `GET /movies.csv`: os 100 filmes, com 19 campos, em CSV | 9 campos inferidos (`pace`, `complexity`, `violence`, `humor`, `audience`, `psychological_intensity`, `emotional_tone`, `themes`, `subgenre`), filtros, paginação e JSON | Prolog igual ao CSV em 1897 de 1900 valores; Drools em 1193 de 1900 |
-| `GET /api/filme` | Um filme, com 28 campos | **Parcial** | A linha do filme em `GET /movies.csv` (não há `/movies/{id}`) | Os mesmos 9 campos inferidos e a pesquisa por `id` | igual ao anterior |
-| `GET /api/recomendacoes` | Filmes parecidos com um filme, com `score` de 0 a 11 | Não | — | O cálculo da semelhança | — |
-| `GET /api/recomendacoes_utilizador` | Recomendações de um utilizador (`score`, `status`, `reasons`, `score_breakdown`...) | Não | `GET /users/{user_id}` devolve o perfil (34 colunas em texto), não recomendações | Todo o cálculo | — |
-| `POST /api/reload` | Relê os dois CSV | Não se aplica | — (a KB lê o ficheiro a cada pedido, não guarda cópia) | — | — |
-| `POST /api/reload/users` | Relê o CSV dos utilizadores | Não se aplica | — (idem) | — | — |
-| `POST /api/reload/movies` | Relê o CSV dos filmes | Não se aplica | — (idem) | — | — |
-| `GET /api/how` | Como se chegou a uma recomendação | Não | — | A explicação | — |
-| `GET /api/why-not` | Porque um filme não foi recomendado | Não | — | A explicação | — |
-| `GET /api/trace` | Eventos das regras disparadas | Não | — | Os eventos | — |
-| `GET /docs`, `/swagger-ui/index.html`, `/openapi.json` | A documentação do próprio motor | Não | `GET /docs`, `/openapi.json` da KB documentam só a KB | A documentação dos motores | — |
+| `GET /api/health` | `{"status": "ok"}` | No | — (`GET /health` on the knowledge base is its own healthcheck, not the engine's) | The state of the service | — |
+| `GET /api/filmes` | A page of movies (`total`, `offset`, `limit`, `items`) with 28 fields; filters `genre`, `pace`, `complexity` | **Partly** | `GET /movies.csv`: the 100 movies, with 19 fields, as CSV | 9 inferred fields (`pace`, `complexity`, `violence`, `humor`, `audience`, `psychological_intensity`, `emotional_tone`, `themes`, `subgenre`), filters, pagination and JSON | Prolog equals the CSV in 1897 of 1900 values; Drools in 1193 of 1900 |
+| `GET /api/filme` | One movie, with 28 fields | **Partly** | The movie's row in `GET /movies.csv` (there is no `/movies/{id}`) | The same 9 inferred fields and the search by `id` | same as above |
+| `GET /api/recomendacoes` | Movies similar to a movie, with a `score` from 0 to 11 | No | — | The similarity calculation | — |
+| `GET /api/recomendacoes_utilizador` | Recommendations for a user (`score`, `status`, `reasons`, `score_breakdown`...) | No | `GET /users/{user_id}` returns the profile (34 columns as text), not recommendations | The whole calculation | — |
+| `POST /api/reload` | Reads both CSV files again | Not applicable | — (the knowledge base reads the file on every request and keeps no copy) | — | — |
+| `POST /api/reload/users` | Reads the users CSV again | Not applicable | — (same) | — | — |
+| `POST /api/reload/movies` | Reads the movies CSV again | Not applicable | — (same) | — | — |
+| `GET /api/how` | How a recommendation was reached | No | — | The explanation | — |
+| `GET /api/why-not` | Why a movie was not recommended | No | — | The explanation | — |
+| `GET /api/trace` | The rule events that fired | No | — | The events | — |
+| `GET /docs`, `/swagger-ui/index.html`, `/openapi.json` | The engine's own documentation | No | `GET /docs` and `/openapi.json` of the knowledge base document only the knowledge base | The documentation of the engines | — |
 
-Dos 14 endpoints do Drools e dos 8 do Prolog, a KB cobre **parcialmente 2** (`/api/filmes` e `/api/filme`), e só nos 19 campos
-do CSV. Os outros dependem de cálculo dos motores ou do estado deles. Nos 19 campos, o Prolog devolve os valores do CSV; o
-Drools altera a duração, a nota e deixa vazios 7 campos (`vote`, `budget`, `win`, `nomination`, `oscar`, `filming_location`,
-`production_company`).
+Of the 14 Drools endpoints and the 8 Prolog endpoints, the knowledge base **partly covers 2**
+(`/api/filmes` and `/api/filme`), and only in the 19 CSV fields. The others depend on the engines'
+calculation or on their state. In those 19 fields, Prolog returns the CSV values; Drools changes the
+duration and the rating, and leaves 7 fields empty (`vote`, `budget`, `win`, `nomination`, `oscar`,
+`filming_location`, `production_company`).
 
-## Por serviço
+## By service
 
-A coluna **Front** diz se o frontend chama o endpoint.
+The **Frontend** column says whether the frontend calls the endpoint.
 
 ### Prolog (`:8081`)
 
-| Método | Endpoint | O que faz | Parâmetros | Front |
+| Method | Endpoint | What it does | Parameters | Frontend |
 | --- | --- | --- | --- | --- |
-| GET | `/api/health` | Estado do serviço | — | — |
-| GET | `/api/filmes` | Lista filmes, com filtros e paginação | `genre`, `pace`, `complexity`, `limit` (1–100, 20), `offset` (0) | — |
-| GET | `/api/filme` | Um filme | `id` | — |
-| GET | `/api/recomendacoes` | Filmes parecidos com um filme | `id`, `min_score` (0–11, 0), `limit` (1–100, 10) | — |
-| GET | `/api/recomendacoes_utilizador` | Recomendações para um utilizador | `user_id`, `limit` (1–100, 10), `offset` (0) | usa |
-| POST | `/api/reload` | Relê os dois CSV | — | — |
-| POST | `/api/reload/users` | Relê o CSV dos utilizadores | — | usa |
-| POST | `/api/reload/movies` | Relê o CSV dos filmes | — | — |
+| GET | `/api/health` | Service state | — | — |
+| GET | `/api/filmes` | Lists movies, with filters and pagination | `genre`, `pace`, `complexity`, `limit` (1–100, 20), `offset` (0) | — |
+| GET | `/api/filme` | One movie | `id` | — |
+| GET | `/api/recomendacoes` | Movies similar to a movie | `id`, `min_score` (0–11, 0), `limit` (1–100, 10) | — |
+| GET | `/api/recomendacoes_utilizador` | Recommendations for a user | `user_id`, `limit` (1–100, 10), `offset` (0) | calls it |
+| POST | `/api/reload` | Reads both CSV files again | — | — |
+| POST | `/api/reload/users` | Reads the users CSV again | — | calls it |
+| POST | `/api/reload/movies` | Reads the movies CSV again | — | — |
 
 ### Drools (`:8082`)
 
-| Método | Endpoint | O que faz | Parâmetros | Front |
+| Method | Endpoint | What it does | Parameters | Frontend |
 | --- | --- | --- | --- | --- |
-| GET | `/api/health` | Estado do serviço | — | — |
-| GET | `/api/filmes` | Lista filmes, com filtros e paginação | `genre`, `pace`, `complexity`, `limit` (1–100, 20), `offset` (0) | — |
-| GET | `/api/filme` | Um filme | `id` | — |
-| GET | `/api/recomendacoes` | Filmes parecidos com um filme | `id`, `min_score` (0–11, 0), `limit` (1–100, 10) | — |
-| GET | `/api/recomendacoes_utilizador` | Recomendações para um utilizador | `user_id`, `limit` (1–100, 10), `offset` (0) | usa |
-| POST | `/api/reload` | Relê os dois CSV | — | — |
-| POST | `/api/reload/users` | Relê o CSV dos utilizadores | — | usa |
-| POST | `/api/reload/movies` | Relê o CSV dos filmes | — | — |
-| GET | `/api/how` | Como se chegou a uma recomendação | `user_id`, `movie` | — |
-| GET | `/api/why-not` | Porque um filme não foi recomendado | `user_id`, `movie` | — |
-| GET | `/api/trace` | Eventos das regras disparadas | `user_id`, `movie` (opcional) | — |
-| GET | `/docs` | Swagger UI (redireciona) | — | — |
+| GET | `/api/health` | Service state | — | — |
+| GET | `/api/filmes` | Lists movies, with filters and pagination | `genre`, `pace`, `complexity`, `limit` (1–100, 20), `offset` (0) | — |
+| GET | `/api/filme` | One movie | `id` | — |
+| GET | `/api/recomendacoes` | Movies similar to a movie | `id`, `min_score` (0–11, 0), `limit` (1–100, 10) | — |
+| GET | `/api/recomendacoes_utilizador` | Recommendations for a user | `user_id`, `limit` (1–100, 10), `offset` (0) | calls it |
+| POST | `/api/reload` | Reads both CSV files again | — | — |
+| POST | `/api/reload/users` | Reads the users CSV again | — | calls it |
+| POST | `/api/reload/movies` | Reads the movies CSV again | — | — |
+| GET | `/api/how` | How a recommendation was reached | `user_id`, `movie` | — |
+| GET | `/api/why-not` | Why a movie was not recommended | `user_id`, `movie` | — |
+| GET | `/api/trace` | The rule events that fired | `user_id`, `movie` (optional) | — |
+| GET | `/docs` | Swagger UI (redirects) | — | — |
 | GET | `/swagger-ui/index.html` | Swagger UI | — | — |
-| GET | `/openapi.json` | Especificação OpenAPI | — | — |
+| GET | `/openapi.json` | OpenAPI specification | — | — |
 
 ### Knowledge base (`:8090`)
 
-| Método | Endpoint | O que faz | Parâmetros | Front |
+| Method | Endpoint | What it does | Parameters | Frontend |
 | --- | --- | --- | --- | --- |
-| GET | `/users.csv` | O CSV dos utilizadores | — | usa |
-| GET | `/movies.csv` | O CSV dos filmes | — | usa |
-| GET | `/users` | Lista utilizadores em JSON | — | — |
-| POST | `/users` | Cria um utilizador | corpo JSON com as colunas | usa |
-| GET | `/users/{user_id}` | Um utilizador | `user_id` no caminho | — |
-| PUT | `/users/{user_id}` | Substitui um utilizador (o id pode mudar) | `user_id` no caminho, corpo JSON | usa |
-| DELETE | `/users/{user_id}` | Apaga um utilizador | `user_id` no caminho | usa |
+| GET | `/health` | Service state | — | — |
+| GET | `/users.csv` | The users CSV | — | calls it |
+| GET | `/movies.csv` | The movies CSV | — | calls it |
+| POST | `/users` | Creates a user | JSON body with the columns | calls it |
+| GET | `/users/{user_id}` | One user | `user_id` in the path | — |
+| PUT | `/users/{user_id}` | Replaces a user (the id can change) | `user_id` in the path, JSON body | calls it |
+| DELETE | `/users/{user_id}` | Deletes a user | `user_id` in the path | calls it |
 | GET | `/docs` | Swagger UI | — | — |
-| GET | `/redoc` | Documentação ReDoc | — | — |
-| GET | `/openapi.json` | Especificação OpenAPI | — | — |
+| GET | `/redoc` | ReDoc documentation | — | — |
+| GET | `/openapi.json` | OpenAPI specification | — | — |
 
 ### Frontend (`:4173`)
 
-| Método | Endpoint | O que faz | Parâmetros | Front |
+| Method | Endpoint | What it does | Parameters | Frontend |
 | --- | --- | --- | --- | --- |
-| GET | `/config.json` | Os URLs dos serviços; o front lê-o ao arrancar | — | lê |
+| GET | `/health` | Service state | — | — |
+| GET | `/config.json` | The service addresses; the frontend reads it at startup | — | reads it |
 
-## Resumo
+## Summary
 
-| Serviço | Endpoints | Só neste serviço | O front usa |
+| Service | Endpoints | Only in this service | The frontend uses |
 | --- | :-: | --- | :-: |
-| Prolog | 8 | nenhum | 2 |
+| Prolog | 8 | none | 2 |
 | Drools | 14 | `/api/how`, `/api/why-not`, `/api/trace`, `/docs`, `/swagger-ui/index.html`, `/openapi.json` | 2 |
-| Knowledge base | 10 | todos | 5 |
-| Frontend | 1 | `/config.json` | 1 |
+| Knowledge base | 10 | all | 5 |
+| Frontend | 2 | `/health`, `/config.json` | 1 |
 
-Os dois motores têm os mesmos 8 endpoints de dados. O Drools acrescenta as 3 explicações e a documentação. O front usa 10 dos 33 endpoints (contando cada serviço em separado):
-`/api/recomendacoes_utilizador` e `/api/reload/users` (nos dois motores), 5 da knowledge base e o seu próprio `/config.json`.
+Both engines have the same 8 data endpoints. Drools adds the 3 explanations and the documentation. The
+frontend uses 10 of the 34 endpoints (counting each service separately): `/api/recomendacoes_utilizador` and
+`/api/reload/users` (in both engines), 5 from the knowledge base (`/users.csv`, `/movies.csv`, and `POST`,
+`PUT` and `DELETE` on `/users`) and its own `/config.json`.

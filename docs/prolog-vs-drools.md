@@ -1,35 +1,36 @@
-# Prolog vs Drools: o que muda e porquê
+# Prolog vs Drools: what differs and why
 
-Os dois motores fazem o mesmo trabalho (mesmas exclusões, mesmos 19 tipos de motivo de preferência, mesma pontuação e
-mesmo estado `main` / `alternative`) e têm os mesmos endpoints, parâmetros, paginação e erros 400 e 404. A tabela tem
-só o que muda. O frontend é quem dita o contrato, por isso a última coluna diz se o front já é afetado.
+The two engines do the same job: the same exclusions, the same 19 kinds of preference reasons, the same
+scoring and the same `main` / `alternative` status. They also have the same endpoints, parameters,
+pagination, and `400` and `404` errors. The table below lists only what differs. The frontend decides the
+contract, so the last column says whether the frontend is already affected.
 
-Medido com os mesmos pedidos aos dois motores a correr (100 filmes, 10 utilizadores) e com a leitura das regras e do
-código do front.
+Measured by sending the same requests to both running engines (100 movies, 10 users) and by reading the
+rules and the frontend code.
 
-| O que muda | Endpoint | Prolog | Drools | Porquê | Front |
+| What differs | Endpoint | Prolog | Drools | Why | Frontend |
 | --- | --- | --- | --- | --- | --- |
-| Utilizador sem preferências (ou com poucas) | `GET /api/recomendacoes_utilizador` | 100 recomendações | 0 (só filmes com algum motivo de preferência) | A regra do Drools exige pelo menos um motivo de preferência | Afeta já: todo o utilizador novo |
-| Reload com CSV inválido | `POST /api/reload/users` | `422` com a mensagem; a base anterior mantém-se | `200`, aceita o CSV | O Drools não valida o CSV | Afeta já: o front mostra o erro do reload |
-| `rating_imdb` | `GET /api/filmes`<br>`GET /api/filme`<br>`GET /api/recomendacoes`<br>`GET /api/recomendacoes_utilizador` | texto `"8,2"` ou inteiro `7` | número `8.2` | O Prolog devolve o que está no CSV; o Drools converte | Afeta já: o front declara `string` |
-| Títulos com acento (2 filmes) | `GET /api/filmes`<br>`GET /api/filme`<br>`GET /api/recomendacoes`<br>`GET /api/recomendacoes_utilizador` | estragados (`Ãducation`) | corretos | O Prolog lê o fluxo HTTP como `octet` (Latin-1) e ignora o `charset=utf-8` que a knowledge base envia | Afeta já: aparecem na lista |
-| Ordem dos empates no `score` | `GET /api/recomendacoes_utilizador` | por nota e id | sem critério (varia entre pedidos) | O Drools não define desempate | Afeta já: ordem da lista |
-| Pontuação de `Smash Palace` (carla) | `GET /api/recomendacoes_utilizador` | 30 | 28 | Grupo `secondary` 9 contra 7; causa por investigar | Afeta já: `score` |
-| `reasons` | `GET /api/recomendacoes_utilizador` | valor concreto (`genre: "Action"`) e `rating` | `"preferred"`, sem `rating` | O Drools não guarda o valor da razão | Vai precisar |
-| `satisfied_requirements` | `GET /api/recomendacoes_utilizador` | preenchido | sempre `[]` | Não implementado no Drools | Vai precisar |
-| `unmet_preferences` | `GET /api/recomendacoes_utilizador` | preenchido | sempre `[]` | Não implementado no Drools | Vai precisar |
-| Explicação de como se chegou a uma recomendação | `GET /api/how` | só na consola | na API | Só o Drools a expõe por HTTP | Vai precisar |
-| Explicação de porque um filme não foi recomendado | `GET /api/why-not` | só na consola | na API | Só o Drools a expõe por HTTP | Vai precisar |
-| Eventos de regras disparadas | `GET /api/trace` | — | na API | Só o Drools os tem | Vai precisar |
-| `duration` | `GET /api/filmes`<br>`GET /api/filme`<br>`GET /api/recomendacoes`<br>`GET /api/recomendacoes_utilizador` | `"2h 20m"` | `140` | Formatos diferentes | Não usa |
-| `vote`, `budget`, `win`, `nomination`, `oscar` | `GET /api/filmes`<br>`GET /api/filme`<br>`GET /api/recomendacoes`<br>`GET /api/recomendacoes_utilizador` | valor do CSV | sempre `null` | O Drools não lê estas colunas | Não usa |
-| `filming_location`, `production_company` | `GET /api/filmes`<br>`GET /api/filme`<br>`GET /api/recomendacoes`<br>`GET /api/recomendacoes_utilizador` | lista do CSV | lista vazia na maioria dos filmes | O Drools não lê estas colunas | Não usa |
-| `rating_mpa` sem valor | `GET /api/filmes`<br>`GET /api/filme`<br>`GET /api/recomendacoes`<br>`GET /api/recomendacoes_utilizador` | `""` | `null` | Formatos diferentes | Não usa |
-| Ordem de `country_origin`, `director`, `emotional_tone`, `genre`, `language`, `star`, `themes` | `GET /api/filmes`<br>`GET /api/filme`<br>`GET /api/recomendacoes`<br>`GET /api/recomendacoes_utilizador` | uma | outra, com os mesmos elementos | Cada motor ordena à sua maneira | Não usa |
-| Filtro `genre=Sword Sandal` | `GET /api/filmes?genre=` | 1 filme | 0 | O Prolog normaliza espaços; o CSV tem dois | Não usa |
-| Rota inexistente | `GET /api/nao_existe` | `404` com `{"code": 404, "location": ..., "message": "Path not found: ..."}` | `404` com `{"error": "Route not found"}` | O Prolog usa o formato de erro do SWI-Prolog para rotas inexistentes | Não usa |
-| Método errado (`405`) | `GET /api/reload`<br>`POST /api/health` | com CORS | sem CORS | | Não usa |
-| `OPTIONS` sem `Access-Control-Request-Method` | `OPTIONS /api/filmes` | `200` | `403` | O pré-voo real de um browser dá `200` nos dois | Não usa |
-| Documentação da API | `GET /docs`<br>`GET /openapi.json`<br>`GET /swagger-ui/index.html` | — | sim | Só o Drools gera OpenAPI | Não usa |
-| Diálogo «porquê?» | — (só consola) | sim | — | Só existe no Prolog | Não usa (sem API) |
-| Regras de género, realizador e ator obrigatórios | — (só consola) | — | sim | Só existem no Drools | Não usa (sem API) |
+| A user with no preferences (or very few) | `GET /api/recomendacoes_utilizador` | 100 recommendations | 0 (only movies with some preference reason) | The Drools rule needs at least one preference reason | Affected now: every new user |
+| Reload with an invalid CSV | `POST /api/reload/users` | `422` with the message; the previous base is kept | `200`, accepts the CSV | Drools does not validate the CSV | Affected now: the frontend shows the reload error |
+| `rating_imdb` | `GET /api/filmes`<br>`GET /api/filme`<br>`GET /api/recomendacoes`<br>`GET /api/recomendacoes_utilizador` | the text `"8,2"` or the integer `7` | the number `8.2` | Prolog returns what is in the CSV; Drools converts it | Affected now: the frontend declares `string` |
+| Titles with accents (2 movies) | `GET /api/filmes`<br>`GET /api/filme`<br>`GET /api/recomendacoes`<br>`GET /api/recomendacoes_utilizador` | broken (`Ãducation`) | correct | Prolog reads the HTTP stream as `octet` (Latin-1) and ignores the `charset=utf-8` that the knowledge base sends | Affected now: they appear in the list |
+| Order of ties in `score` | `GET /api/recomendacoes_utilizador` | by rating and id | no rule (varies between requests) | Drools defines no tie-breaker | Affected now: the order of the list |
+| Score of `Smash Palace` (carla) | `GET /api/recomendacoes_utilizador` | 30 | 28 | The `secondary` group is 9 against 7; cause still to investigate | Affected now: `score` |
+| `reasons` | `GET /api/recomendacoes_utilizador` | the actual value (`genre: "Action"`) and `rating` | `"preferred"`, with no `rating` | Drools does not keep the value of the reason | Will need it |
+| `satisfied_requirements` | `GET /api/recomendacoes_utilizador` | filled in | always `[]` | Not implemented in Drools | Will need it |
+| `unmet_preferences` | `GET /api/recomendacoes_utilizador` | filled in | always `[]` | Not implemented in Drools | Will need it |
+| Explanation of how a recommendation was reached | `GET /api/how` | console only | in the API | Only Drools exposes it over HTTP | Will need it |
+| Explanation of why a movie was not recommended | `GET /api/why-not` | console only | in the API | Only Drools exposes it over HTTP | Will need it |
+| Events of the rules that fired | `GET /api/trace` | — | in the API | Only Drools has them | Will need it |
+| `duration` | `GET /api/filmes`<br>`GET /api/filme`<br>`GET /api/recomendacoes`<br>`GET /api/recomendacoes_utilizador` | `"2h 20m"` | `140` | Different formats | Does not use it |
+| `vote`, `budget`, `win`, `nomination`, `oscar` | `GET /api/filmes`<br>`GET /api/filme`<br>`GET /api/recomendacoes`<br>`GET /api/recomendacoes_utilizador` | the CSV value | always `null` | Drools does not read these columns | Does not use them |
+| `filming_location`, `production_company` | `GET /api/filmes`<br>`GET /api/filme`<br>`GET /api/recomendacoes`<br>`GET /api/recomendacoes_utilizador` | the list from the CSV | an empty list for most movies | Drools does not read these columns | Does not use them |
+| `rating_mpa` with no value | `GET /api/filmes`<br>`GET /api/filme`<br>`GET /api/recomendacoes`<br>`GET /api/recomendacoes_utilizador` | `""` | `null` | Different formats | Does not use it |
+| Order of `country_origin`, `director`, `emotional_tone`, `genre`, `language`, `star`, `themes` | `GET /api/filmes`<br>`GET /api/filme`<br>`GET /api/recomendacoes`<br>`GET /api/recomendacoes_utilizador` | one order | another order, with the same elements | Each engine sorts in its own way | Does not use it |
+| Filter `genre=Sword Sandal` | `GET /api/filmes?genre=` | 1 movie | 0 | Prolog normalises spaces; the CSV has two | Does not use it |
+| Unknown route | `GET /api/nao_existe` | `404` with `{"code": 404, "location": ..., "message": "Path not found: ..."}` | `404` with `{"error": "Route not found"}` | Prolog uses the SWI-Prolog error format for unknown routes | Does not use it |
+| Wrong method (`405`) | `GET /api/reload`<br>`POST /api/health` | with CORS | without CORS | | Does not use it |
+| `OPTIONS` without `Access-Control-Request-Method` | `OPTIONS /api/filmes` | `200` | `403` | A real browser preflight gets `200` from both | Does not use it |
+| API documentation | `GET /docs`<br>`GET /openapi.json`<br>`GET /swagger-ui/index.html` | — | yes | Only Drools generates OpenAPI | Does not use it |
+| "Why?" dialogue | — (console only) | yes | — | It exists only in Prolog | Does not use it (no API) |
+| Mandatory genre, director and actor rules | — (console only) | — | yes | They exist only in Drools | Does not use them (no API) |

@@ -1,16 +1,16 @@
-# Flowchart - Movie Recommendation System
+# Flowchart: movie recommendation system
 
-## Brief Repository Analysis
+## What the project contains today
 
-The current repository does not yet contain a Prolog, Drools, Java, or inference engine implementation in the checked-out branch. The current structure only contains base documentation:
+The flowchart below describes the recommendation flow. It is based on the goal of the system and on the
+interview with the expert Joao Mota. The project implements it in two engines:
 
-- `README.md`: identifies the project as `Inference Engine` and describes the branch policy.
-- `docs/branch-management.md`: operational guide for creating, synchronizing, and merging branches.
-- `origin/feature/docs-fluxogram`: remote branch with an initial PlantUML draft for the recommendation flow.
+- the Prolog engine (`swi-prolog/`), documented in [swi-prolog/README.md](../swi-prolog/README.md);
+- the Drools engine (`drools/`), documented in [drools/README.md](../drools/README.md);
+- the knowledge base service (`knowledge_base/`), which serves the movies and users to both engines;
+- the frontend (`frontend/`), where the user edits a profile and compares the recommendations.
 
-Therefore, the flowchart below is a conceptual proposal for the future implementation, based on the system goal and the interview with expert Joao Mota.
-
-## Knowledge Extracted From The Interview
+## Knowledge extracted from the interview
 
 The system should recommend movies that the user will probably enjoy, while also helping them discover new options. The recommendation should first respect mandatory criteria and only then calculate suitability through scoring.
 
@@ -41,19 +41,19 @@ Suggested ranking hierarchy:
 5. Director and actors.
 6. Practical availability.
 
-## Role Of Prolog And Drools
+## The role of Prolog and Drools
 
 Prolog can be used to represent facts and logical queries: movies, genres, actors, ratings, user restrictions, and similarity relationships.
 
 Drools can be used to apply business rules with weights, exclusions, scoring, tolerance margins, and explanations. The same conceptual base should be maintained across both engines so that the results can be compared.
 
-## Sample Flowchart
+## Sample flowchart
 
 ```mermaid
 flowchart TD
-    A([Start]) --> B[Load movie catalog]
+    A([Start]) --> B[Load movie catalogue]
     B --> C[Load user profile]
-    C --> D[Normalize preferences and restrictions]
+    C --> D[Normalise preferences and restrictions]
 
     D --> E[Send facts to Prolog]
     D --> F[Send facts to Drools]
@@ -83,7 +83,7 @@ flowchart TD
     S --> T
 ```
 
-## Example Extracted Rules
+## Example rules extracted
 
 - If the movie belongs to an explicitly rejected genre, then it must be excluded.
 - If the movie violates mandatory duration, language, or period, then it must be excluded.

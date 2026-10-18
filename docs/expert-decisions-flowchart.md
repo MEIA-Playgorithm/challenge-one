@@ -1,10 +1,10 @@
-# High-Level Flowchart - Expert Decisions
+# High-level flowchart: expert decisions
 
 Based on the interview with expert Joao Mota about the movie recommendation expert system.
 
 This document presents a macro-level view of the decision process. The goal is to show how the system should reason before detailing Prolog rules, Drools rules, weights, or technical implementation.
 
-## General Principle
+## General principle
 
 The system should help the user discover movies they are likely to enjoy, while first respecting mandatory conditions and then using the remaining preferences to rank the best alternatives.
 
@@ -13,7 +13,7 @@ The expert separates criteria into two types:
 - **Mandatory restrictions**: if they fail, the movie must be excluded.
 - **Desirable preferences**: if they match, they increase the score; if they fail, they do not necessarily exclude the movie.
 
-## Macro Flowchart
+## Macro flowchart
 
 ```mermaid
 flowchart TD
@@ -23,7 +23,7 @@ flowchart TD
 
     D --> E{Are there mandatory restrictions?}
     E -- Yes --> F[Filter movies that fail mandatory criteria]
-    E -- No --> G[Keep catalog as candidates]
+    E -- No --> G[Keep catalogue as candidates]
 
     F --> H{Does the movie satisfy all mandatory criteria?}
     H -- No --> I[Exclude and store reason]
@@ -48,9 +48,9 @@ flowchart TD
     T --> U
 ```
 
-## Main Expert Decisions
+## Main expert decisions
 
-### 1. Understand The Request
+### 1. Understand the request
 
 Before recommending, the system should understand what the user is looking for at that moment:
 
@@ -60,7 +60,7 @@ Before recommending, the system should understand what the user is looking for a
 - finding a movie similar to others they liked;
 - respecting a concrete situation, such as watching with children or using an available streaming platform.
 
-### 2. Separate Mandatory From Desirable
+### 2. Separate mandatory from desirable
 
 This is the central expert decision.
 
@@ -87,7 +87,7 @@ Examples of desirable preferences:
 - belonging to a saga or series of interest;
 - availability on an accessible platform.
 
-### 3. Apply Exclusions First
+### 3. Apply exclusions first
 
 The expert was clear: a good score in other criteria should not compensate for a mandatory violation.
 
@@ -99,7 +99,7 @@ Therefore, the system should first exclude movies that:
 - have an incompatible age rating or type of content;
 - have already been watched, if the request does not allow rewatching.
 
-### 4. Score Only Eligible Movies
+### 4. Score only eligible movies
 
 After mandatory filters, the system evaluates the remaining movies.
 
@@ -114,7 +114,7 @@ Suggested priority from the expert:
 5. Actors.
 6. Practical availability.
 
-### 5. Interpret Ratings With Context
+### 5. Interpret ratings with context
 
 The expert indicated that ratings should not be used with the same rigid threshold for every genre.
 
@@ -127,7 +127,7 @@ The system should evaluate:
 - movie genre;
 - allowed tolerance margin.
 
-### 6. Allow Alternatives
+### 6. Allow alternatives
 
 When a movie fails a desirable preference, it may still be recommended if its overall suitability is good.
 
@@ -138,7 +138,7 @@ Example: if the user asked for a minimum rating of 8, a movie rated 7.5 may appe
 - the movie satisfies more important criteria;
 - the explanation clearly states what was not fully satisfied.
 
-### 7. Rank And Justify
+### 7. Rank and justify
 
 The result should not be only a list. It should explain why each movie was recommended.
 
@@ -150,7 +150,7 @@ The explanation should include:
 - preferences not fully satisfied, when relevant;
 - exclusion reasons, when there are not enough recommendations.
 
-## Simplified Decision Flow
+## Simplified decision flow
 
 ```mermaid
 flowchart LR
@@ -164,7 +164,7 @@ flowchart LR
     H --> I[Recommend]
 ```
 
-## Next Level Of Detail
+## Next level of detail
 
 This flowchart is intentionally high-level. In a next step, it can be split into more specific flowcharts, for example:
 
