@@ -14,7 +14,7 @@ import {
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
-import { AUTOSAVE_DELAY_MS } from "../hooks/useSave";
+import { AUTOSAVE_DELAY_MS } from "../../hooks/useSave";
 
 type Props = {
     dirty: boolean;

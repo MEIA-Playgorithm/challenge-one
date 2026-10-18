@@ -1,7 +1,7 @@
 import { Grid } from "@mui/material";
-import UserPanel from "./components/UserPanel";
-import UserParameters from "./components/UserParameters";
-import Recommendations from "./components/Recommendations";
+import UserPanel from "./components/user/UserPanel";
+import UserParameters from "./components/parameters/UserParameters";
+import Recommendations from "./components/recommendations/Recommendations";
 
 const App = () => {
     return (

@@ -1,7 +1,7 @@
 import { Box, Chip, Stack, Typography } from "@mui/material";
 import ThumbUpAltIcon from "@mui/icons-material/ThumbUpAlt";
 import ThumbDownAltIcon from "@mui/icons-material/ThumbDownAlt";
-import { formatLabel } from "../lib/utils";
+import { formatLabel } from "../../lib/utils";
 
 type Props = {
     label: string;

@@ -1,6 +1,6 @@
 import { ToggleButton, ToggleButtonGroup } from "@mui/material";
-import { useApp } from "../context/AppContext";
-import { config, type EngineId } from "../lib/config";
+import { useApp } from "../../context/AppContext";
+import { config, type EngineId } from "../../lib/config";
 
 // Escolhe que motores mostrar: nenhum, um ou vários.
 const EngineSelector = () => {

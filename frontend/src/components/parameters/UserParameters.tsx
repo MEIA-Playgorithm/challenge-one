@@ -1,8 +1,8 @@
 import { Box, Paper, Tab, Tabs } from "@mui/material";
 import { useState } from "react";
-import { useApp } from "../context/AppContext";
-import Preferences from "./Preferences";
-import Movies from "./Movies";
+import { useApp } from "../../context/AppContext";
+import Preferences from "../preferences/Preferences";
+import Movies from "../movies/Movies";
 import PeopleAndOrigins from "./PeopleAndOrigins";
 
 const UserParameters = () => {

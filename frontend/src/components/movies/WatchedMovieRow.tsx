@@ -1,8 +1,8 @@
 import { Box, IconButton, Rating, Stack, Typography } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import type { WatchedMovie, WatchedMovieRating } from "../types/User";
-import { useApp } from "../context/AppContext";
-import { formatLabel } from "../lib/utils";
+import type { WatchedMovie, WatchedMovieRating } from "../../types/User";
+import { useApp } from "../../context/AppContext";
+import { formatLabel } from "../../lib/utils";
 
 const RATING_LABELS = ["Watched, no opinion", "Didn't like at all", "Didn't like", "It was okay", "Liked", "Liked a lot"];
 

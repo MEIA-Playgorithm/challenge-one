@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Autocomplete, Divider, Stack, TextField } from "@mui/material";
-import { useApp } from "../context/AppContext";
-import { useSave } from "../hooks/useSave";
-import type { User } from "../types/User";
-import { withValues } from "../lib/utils";
-import PreferenceSection from "./PreferenceSection";
+import { useApp } from "../../context/AppContext";
+import { useSave } from "../../hooks/useSave";
+import type { User } from "../../types/User";
+import { withValues } from "../../lib/utils";
+import PreferenceSection from "../common/PreferenceSection";
 import WatchedMovieRow from "./WatchedMovieRow";
-import SaveBar from "./SaveBar";
+import SaveBar from "../common/SaveBar";
 
 type MovieFields = Pick<User, "watched" | "wishlist">;
 

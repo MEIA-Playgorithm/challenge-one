@@ -1,7 +1,7 @@
 import { Chip, CircularProgress, List, ListItem, ListItemText, Typography } from "@mui/material";
-import { useApp } from "../context/AppContext";
-import { useRecommendations } from "../hooks/useRecommendations";
-import { config, type EngineId } from "../lib/config";
+import { useApp } from "../../context/AppContext";
+import { useRecommendations } from "../../hooks/useRecommendations";
+import { config, type EngineId } from "../../lib/config";
 
 type Props = {
     engine: EngineId;

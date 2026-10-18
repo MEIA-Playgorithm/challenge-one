@@ -1,5 +1,5 @@
 import { Stack, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
-import { formatLabel } from "../lib/utils";
+import { formatLabel } from "../../lib/utils";
 
 type Props<T extends string> = {
     label: string;

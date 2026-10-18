@@ -1,6 +1,6 @@
 import { Box, Chip, Stack, Typography } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
-import { formatLabel } from "../lib/utils";
+import { formatLabel } from "../../lib/utils";
 
 type Props<T extends string> = {
     label: string;

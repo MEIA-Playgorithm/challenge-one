@@ -1,5 +1,5 @@
 import { Divider, Paper, Stack, Typography } from "@mui/material";
-import { useApp } from "../context/AppContext";
+import { useApp } from "../../context/AppContext";
 import EngineSelector from "./EngineSelector";
 import EngineRecommendations from "./EngineRecommendations";
 
