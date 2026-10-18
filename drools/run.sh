@@ -8,4 +8,6 @@ cd "$(dirname "$0")"
 
 MVN="${MAVEN_BIN:-mvn}"
 "$MVN" -q -DskipTests package dependency:copy-dependencies
-exec java -cp "target/classes:target/dependency/*" meia.playgorithm.Application "$@"
+# The classpath separator is ";" for the Java of Windows (Git Bash) and ":" elsewhere.
+case "$(uname -s)" in MINGW* | MSYS* | CYGWIN*) SEP=";" ;; *) SEP=":" ;; esac
+exec java -cp "target/classes${SEP}target/dependency/*" meia.playgorithm.Application "$@"
