@@ -1,21 +1,21 @@
 package meia.playgorithm;
 
-import meia.playgorithm.api.ApiServer;
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.info.Info;
 import meia.playgorithm.console.MovieRecommendationConsole;
-
-import java.io.IOException;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /** Ponto de entrada: sem argumentos arranca a API REST; com `console`, a consola interativa. */
-public final class Application {
+@SpringBootApplication
+@OpenAPIDefinition(info = @Info(title = "Playgorithm Drools Recommendation API", version = "1.0.0"))
+public class Application {
 
-    private Application() {
-    }
-
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         if (args.length > 0 && args[0].equals("console")) {
             MovieRecommendationConsole.main(args);
         } else {
-            ApiServer.start(Integer.parseInt(System.getenv().getOrDefault("PORT", "8080")));
+            SpringApplication.run(Application.class, args);
         }
     }
 }

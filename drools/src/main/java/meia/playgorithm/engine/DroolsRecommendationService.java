@@ -8,11 +8,13 @@ import meia.playgorithm.model.UserPreferences;
 
 import org.drools.ruleunits.api.RuleUnitInstance;
 import org.drools.ruleunits.api.RuleUnitProvider;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+@Service
 public class DroolsRecommendationService {
 
     public RecommendationResult evaluate(UserPreferences preferences, List<Movie> movies) {

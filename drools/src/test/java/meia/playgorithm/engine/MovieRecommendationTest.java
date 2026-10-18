@@ -168,7 +168,7 @@ public class MovieRecommendationTest {
 
     @Test
     void shouldLoadTheSameMovieCatalogUsedByProlog() {
-        List<Movie> movies = MovieCatalog.movies();
+        List<Movie> movies = new MovieCatalog().movies();
 
         assertEquals(100, movies.size());
         Movie batman = movies.stream()
@@ -194,7 +194,7 @@ public class MovieRecommendationTest {
 
     @Test
     void shouldLoadUserProfilesUsedByThePrologApiContract() {
-        UserPreferences ana = UserCatalog.find("ana").orElseThrow();
+        UserPreferences ana = new UserCatalog().find("ana").orElseThrow();
 
         assertEquals(25, ana.getAge());
         assertTrue(ana.getWishlistMovieIds().contains("tt0372784"));

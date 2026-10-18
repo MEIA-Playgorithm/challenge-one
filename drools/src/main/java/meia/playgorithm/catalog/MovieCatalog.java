@@ -2,6 +2,8 @@ package meia.playgorithm.catalog;
 
 import meia.playgorithm.model.Movie;
 
+import org.springframework.stereotype.Component;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -12,7 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public final class MovieCatalog {
+@Component
+public class MovieCatalog {
 
     private static final List<Path> CSV_CANDIDATES = List.of(
         Path.of("../knowledge_base/movies.csv"),
@@ -34,29 +37,26 @@ public final class MovieCatalog {
         "Suspense Mystery", "Swashbuckler", "Sword Sandal", "True Crime", "Wuxia"
     );
 
-    private MovieCatalog() {
-    }
-
-    public static List<Movie> movies() {
+    public List<Movie> movies() {
         return moviesFromLines(currentLines());
     }
 
-    public static int count() {
+    public int count() {
         return movies().size();
     }
 
     // Linhas do CSV em memória: lidas no arranque e em reload(); cada pedido constrói
     // objetos novos a partir delas, porque as regras alteram os filmes.
-    private static List<String> csvLines;
+    private List<String> csvLines;
 
     /** Relê o CSV; se for inválido lança IllegalStateException e mantém as linhas anteriores. */
-    public static synchronized void reload() {
+    public synchronized void reload() {
         List<String> loaded = readLines();
         moviesFromLines(loaded);
         csvLines = loaded;
     }
 
-    private static synchronized List<String> currentLines() {
+    private synchronized List<String> currentLines() {
         if (csvLines == null) {
             reload();
         }

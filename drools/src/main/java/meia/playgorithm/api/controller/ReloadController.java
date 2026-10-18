@@ -1,33 +1,27 @@
 package meia.playgorithm.api.controller;
 
-import meia.playgorithm.api.http.ApiException;
-import meia.playgorithm.catalog.MovieCatalog;
-import meia.playgorithm.catalog.UserCatalog;
-import com.sun.net.httpserver.HttpExchange;
-import java.util.Map;
-import java.io.IOException;
-import static meia.playgorithm.api.http.Http.*;
-import static meia.playgorithm.api.view.JsonViews.*;
+import io.swagger.v3.oas.annotations.Operation;
+import meia.playgorithm.api.dto.ReloadDto;
+import meia.playgorithm.service.KnowledgeBaseService;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-public final class ReloadController {
+@RestController
+@RequestMapping("/api")
+public class ReloadController {
 
-    public static void reload(HttpExchange exchange, String scope) throws IOException {
-        String reloaded = scope.isEmpty() ? "all" : scope.substring(1);
-        try {
-            if (!reloaded.equals("users")) {
-                MovieCatalog.reload();
-            }
-            if (!reloaded.equals("movies")) {
-                UserCatalog.reload();
-            }
-        } catch (IllegalStateException exception) {
-            throw new ApiException(422, exception.getMessage());
-        }
-        json(exchange, 200, Map.of(
-            "status", "ok",
-            "reloaded", reloaded,
-            "movies", MovieCatalog.movies().size(),
-            "users", UserCatalog.users().size()
-        ));
+    private final KnowledgeBaseService knowledgeBase;
+
+    public ReloadController(KnowledgeBaseService knowledgeBase) {
+        this.knowledgeBase = knowledgeBase;
+    }
+
+    /** Relê os CSV: sem `scope` os dois, ou só `users` ou só `movies`. */
+    @Operation(summary = "Reload the knowledge base CSV files")
+    @PostMapping({"/reload", "/reload/{scope:users|movies}"})
+    public ReloadDto reload(@PathVariable(name = "scope", required = false) String scope) {
+        return knowledgeBase.reload(scope == null ? "all" : scope);
     }
 }

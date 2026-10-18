@@ -1,14 +1,18 @@
 package meia.playgorithm.api.controller;
 
-import com.sun.net.httpserver.HttpExchange;
-import java.util.Map;
-import java.io.IOException;
-import static meia.playgorithm.api.http.Http.*;
-import static meia.playgorithm.api.view.JsonViews.*;
+import io.swagger.v3.oas.annotations.Operation;
+import meia.playgorithm.api.dto.HealthDto;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-public final class HealthController {
+@RestController
+@RequestMapping("/api")
+public class HealthController {
 
-    public static void health(HttpExchange exchange) throws IOException {
-        json(exchange, 200, Map.of("status", "ok"));
+    @Operation(summary = "Check API health")
+    @GetMapping("/health")
+    public HealthDto health() {
+        return new HealthDto("ok");
     }
 }

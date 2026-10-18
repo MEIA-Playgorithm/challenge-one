@@ -1,42 +1,34 @@
 package meia.playgorithm.api.controller;
 
-import meia.playgorithm.api.http.ApiException;
-import meia.playgorithm.catalog.MovieCatalog;
-import meia.playgorithm.catalog.UserCatalog;
-import meia.playgorithm.model.Recommendation;
-import meia.playgorithm.model.RecommendationResult;
-import meia.playgorithm.model.UserPreferences;
-import meia.playgorithm.engine.DroolsRecommendationService;
-import com.sun.net.httpserver.HttpExchange;
-import java.util.List;
-import java.util.Map;
-import java.io.IOException;
-import static meia.playgorithm.api.http.Http.*;
-import static meia.playgorithm.api.view.JsonViews.*;
+import static meia.playgorithm.api.Validation.PAGE;
 
-public final class UserRecommendationController {
+import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import meia.playgorithm.api.dto.UserRecommendationsDto;
+import meia.playgorithm.service.RecommendationService;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-    private static final DroolsRecommendationService SERVICE = new DroolsRecommendationService();
+@RestController
+@RequestMapping("/api")
+public class UserRecommendationController {
 
-    public static void userRecommendations(HttpExchange exchange, Map<String, String> query) throws IOException {
-        String userId = required(query, "user_id");
-        int limit = intParam(query, "limit", 10);
-        int offset = intParam(query, "offset", 0);
-        validPage(limit, offset);
-        UserPreferences preferences = UserCatalog.find(userId)
-            .orElseThrow(() -> new ApiException(404, "Utilizador não encontrado"));
-        RecommendationResult result = SERVICE.evaluate(preferences, MovieCatalog.movies());
-        List<Recommendation> recommendations = result.recommendations();
-        List<Map<String, Object>> items = page(recommendations, offset, limit).stream()
-            .map(recommendation -> recommendationJson(recommendation, result))
-            .toList();
+    private final RecommendationService recommendations;
 
-        json(exchange, 200, Map.of(
-            "user_id", userId,
-            "total", recommendations.size(),
-            "offset", offset,
-            "limit", limit,
-            "items", items
-        ));
+    public UserRecommendationController(RecommendationService recommendations) {
+        this.recommendations = recommendations;
+    }
+
+    @Operation(summary = "List recommendations for a CSV user profile")
+    @GetMapping("/recomendacoes_utilizador")
+    public UserRecommendationsDto userRecommendations(
+        @RequestParam("user_id") String userId,
+        @RequestParam(name = "limit", defaultValue = "10") @Min(value = 1, message = PAGE) @Max(value = 100, message = PAGE) int limit,
+        @RequestParam(name = "offset", defaultValue = "0") @Min(value = 0, message = PAGE) int offset
+    ) {
+        return recommendations.forUser(userId, limit, offset);
     }
 }

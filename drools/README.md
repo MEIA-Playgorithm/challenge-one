@@ -114,9 +114,8 @@ field names.
 | `/api/recomendacoes_utilizador` | `GET` | Runs the Drools recommendation engine for a CSV user profile using `user_id`, `limit`, and `offset`. |
 | `/api/how` | `GET` | Explains how a recommendation conclusion was inferred for `user_id` and `movie`. |
 | `/api/why-not` | `GET` | Explains why a movie was not recommended for `user_id` and `movie`. |
-| `/api/why_not` | `GET` | Alias for `/api/why-not`. |
 | `/api/trace` | `GET` | Returns rule trace events for `user_id`, optionally filtered by `movie`. |
-| `/openapi.json` | `GET` | Serves the OpenAPI specification. |
+| `/openapi.json` | `GET` | OpenAPI specification, generated from the controllers' annotations. |
 | `/docs` | `GET` | Opens Swagger UI for trying the API in the browser. |
 
 Example request:
@@ -135,8 +134,9 @@ curl 'http://localhost:8080/api/how?user_id=ana&movie=Batman%20Begins'
 curl 'http://localhost:8080/api/why-not?user_id=ana&movie=Psycho'
 ```
 
-The earlier JSON `POST` routes remain available as debugging aliases, but the
-Prolog-compatible `GET /api/...` routes are the preferred integration surface.
+The earlier JSON `POST` routes (`/recommendations`, `/how`, `/why-not`, `/trace`, which took a whole
+user profile in the request body) and the aliases `/health`, `/api/facts`, `/movies`, `/facts` and
+`/api/why_not` were removed. Use the Prolog-compatible `GET /api/...` routes above.
 
 ## Course-material alignment
 
@@ -149,7 +149,7 @@ Prolog-compatible `GET /api/...` routes are the preferred integration surface.
 | Expert interview knowledge acquisition (`02-IntrodSP.pdf`, `Entrevista_Joao_Mota_Revista.pdf`) | The rules encode the expert decisions captured from the interview: mandatory limits discard movies; flexible preferences affect score; rejected genres/directors/actors exclude; recommendations expose satisfied and unmet preferences. |
 | Drools working memory and rule execution (`Drools-HelloWorld.pdf`) | `MovieRecommendationUnit` contains `DataStore<Movie>`, `DataStore<UserPreferences>`, `DataStore<Recommendation>`, and `DataStore<TraceEvent>`. Rules combine working-memory facts with the knowledge base to create new facts. |
 | Drools monitoring and queries (`Monitorização Drools.pdf`) | `rules.drl` defines `FindRecommendations` and `FindTraceEvents` queries. `TraceEvent` records rule firings for exclusions, preference matches, and recommendation creation. |
-| Explanation types: How, Why, Why not (`04-ArquitSP.pdf`, `05-EstratRac.pdf`, `WhyNot.pdf`) | `how <movie>` and `POST /how` explain how a recommendation was produced; `why-not <movie>` and `POST /why-not` explain why it was not produced; `trace` and `POST /trace` show the fired-rule path; `facts` and `GET /facts` expose the known facts. |
+| Explanation types: How, Why, Why not (`04-ArquitSP.pdf`, `05-EstratRac.pdf`, `WhyNot.pdf`) | `how <movie>` and `GET /api/how` explain how a recommendation was produced; `why-not <movie>` and `GET /api/why-not` explain why it was not produced; `trace` and `GET /api/trace` show the fired-rule path; `facts` and `GET /facts` expose the known facts. |
 | Truth Maintenance Systems (`12-SP-TMS.pdf`) | The current implementation stores explicit trace facts. A future improvement can use Drools `insertLogical` for conclusions that should be automatically retracted when their supporting facts stop being true. |
 | Fuzzy reasoning (`07-SP-Fuzzy.pdf`) | Current scoring is weighted and deterministic. Fuzzy logic is a suitable future extension for vague concepts such as "short movie", "recent movie", "close to minimum rating", and "high popularity". |
 | Bayesian reasoning (`09-SP-Bayes.pdf`) | Bayesian reasoning is not implemented because the current project has no reliable prior and conditional probabilities. It should only be added if the catalogue/user data supports probabilistic evidence. |
@@ -163,8 +163,9 @@ Java packages under `src/main/java/meia/playgorithm`:
 | --- | --- |
 | `model/` | Facts and results: `Movie`, `UserPreferences`, `Recommendation` (score, status, reasons, unmet preferences, score breakdown), `RecommendationResult`, `TraceEvent` (observable explanation fact), `PreferenceReason`. |
 | `engine/` | `MovieRecommendationUnit` (RuleUnit working memory) and `DroolsRecommendationService` (runs the inference engine). The knowledge base is `src/main/resources/meia/playgorithm/engine/rules.drl`: exclusions, scoring reasons, recommendation creation, and queries. |
-| `catalog/` | `MovieCatalog` and `UserCatalog` hold the knowledge base CSVs in memory (`reload()` re-reads them); `CsvSource` reads a URL or a file. |
-| `api/` | REST interface: `ApiServer` starts the HTTP server and routes requests. `api/controller/` holds the controllers (`HealthController`, `MovieController`, `UserRecommendationController`, `ExplanationController`, `ReloadController`, `DocsController`, `DebugController` for the JSON `POST` aliases), `api/http/` the shared helpers `Http` and `ApiException`, and `api/view/` `JsonViews` (JSON representation of the model). |
+| `catalog/` | `MovieCatalog` and `UserCatalog` (Spring beans) hold the knowledge base CSVs in memory (`reload()` re-reads them); `CsvSource` reads a URL or a file. |
+| `api/` | REST interface on Spring Boot. `api/controller/` has thin controllers (`MovieController`, `UserRecommendationController`, `ExplanationController`, `ReloadController`, `HealthController`) that declare their routes with annotations, validate the parameters and call a service. `api/dto/` has the response records (snake_case JSON, one per response shape), `ApiErrors` turns every error into `{"error": "..."}` and `WebConfig` opens CORS. The OpenAPI document is generated from the controllers and DTOs. |
+| `service/` | `MovieService` (listing, filters, similar movies), `RecommendationService` (recommendations and the how / why-not / trace explanations) and `KnowledgeBaseService` (reload). They receive the catalogs and the engine by constructor injection. |
 | `Application` | Entry point: starts the API; `Application console` starts the interactive console. |
 | `console/` | `MovieRecommendationConsole`: interactive interface for recommendations and explanations. |
 | `src/test/java/meia/playgorithm/engine/MovieRecommendationTest.java` | Automated validation of exclusions, alternatives, scoring, compatibility, and trace events. |

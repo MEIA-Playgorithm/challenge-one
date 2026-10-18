@@ -22,7 +22,7 @@ public class MovieRecommendationConsole {
         System.out.println();
 
         UserPreferences preferences = readPreferences(scanner);
-        List<Movie> movies = MovieCatalog.movies();
+        List<Movie> movies = new MovieCatalog().movies();
         RecommendationResult result = new DroolsRecommendationService()
             .evaluate(preferences, movies);
 
