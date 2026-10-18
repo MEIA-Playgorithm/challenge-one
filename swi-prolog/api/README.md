@@ -1,28 +1,28 @@
-# API HTTP
+# HTTP API
 
-API do motor SWI-Prolog. Devolve sempre JSON.
+The API of the Prolog engine. It always answers JSON.
 
-- **Endereço base:** `http://localhost:8081` com Docker, `http://localhost:8080` se correres
-  à mão. Os exemplos abaixo usam 8081. Como arrancar: [README](../README.md).
-- **Consultas** são `GET`. **Recarregar dados** é `POST`.
-- Sem autenticação e com CORS aberto: é uma API de desenvolvimento.
+- **Base address:** `http://localhost:8081` with Docker, `http://localhost:8080` when you run it manually.
+  The examples below use 8081. How to start it: [README](../README.md).
+- **Queries** are `GET` requests. **Reloading the data** is a `POST` request.
+- There is no authentication and CORS is open: this is a development API.
 
-## Resumo
+## Summary
 
-| Pedido | Para que serve |
+| Request | What it does |
 | --- | --- |
-| `GET /api/health` | Ver se a API está a funcionar |
-| `GET /api/filmes` | Listar filmes, com filtros |
-| `GET /api/filme?id=` | Um filme |
-| `GET /api/recomendacoes?id=` | Filmes parecidos com um filme |
-| `GET /api/recomendacoes_utilizador?user_id=` | Recomendações para um utilizador |
-| `POST /api/reload` | Ler outra vez os dois CSV |
-| `POST /api/reload/users` | Ler outra vez só `users.csv` |
-| `POST /api/reload/movies` | Ler outra vez só `movies.csv` |
+| `GET /api/health` | Checks that the API is running |
+| `GET /api/filmes` | Lists movies, with filters |
+| `GET /api/filme?id=` | Returns one movie |
+| `GET /api/recomendacoes?id=` | Lists movies similar to a movie |
+| `GET /api/recomendacoes_utilizador?user_id=` | Recommends movies to a user |
+| `POST /api/reload` | Reads both CSV files again |
+| `POST /api/reload/users` | Reads only `users.csv` again |
+| `POST /api/reload/movies` | Reads only `movies.csv` again |
 
 ---
 
-## Consultar
+## Queries
 
 ### `GET /api/health`
 
@@ -32,23 +32,23 @@ API do motor SWI-Prolog. Devolve sempre JSON.
 
 ### `GET /api/filmes`
 
-Lista de filmes, por ordem de carregamento. Todos os parâmetros são opcionais.
+Lists movies in loading order. Every parameter is optional.
 
-| Parâmetro | Valores | Por omissão |
+| Parameter | Values | Default |
 | --- | --- | --- |
-| `genre` | Nome exato do género, por exemplo `Action` ou `Dark Comedy` | todos |
-| `pace` | `slow`, `medium`, `fast`, `unknown` | todos |
-| `complexity` | `low`, `medium`, `high`, `unknown` | todos |
-| `limit` | 1 a 100 | 20 |
-| `offset` | 0 ou mais | 0 |
+| `genre` | The exact genre name, for example `Action` or `Dark Comedy` | all |
+| `pace` | `slow`, `medium`, `fast`, `unknown` | all |
+| `complexity` | `low`, `medium`, `high`, `unknown` | all |
+| `limit` | 1 to 100 | 20 |
+| `offset` | 0 or more | 0 |
 
-Os filtros combinam-se (têm de se cumprir todos). Exemplo:
+Filters combine: a movie must meet all of them. Example:
 
 ```text
 GET /api/filmes?pace=fast&complexity=high&limit=10
 ```
 
-Resposta (`total` é o número de filmes que cumprem os filtros, antes de aplicar o `limit`):
+Response (`total` is the number of movies that meet the filters, before `limit` is applied):
 
 ```json
 {
@@ -61,11 +61,11 @@ Resposta (`total` é o número de filmes que cumprem os filtros, antes de aplica
 
 ### `GET /api/filme?id=tt0372784`
 
-| Parâmetro | Valor |
+| Parameter | Value |
 | --- | --- |
-| `id` | **Obrigatório.** O id do filme |
+| `id` | **Required.** The movie id |
 
-Resposta (resumida):
+Response (shortened):
 
 ```json
 {
@@ -81,25 +81,23 @@ Resposta (resumida):
 }
 ```
 
-Um filme tem também realizadores, atores, idiomas, países, prémios, orçamento, e as
-classificações inferidas pelo motor (ritmo, complexidade, violência, humor, temas,
-tom emocional, público).
+A movie also has directors, actors, languages, countries, awards, budget and the ratings inferred by the
+engine (pace, complexity, violence, humor, themes, emotional tone and audience).
 
-- Os campos que podem ter vários valores (`genre`, `director`, `star`, `language`, ...)
-  são sempre listas, mesmo que só tenham um.
-- Um campo simples que não existe vem a `null`. Uma classificação sem dados suficientes
-  vem a `"unknown"`.
-- Os valores vêm tal como estão no CSV: por exemplo, `rating_imdb` é o texto `"8,2"`.
+- Fields that can hold several values (`genre`, `director`, `star`, `language`, ...) are always lists, even
+  when they hold only one.
+- A simple field with no value is `null`. A rating without enough data is `"unknown"`.
+- Values come as they are in the CSV: for example, `rating_imdb` is the text `"8,2"`.
 
 ### `GET /api/recomendacoes?id=tt0372784`
 
-Filmes parecidos com um filme, do mais parecido para o menos parecido.
+Movies similar to a movie, from the most similar to the least.
 
-| Parâmetro | Valores | Por omissão |
+| Parameter | Values | Default |
 | --- | --- | --- |
-| `id` | **Obrigatório.** O id do filme | |
-| `min_score` | 0 a 11. Só devolve filmes com pelo menos esta semelhança | 0 |
-| `limit` | 1 a 100 | 10 |
+| `id` | **Required.** The movie id | |
+| `min_score` | 0 to 11. Only movies with at least this similarity are returned | 0 |
+| `limit` | 1 to 100 | 10 |
 
 ```json
 {
@@ -111,19 +109,19 @@ Filmes parecidos com um filme, do mais parecido para o menos parecido.
 }
 ```
 
-O próprio filme nunca aparece. Em caso de empate na semelhança, ordena pelo id.
+The movie itself never appears. Movies with the same similarity are ordered by id.
 
 ### `GET /api/recomendacoes_utilizador?user_id=ana`
 
-Recomendações para um utilizador, com as razões de cada uma.
+Recommendations for a user, with the reasons for each one.
 
-| Parâmetro | Valores | Por omissão |
+| Parameter | Values | Default |
 | --- | --- | --- |
-| `user_id` | **Obrigatório.** O utilizador (coluna `user_id` do `users.csv`) | |
-| `limit` | 1 a 100 | 10 |
-| `offset` | 0 ou mais | 0 |
+| `user_id` | **Required.** The user (the `user_id` column of `users.csv`) | |
+| `limit` | 1 to 100 | 10 |
+| `offset` | 0 or more | 0 |
 
-Resposta (um item, resumido):
+Response (one item, shortened):
 
 ```json
 {
@@ -145,101 +143,100 @@ Resposta (um item, resumido):
 }
 ```
 
-| Campo | O que é |
+| Field | What it is |
 | --- | --- |
-| `score` | Pontuação do filme para este utilizador |
-| `status` | `main` cumpre tudo o que foi pedido; `alternative` falha só a nota mínima, dentro da tolerância do utilizador |
-| `reasons` | Porque foi recomendado |
-| `satisfied_requirements` | Limites do utilizador que o filme cumpre (duração, idioma, idade...) |
-| `unmet_preferences` | Preferências que o filme não cumpre |
-| `score_breakdown` | Como se chegou ao `score`. Soma dos valores = `score` |
+| `score` | The movie's score for this user |
+| `status` | `main` meets everything that was asked; `alternative` fails only the minimum rating, within the user's tolerance |
+| `reasons` | Why the movie was recommended |
+| `satisfied_requirements` | The user's limits that the movie meets (duration, language, age...) |
+| `unmet_preferences` | The preferences that the movie does not meet |
+| `score_breakdown` | How the `score` was reached. The values add up to the `score` |
 
-- A ordem é: primeiro os `main`, depois os `alternative`; dentro de cada grupo, maior
-  `score` primeiro, depois maior nota, depois o id.
-- Uma lista vazia (`"items": []`) quer dizer que nenhum filme é elegível para este
-  utilizador (por exemplo, já viu todos os que cumprem os limites).
-- Os pesos das regras não se somam no cliente: usa o `score_breakdown`.
-- Como a pontuação é calculada: [MOTOR.md](../MOTOR.md).
+- The order is: `main` first, then `alternative`. Inside each group, the higher `score` comes first, then the
+  higher rating, then the id.
+- An empty list (`"items": []`) means that no movie is eligible for this user (for example, the user has
+  already watched every movie that meets the limits).
+- Do not add the rule weights on the client: use `score_breakdown`.
+- How the score is calculated: [ENGINE.md](../ENGINE.md).
 
 ---
 
-## Recarregar os dados
+## Reloading the data
 
-Depois de alterares um CSV, estes pedidos fazem o Prolog ler-lo outra vez, sem reiniciar.
-Não levam corpo.
+After you change a CSV file, these requests make the engine read it again, with no restart. They take no
+body.
 
-| Pedido | Lê outra vez |
+| Request | Reads again |
 | --- | --- |
-| `POST /api/reload` | `movies.csv` e `users.csv` |
-| `POST /api/reload/users` | só `users.csv` |
-| `POST /api/reload/movies` | só `movies.csv` |
+| `POST /api/reload` | `movies.csv` and `users.csv` |
+| `POST /api/reload/users` | only `users.csv` |
+| `POST /api/reload/movies` | only `movies.csv` |
 
-Resposta:
+Response:
 
 ```json
 { "status": "ok", "reloaded": "users", "movies": 100, "users": 10 }
 ```
 
-- Demora cerca de 2 segundos, porque o motor volta a correr todas as regras.
-  (Isto acontece sempre, porque as conclusões dependem dos dois ficheiros.)
-- **Ou muda tudo ou não muda nada.** Os pedidos de consulta que chegarem durante o reload
-  veem os dados antigos. Se o CSV tiver um erro, a resposta é `422` e o Prolog continua
-  com os dados anteriores.
-- Dois reloads ao mesmo tempo correm um a seguir ao outro.
+- It takes about 2 seconds, because the engine runs all the rules again. This happens every time, because
+  the conclusions depend on both files.
+- **Everything changes or nothing does.** Queries that arrive during a reload see the old data. If a CSV has
+  an error, the answer is `422` and the engine keeps the previous data.
+- Two reloads at the same time run one after the other.
 
 ---
 
-## Erros
+## Errors
 
-Os erros têm sempre o mesmo formato, com a mensagem em `error`:
+Errors always have the same shape, with the message in `error`:
 
 ```json
 { "error": "Filme não encontrado" }
 ```
 
-| Código | Quando |
+| Code | When |
 | --- | --- |
-| `400` | Parâmetro em falta ou inválido (por exemplo `limit=0`, `pace=xpto`) |
-| `404` | Filme ou utilizador que não existe |
-| `405` | Método errado (por exemplo `GET /api/reload`) |
-| `422` | Um reload encontrou um CSV inválido |
-| `500` | Erro inesperado no Prolog (fica registado nos logs) |
+| `400` | A parameter is missing or invalid (for example `limit=0` or `pace=xpto`) |
+| `404` | The movie or the user does not exist |
+| `405` | Wrong method (for example `GET /api/reload`) |
+| `422` | A reload found an invalid CSV |
+| `500` | Unexpected error in Prolog (it is written to the logs) |
 
 ---
 
-## Para quem altera a API
+## For whoever changes the API
 
-### Organização do código
+### Code organisation
 
-| Ficheiro | Responsabilidade |
+| File | What it does |
 | --- | --- |
-| `server.pl` | Ponto de entrada: carrega o motor, regista os controllers, `start/0,1` e `stop/0` |
-| `http_common.pl` | CORS, método HTTP, erros JSON, paginação e logs |
+| `server.pl` | Entry point: loads the engine, registers the controllers, and defines `start/0,1` and `stop/0` |
+| `http_common.pl` | CORS, HTTP method, JSON errors, pagination and logs |
 | `health_controller.pl` | `/api/health` |
-| `movies_controller.pl` | `/api/filmes`, `/api/filme`, `/api/recomendacoes` (e a serialização de um filme) |
+| `movies_controller.pl` | `/api/filmes`, `/api/filme` and `/api/recomendacoes` (and how a movie is serialised) |
 | `users_controller.pl` | `/api/recomendacoes_utilizador` |
-| `reload_controller.pl` | `/api/reload`, `/api/reload/users`, `/api/reload/movies` |
+| `reload_controller.pl` | `/api/reload`, `/api/reload/users` and `/api/reload/movies` |
 
-Um novo controller é um módulo com os seus `http_handler`, no formato
-`api_handle(get, handler)`, carregado em `server.pl`. A lógica de recarga
-(`recarrega_base/1`) está em `../filmes_bc.pl`, junto do carregamento dos factos.
+A new controller is a module with its own `http_handler` declarations, in the form
+`api_handle(get, handler)`, loaded in `server.pl`. The reload logic (`recarrega_base/1`) is in
+`../filmes_bc.pl`, next to the code that loads the facts.
 
 ### Logs
 
-Cada pedido escreve uma linha (`docker compose logs -f swi-prolog`):
+Each request writes one line (`docker compose logs -f swi-prolog`):
 
 ```text
 GET /api/filme?id=x -> 404 (1 ms)
 POST /api/reload -> 200 (1672 ms)
 ```
 
-### Testes
+### Tests
 
-Dentro de `swi-prolog/`:
+Inside `swi-prolog/`:
 
 ```bash
 python api/test_http.py
 ```
 
-Arranca um servidor temporário, faz pedidos HTTP reais (consultas, filtros, erros,
-CORS e reloads) e termina-o.
+It starts a temporary server, sends real HTTP requests (queries, filters, errors, CORS and reloads) and shuts
+it down.

@@ -1,116 +1,116 @@
-# SWI-Prolog
+# Prolog engine
 
-Motor de inferência em SWI-Prolog. Aplica regras de produção a uma base de filmes e de
-utilizadores e devolve recomendações através de uma API HTTP.
+An inference engine in SWI-Prolog. It applies production rules to a base of movies and users and returns
+recommendations through an HTTP API, or through an interactive console.
 
-Mais documentação: [api/README.md](api/README.md) (endpoints) e
-[MOTOR.md](MOTOR.md) (regras e cálculo das recomendações).
+More documentation in this folder: [api/README.md](api/README.md) (the endpoints) and
+[ENGINE.md](ENGINE.md) (the rules, the user CSV format and how the scores are calculated).
 
 ---
 
-## Com Docker
+## Run with Docker
 
-Só precisas do Docker Desktop. Todos os comandos correm num terminal aberto na **raiz do
-repositório** (a pasta onde está o `docker-compose.yml`).
+You only need Docker Desktop. Run every command in a terminal opened at the **repository root** (the folder
+that holds `docker-compose.yml`).
 
-### Passo 1. Abrir o Docker Desktop
+### Step 1. Open Docker Desktop
 
-Confirma que está aberto e a correr.
+Check that it is open and running.
 
-### Passo 2. Arrancar
+### Step 2. Start the engine
 
 ```bash
 docker compose up -d --build swi-prolog
 ```
 
-Isto arranca o Prolog e o serviço `knowledge-base`, de onde o Prolog lê os CSV. A primeira
-vez demora alguns minutos, porque constrói as imagens.
+This starts the Prolog engine and the knowledge base, where the engine reads the CSV files. The first run
+takes a few minutes because it builds the images.
 
-### Passo 3. Confirmar que arrancou
+### Step 3. Check that it works
 
-Espera cerca de 30 segundos e abre no browser:
+Wait about 30 seconds and open in the browser:
 
 > http://localhost:8081/api/health
 
-Deves ver `{"status":"ok"}`. Se der erro, espera mais um pouco e atualiza a página.
+You should see `{"status":"ok"}`. If you get an error, wait a little longer and refresh the page.
 
-### Passo 4. Usar a API
+### Step 4. Use the API
 
-Abre no browser:
+Open in the browser:
 
-| O que mostra | Endereço |
+| What it shows | Address |
 | --- | --- |
-| Lista de filmes | http://localhost:8081/api/filmes |
-| Um filme | http://localhost:8081/api/filme?id=tt0372784 |
-| Filmes parecidos com esse | http://localhost:8081/api/recomendacoes?id=tt0372784 |
-| Recomendações para o utilizador `ana` | http://localhost:8081/api/recomendacoes_utilizador?user_id=ana |
+| The list of movies | http://localhost:8081/api/filmes |
+| One movie | http://localhost:8081/api/filme?id=tt0372784 |
+| Movies similar to that one | http://localhost:8081/api/recomendacoes?id=tt0372784 |
+| Recommendations for the user `ana` | http://localhost:8081/api/recomendacoes_utilizador?user_id=ana |
 
-### Passo 5. Alterar os dados
+### Step 5. Change the data
 
-1. Edita `knowledge_base/users.csv` (ou `movies.csv`) e grava.
-2. Pede ao Prolog que os leia outra vez. São pedidos `POST`, por isso não dá no browser.
-   Escolhe o que alteraste:
+1. Edit `knowledge_base/users.csv` (or `movies.csv`) and save.
+2. Ask the engine to read the files again. These are `POST` requests, so they do not work in the browser.
+   Pick the one that matches what you changed:
 
-   | O que alteraste | Comando | Pedido no Postman |
+   | What you changed | Command | Postman request |
    | --- | --- | --- |
-   | Os dois ficheiros | `curl -X POST http://localhost:8081/api/reload` | Reload all |
-   | Só `users.csv` | `curl -X POST http://localhost:8081/api/reload/users` | Reload users |
-   | Só `movies.csv` | `curl -X POST http://localhost:8081/api/reload/movies` | Reload movies |
+   | Both files | `curl -X POST http://localhost:8081/api/reload` | Reload all |
+   | Only `users.csv` | `curl -X POST http://localhost:8081/api/reload/users` | Reload users |
+   | Only `movies.csv` | `curl -X POST http://localhost:8081/api/reload/movies` | Reload movies |
 
-   No PowerShell escreve `curl.exe` em vez de `curl`.
+   In PowerShell, write `curl.exe` instead of `curl`.
 
-3. Se correu bem, a resposta tem `"status":"ok"`. Se o CSV tiver um erro, responde `422`
-   com a descrição e o Prolog continua com os dados anteriores.
+3. If it worked, the answer has `"status":"ok"`. If a CSV has an error, the answer is `422` with a
+   description and the engine keeps the previous data.
 
-### Passo 6. Ver o que se passa e parar
+### Step 6. See the logs and stop
 
-Ver os pedidos a chegar (Ctrl+C para sair):
+Follow the requests as they arrive (Ctrl+C to leave):
 
 ```bash
 docker compose logs -f swi-prolog
 ```
 
-Parar tudo:
+Stop everything:
 
 ```bash
 docker compose down
 ```
 
-Depois de alterares ficheiros `.pl`, volta ao Passo 2 para reconstruir a imagem.
+After you change a `.pl` file, go back to Step 2 to rebuild the image.
 
 ---
 
-## Manualmente
+## Run manually
 
-Sem Docker. Precisas do **SWI-Prolog 9 ou superior** instalado (o comando `swipl` tem de
-funcionar no terminal).
+No Docker needed for the engine. You need **SWI-Prolog 9 or newer** installed (the `swipl` command must work
+in the terminal).
 
-### Passo 1. Entrar na pasta
+### Step 1. Go to the folder
 
-A partir da raiz do repositório:
+From the repository root:
 
 ```bash
 cd swi-prolog
 ```
 
-Todos os comandos seguintes correm aqui dentro.
+Every command below runs here.
 
-### Passo 2. Escolher de onde vêm os ficheiros CSV
+### Step 2. Choose where the CSV files come from
 
-**Opção A: dos ficheiros do repositório.** Não faças nada. O Prolog lê
-`../knowledge_base/movies.csv` e `../knowledge_base/users.csv`.
+**Option A: the files in the repository.** Do nothing. The engine reads `../knowledge_base/movies.csv`
+and `../knowledge_base/users.csv`.
 
-**Opção B: do serviço `knowledge-base`** (porta 8090). Precisa do Docker:
+**Option B: the knowledge base service** (port 8090). This needs Docker:
 
-1. Na raiz do repositório, arranca o serviço:
+1. From the repository root, start the service:
 
    ```bash
    docker compose up -d knowledge-base
    ```
 
-2. No terminal onde vais correr o Prolog, indica os endereços dos ficheiros.
+2. In the terminal where you will run the engine, set the addresses of the files.
 
-   Linux, macOS ou Git Bash:
+   Linux, macOS or Git Bash:
 
    ```bash
    export MOVIES_CSV=http://localhost:8090/movies.csv
@@ -124,32 +124,41 @@ Todos os comandos seguintes correm aqui dentro.
    $env:USERS_CSV = "http://localhost:8090/users.csv"
    ```
 
-### Passo 3. Carregar a base de conhecimento e arrancar
+### Step 3. Load the knowledge base and start
 
-Escolhe **uma** das três.
+Choose **one** of the three.
 
-**Opção 1: a API** (fica em http://localhost:8080). A base é carregada ao arrancar:
+**Option 1: the API** (at http://localhost:8080). The knowledge base loads at startup.
+
+Linux, macOS or Git Bash:
 
 ```bash
-swipl -q -s api/server.pl -g 'server:start(8080), thread_get_message(stop)'
+./run.sh
 ```
 
-Espera cerca de 30 segundos e abre http://localhost:8080/api/health.
+Windows:
 
-**Opção 2: a consola com o motor 1** (`sp_exp1`):
+```bat
+run.bat
+```
+
+Wait about 30 seconds and open http://localhost:8080/api/health. To use another port, set `PORT` before you
+run the script.
+
+**Option 2: the console with engine 1** (`sp_exp1`):
 
 ```bash
 swipl -q -s sp_exp1.pl
 ```
 
-**Opção 3: a consola com o motor 2** (`sp_exp2`, também explica as conclusões):
+**Option 3: the console with engine 2** (`sp_exp2`, which also explains its conclusions):
 
 ```bash
 swipl -q -s sp_exp2.pl
 ```
 
-Nas opções 2 e 3, quando aparecer o prompt `?-`, carrega a base escrevendo estas três
-linhas, **uma de cada vez** (cada uma termina com ponto):
+With options 2 and 3, when the `?-` prompt appears, load the knowledge base by typing these three lines,
+**one at a time** (each ends with a full stop):
 
 ```prolog
 carrega_bc.
@@ -157,56 +166,56 @@ carrega_bc.
 arranca_motor.
 ```
 
-- `carrega_bc.` pergunta o nome da base de conhecimento.
-- `'filmes_bc.pl'.` é a resposta: lê os CSV e carrega as regras.
-- `arranca_motor.` corre as regras. Escreve muitas linhas "Foi concluído o facto...".
-  É normal e demora alguns segundos.
+- `carrega_bc.` asks for the name of the knowledge base.
+- `'filmes_bc.pl'.` is the answer: it reads the CSV files and loads the rules.
+- `arranca_motor.` runs the rules. It prints many "Foi concluído o facto..." lines, which is normal, and takes
+  a few seconds.
 
-### Passo 4. Fazer perguntas (só na consola)
+### Step 4. Ask questions (console only)
 
-Os géneros do Batman Begins (`;` mostra a resposta seguinte, Enter pára):
+The genres of Batman Begins (`;` shows the next answer, Enter stops):
 
 ```prolog
 facto(_, genre(tt0372784, G)).
 ```
 
-Só no motor 2: porque é que o Batman Begins tem ritmo rápido?
+Engine 2 only: why does Batman Begins have a fast pace?
 
 ```prolog
 facto(N, pace(tt0372784, fast)), como(N).
 ```
 
-Sair da consola: `halt.`
+Leave the console with `halt.`
 
-Mais perguntas possíveis em [MOTOR.md](MOTOR.md).
+More queries are in [ENGINE.md](ENGINE.md).
 
-### Passo 5. Depois de alterar um CSV
+### Step 5. After you change a CSV
 
-- **API a correr:** não é preciso reiniciar. Faz um destes pedidos, conforme o que
-  alteraste (no PowerShell, `curl.exe`):
+- **API running:** no restart needed. Send one of these requests, depending on what you changed (in
+  PowerShell, `curl.exe`):
 
   ```bash
-  curl -X POST http://localhost:8080/api/reload          # os dois ficheiros
-  curl -X POST http://localhost:8080/api/reload/users    # só users.csv
-  curl -X POST http://localhost:8080/api/reload/movies   # só movies.csv
+  curl -X POST http://localhost:8080/api/reload          # both files
+  curl -X POST http://localhost:8080/api/reload/users    # only users.csv
+  curl -X POST http://localhost:8080/api/reload/movies   # only movies.csv
   ```
 
-- **Consola:** escreve `carrega_factos_filmes.` e depois `arranca_motor.` (recarrega os
-  dois ficheiros).
+- **Console:** type `carrega_factos_filmes.` and then `arranca_motor.` (this reads both files again).
 
 ---
 
-## Ficheiros
+## Files
 
-| Ficheiro | Para que serve |
+| File | What it does |
 | --- | --- |
-| `api/` | A API HTTP, um ficheiro por área |
-| `csv_source.pl` | Lê um CSV de um URL ou de um ficheiro |
-| `movies_loader.pl`, `user_bc.pl` | Transformam os CSV de filmes e de utilizadores em factos |
-| `filmes_bc.pl` | Junta os factos e trata do recarregamento |
-| `rules_movies.pl` | Regras 1–33: classificam os filmes |
-| `rules_users.pl` | Regras 34–65: preferências, exclusões e limites dos utilizadores |
-| `user_constraints.pl` | Funções auxiliares das regras |
-| `rules_dialog.pl` | Diálogo no motor 2: escolha de uma de 7 experiências, perguntas de seguimento e «porquê?»; ver [MOTOR.md](MOTOR.md) |
-| `sp_exp1.pl`, `sp_exp2.pl` | Os dois motores de inferência |
-| `rules_user.pl` | Só por compatibilidade; carrega `rules_users.pl` |
+| `run.sh`, `run.bat` | Start the API without Docker |
+| `api/` | The HTTP API, one file per area |
+| `csv_source.pl` | Reads a CSV from a URL or from a file |
+| `movies_loader.pl`, `user_bc.pl` | Turn the movies CSV and the users CSV into facts |
+| `filmes_bc.pl` | Joins the facts and handles reloading |
+| `rules_movies.pl` | Rules 1–33: classify the movies |
+| `rules_users.pl` | Rules 34–65: user preferences, exclusions and limits |
+| `user_constraints.pl` | Helper functions for the rules |
+| `rules_dialog.pl` | Dialogue in engine 2: choose one of seven experiences, follow-up questions and "why?" |
+| `sp_exp1.pl`, `sp_exp2.pl` | The two inference engines |
+| `rules_user.pl` | Kept for compatibility only; it loads `rules_users.pl` |

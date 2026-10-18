@@ -1,263 +1,273 @@
-# Motores de inferência e modelo de recomendação
+# Inference engines and the recommendation model
 
-Este documento explica como funcionam os motores de produção em Prolog, o formato
-dos dados dos utilizadores e como são calculadas as recomendações. Para pôr tudo a
-correr, ver o [README](README.md); para a API HTTP, [api/README.md](api/README.md).
+This document explains how the Prolog production engines work, the format of the user data and how the
+recommendations are calculated. To get everything running, see the [README](README.md). For the HTTP API, see
+[api/README.md](api/README.md).
 
-Os comandos `swipl` deste documento correm dentro da pasta `swi-prolog`. Sem as
-variáveis `MOVIES_CSV` e `USERS_CSV`, os CSV são lidos de `../knowledge_base/`.
+The `swipl` commands in this document run inside the `swi-prolog` folder. Without the `MOVIES_CSV` and
+`USERS_CSV` variables, the CSV files are read from `../knowledge_base/`.
 
-## A base de conhecimento
+The names of the predicates and facts (`carrega_bc`, `arranca_motor`, `facto`, `como`, `whynot`...) and the
+text the console prints are in Portuguese, as in the code. They are kept as they are.
 
-A base é composta por 100 filmes (`movies.csv`) e por inquéritos de utilizadores
-(`users.csv`). Os filmes são carregados por `movies_loader.pl` como factos
-independentes (um por atributo):
+## Contents
+
+1. [The knowledge base](#the-knowledge-base)
+2. [Querying the movies](#querying-the-movies)
+3. [Engine 2: explanations](#engine-2-explanations)
+4. [The dialogue: choose an experience and ask "why?"](#the-dialogue-choose-an-experience-and-ask-why)
+5. [The users CSV format](#the-users-csv-format)
+6. [The user rules](#the-user-rules)
+7. [Querying users and rules in the console](#querying-users-and-rules-in-the-console)
+8. [Recommendations](#recommendations)
+
+---
+
+## The knowledge base
+
+The base has 100 movies (`movies.csv`) and the users' survey answers (`users.csv`). `movies_loader.pl`
+loads the movies as independent facts, one per attribute:
 
 `Id, Title, Vote, Year, Duration, RatingMPA, RatingIMDB, Budget, Director, Writer, Star, Genre, Country, FilmingLocation, Company, Language, Win, Nomination, Oscar`
 
-Os utilizadores são carregados por `user_bc.pl` e interpretados por `rules_users.pl`.
-As regras 1–33 (`rules_movies.pl`) classificam os filmes; as regras 34–65
-(`rules_users.pl`) cruzam utilizadores e filmes. Ambos os motores (`sp_exp1.pl` e
-`sp_exp2.pl`) executam as mesmas regras.
+`user_bc.pl` loads the users and `rules_users.pl` interprets them. Rules 1–33 (`rules_movies.pl`) classify
+the movies. Rules 34–65 (`rules_users.pl`) match users with movies. Both engines (`sp_exp1.pl` and
+`sp_exp2.pl`) run the same rules.
 
-## Motores e consulta de filmes
+---
 
-### Carregar
+## Querying the movies
+
+### Load the base
 
 ```bash
 swipl sp_exp1.pl
 ```
 
-No promt do prolog
+At the Prolog prompt:
 
 ```prolog
 ?- carrega_bc.
-# quando pedir nome da base de conhecimento
+% When it asks for the name of the knowledge base:
 ?- 'filmes_bc.pl'.
 true
 
 ?- arranca_motor.
-
-# dá cerca de 28000 factos sobre os movies
+% This produces about 28000 facts about the movies.
 ```
 
-### depois pode ser interrogada com
+### Ask questions
+
+Write each query with a full stop. Use `;` to ask for another solution, or Enter to finish.
 
 ```prolog
-# saber os géneros de um filme
+% The genres of a movie
 facto(_, genre(tt0372784, Genre)).
 
-# encontrar filmes de ritmo rápido e pouca violência
+% Fast-paced movies with little violence
 facto(_, pace(Id, fast)),
 facto(_, violence(Id, low)),
 facto(_, movie(Id, Title)).
 
-# consultar temas ou intensidade psicológica
+% Themes or psychological intensity
 facto(_, themes(Id, Theme)).
 facto(_, psychological_intensity(Id, high)).
 
-# encontrar filmes semelhantes a um filme
-facto(_, similar_movie(tt0372784, Outro)),
-facto(_, movie(Outro, Title)).
+% Movies similar to a movie
+facto(_, similar_movie(tt0372784, Other)),
+facto(_, movie(Other, Title)).
 
-# obter recomendações com pontuação de similaridade de pelo menos 7
-facto(_, similarity_score(tt0372784, Outro, Score)),
+% Recommendations with a similarity score of at least 7
+facto(_, similarity_score(tt0372784, Other, Score)),
 Score >= 7,
-facto(_, movie(Outro, Title)).
+facto(_, movie(Other, Title)).
 
-# perceber qual a regra que originou uma conclusão
+% Which rule produced a conclusion
 facto(N, pace(tt0372784, fast)),
-justifica(N, Regra, FactosOrigem).
+justifica(N, Rule, SourceFacts).
 
-# listar todos os filmes de ação de uma vez
+% All the action movies at once
 findall(Title,
         (facto(_, genre(Id, 'Action')), facto(_, movie(Id, Title))),
-        Filmes).
+        Movies).
 
-
-# recomendar um filme
-facto(_, similarity_score(tt0372784, Id, Score)),
-Score >= 7,
-facto(_, movie(Id, Title)).
-
----
-# obter apenas o filme com maior pontuação
-% findall reúne todos os resultados, sem agrupar pelos números dos factos.
-findall(Score-Id-Title,
-        (facto(_, similarity_score(tt0372784, Id, Score)),
-         facto(_, movie(Id, Title))),
-        Resultados),
-sort(Resultados, Lista),
-last(Lista, Pontuacao-Filme-Titulo).
-% Em empate, devolve o último ID na ordem padrão do Prolog.
-% Sem resultados, a consulta falha (false).
-
----
-# recomendar por preferências, por exemplo, ação com ritmo rápido
+% Action movies with a fast pace
 facto(_, genre(Id, 'Action')),
 facto(_, pace(Id, fast)),
 facto(_, movie(Id, Title)).
 
----
-
+% The pace and the complexity of one movie
 facto(_, pace(tt0372784, Pace)).
 facto(_, complexity(tt0372784, Complexity)).
 
----
-
+% Fast-paced movies with low complexity
 facto(_, pace(Id, fast)),
 facto(_, complexity(Id, low)),
 facto(_, movie(Id, Title)).
-
 ```
 
-### Usar o segundo motor e pedir explicações
+To get only the movie with the highest similarity:
 
-Iniciar numa sessão nova, escolhendo apenas um motor:
+```prolog
+% findall gathers every result, without grouping by fact number.
+findall(Score-Id-Title,
+        (facto(_, similarity_score(tt0372784, Id, Score)),
+         facto(_, movie(Id, Title))),
+        Results),
+sort(Results, List),
+last(List, Score-Movie-Title).
+% If two movies tie, it returns the last id in the standard Prolog order.
+% With no results, the query fails (false).
+```
+
+---
+
+## Engine 2: explanations
+
+Start a new session and choose only one engine:
 
 ```bash
 swipl -s sp_exp2.pl
 ```
 
-No prompt do Prolog:
+At the Prolog prompt:
 
 ```prolog
 carrega_bc.
 'filmes_bc.pl'.
 arranca_motor.
 
-% como foi concluído que este filme tem ritmo rápido?
+% How was it concluded that this movie has a fast pace?
 facto(N, pace(tt0372784, fast)), como(N).
 
-% porque não foi classificado com ritmo lento?
+% Why was it not classified with a slow pace?
 whynot(pace(tt0372784, slow)).
 ```
 
-As consultas de filmes acima funcionam nos dois motores. A segunda versão suporta também condições `nao` nas regras e preserva as justificações.
-A negação verifica ausência no momento de execução; ligar primeiro as variáveis com condições positivas. Recarregar os factos antes de recalcular após alterações nos dados; o motor não retira automaticamente conclusões anteriores.
+The movie queries above work in both engines. Engine 2 also supports `nao` (not) conditions in the rules and
+keeps the justifications. A negation checks that something is absent at run time, so bind the variables
+first with positive conditions. After you change the data, reload the facts before you calculate again: the
+engine does not remove earlier conclusions by itself.
 
-### Escolher a experiência e perguntar «porquê?» durante o diálogo
+---
 
-O diálogo de [rules_dialog.pl](rules_dialog.pl) começa por uma escolha entre
-sete experiências e coloca depois apenas as perguntas do ramo escolhido.
-Esta interação requer `sp_exp2.pl` e um utilizador atual existente na base.
+## The dialogue: choose an experience and ask "why?"
 
-Na pasta `swi-prolog`, iniciar uma sessão nova:
+The dialogue in [rules_dialog.pl](rules_dialog.pl) starts with a choice between seven experiences and then
+asks only the questions of the chosen branch. It needs `sp_exp2.pl` and a current user that exists in the
+base.
+
+### Start the dialogue
+
+In the `swi-prolog` folder, start a new session:
 
 ```bash
 swipl -q -s sp_exp2.pl
 ```
 
-No prompt Prolog, carregar a base e selecionar a Ana:
+At the Prolog prompt, load the base and select Ana:
 
 ```prolog
 consult(filmes_bc).
 retractall(resposta_utilizador(_, _)).
 
-% A Ana já existe como user(ana) nos factos carregados do CSV.
+% Ana already exists as user(ana) in the facts loaded from the CSV.
 regista_facto_utilizador(utilizador_atual(ana)).
 arranca_motor.
 ```
 
-`filmes_bc.pl` já carrega `rules_dialog.pl`. Além das mensagens de inferência,
-aparecerá a pergunta inicial:
+`filmes_bc.pl` already loads `rules_dialog.pl`. Besides the inference messages, the first question appears:
 
 ```text
 ana, que experiência te apetece ter com o filme de hoje?
 Opções: [emocao,comedia,acao,misterio,terror,ficcao_cientifica,fantasia]. Escreve uma opção ou porque, terminando com ponto.
 ```
 
-Escrever uma das opções exatamente como apresentada, por exemplo `comedia.`.
-Nesta pergunta, `sim.` e `nao.` não são escolhas válidas. Uma opção inválida
-origina uma mensagem e a repetição da pergunta, sem guardar uma escolha.
+Type one of the options exactly as shown, for example `comedia.`. In this question, `sim.` and `nao.` are not
+valid choices. An invalid option prints a message and repeats the question, without saving a choice.
 
-#### Usar `porque.` antes de responder
+### Use `porque.` before you answer
 
-`porque.` é uma resposta durante a interação de `arranca_motor.`, não uma
-consulta autónoma no prompt `?-`. Funciona tanto na escolha inicial como nas
-perguntas de seguimento. Mostra a regra em avaliação, as condições, a informação
-necessária e as ações previstas se todas as condições forem satisfeitas.
-Depois repete a pergunta, sem registar uma escolha ou resposta afirmativa.
+`porque.` is an answer during the interaction started by `arranca_motor.`, not a stand-alone query at the
+`?-` prompt. It works in the first choice and in the follow-up questions. It shows the rule being evaluated,
+its conditions, the information it needs and the actions it will take if every condition is met. Then it
+repeats the question, without recording a choice or an affirmative answer.
 
-Na pergunta inicial, `porque.` explica a regra `dialogo_experiencia`.
-Escolher `comedia.` regista `escolha(experiencia(ana), comedia)` na memória de
-trabalho e permite inferir `experiencia_sessao(ana, comedia)` e
-`sugerir_genero(ana, 'Comedy')`. Surge então:
+In the first question, `porque.` explains the rule `dialogo_experiencia`. Choosing `comedia.` records
+`escolha(experiencia(ana), comedia)` in the working memory and lets the engine infer
+`experiencia_sessao(ana, comedia)` and `sugerir_genero(ana, 'Comedy')`. Then this appears:
 
 ```text
 ana, preferes humor ligado a uma história romântica? (sim/nao/porque, terminar com .)
 ```
 
-Aqui, `porque.` explica a regra `dialogo_comedia_2`. Responder `sim.` permite
-inferir também `sugerir_genero(ana, 'Romantic Comedy')`. Responder `nao.` mantém
-a sugestão de comédia, mas não acrescenta a de comédia romântica.
+Here `porque.` explains the rule `dialogo_comedia_2`. Answering `sim.` also lets the engine infer
+`sugerir_genero(ana, 'Romantic Comedy')`. Answering `nao.` keeps the comedy suggestion but does not add the
+romantic comedy.
 
-| Resposta | Onde usar | Efeito |
+| Answer | Where to use it | Effect |
 | --- | --- | --- |
-| `comedia.` ou outra opção apresentada | Escolha inicial | Guarda a escolha e seleciona o ramo. |
-| `porque.` | Qualquer pergunta | Explica a regra atual e repete a pergunta. |
-| `sim.` | Pergunta de seguimento | Guarda a resposta e acrescenta o facto perguntado. |
-| `nao.` | Pergunta de seguimento | Guarda a resposta sem acrescentar o facto; a condição falha. |
+| `comedia.` or another listed option | The first choice | Saves the choice and selects the branch |
+| `porque.` | Any question | Explains the current rule and repeats the question |
+| `sim.` | A follow-up question | Saves the answer and adds the fact that was asked |
+| `nao.` | A follow-up question | Saves the answer without adding the fact; the condition fails |
 
-Todas as entradas terminam com ponto. Os nomes das opções usam minúsculas,
-sem acentos; ficção científica escreve-se `ficcao_cientifica.`.
+Every answer ends with a full stop. Option names are lower case, with no accents: science fiction is written
+`ficcao_cientifica.`.
 
-#### Percursos disponíveis em `rules_dialog.pl`
+### The paths in `rules_dialog.pl`
 
-| Escolha | Sugestão inicial | Pergunta de seguimento e resultado de `sim.` |
+| Choice | First suggestion | Follow-up question and the result of `sim.` |
 | --- | --- | --- |
-| `emocao.` | Seleciona o ramo emocional. | História que emocione → `perfil_sessao(U, emocional)`; temas realistas → `'Drama'`; aceitar final triste → `sugerir_tom(U, triste)`. |
-| `comedia.` | `'Comedy'` | Humor ligado a uma história romântica → `'Romantic Comedy'`. |
-| `acao.` | `'Action'` | Acompanhar uma aventura → `'Adventure'`. |
-| `misterio.` | `'Mystery'` | Suspense e tensão → `'Thriller'`. |
-| `terror.` | `'Horror'` | Elementos sobrenaturais → `preferencia_sessao(U, sobrenatural)`. |
-| `ficcao_cientifica.` | `'SciFi'` | Sociedades dominadas pela tecnologia → `'Cyberpunk'`. |
-| `fantasia.` | `'Fantasy'` | Missão ou jornada → `'Quest'`. |
+| `emocao.` | Selects the emotional branch | A story that moves you → `perfil_sessao(U, emocional)`; realistic themes → `'Drama'`; accepting a sad ending → `sugerir_tom(U, triste)` |
+| `comedia.` | `'Comedy'` | Humour tied to a love story → `'Romantic Comedy'` |
+| `acao.` | `'Action'` | Following an adventure → `'Adventure'` |
+| `misterio.` | `'Mystery'` | Suspense and tension → `'Thriller'` |
+| `terror.` | `'Horror'` | Supernatural elements → `preferencia_sessao(U, sobrenatural)` |
+| `ficcao_cientifica.` | `'SciFi'` | Societies dominated by technology → `'Cyberpunk'` |
+| `fantasia.` | `'Fantasy'` | A quest or journey → `'Quest'` |
 
-Os géneros da tabela são conclusões `sugerir_genero(U, Genero)`.
-No ramo emocional, cada pergunta depende da resposta afirmativa à anterior:
-`dialogo_1` infere o perfil emocional, `dialogo_2` sugere Drama e `dialogo_3`
-sugere o tom triste. Uma resposta negativa interrompe essa cadeia.
-Nos outros ramos, a escolha já permite sugerir o género inicial; a pergunta
-seguinte acrescenta uma sugestão ou preferência, se a resposta for afirmativa.
+The genres in the table are conclusions of the form `sugerir_genero(U, Genre)`. In the emotional branch,
+each question depends on an affirmative answer to the previous one: `dialogo_1` infers the emotional
+profile, `dialogo_2` suggests Drama and `dialogo_3` suggests the sad tone. A negative answer stops the
+chain. In the other branches the choice already allows the first genre suggestion, and the next question adds
+a suggestion or a preference if the answer is affirmative.
 
-#### Consultar a escolha, as respostas e as explicações
+### Look at the choice, the answers and the explanations
 
-Depois de concluir o exemplo de comédia:
+After you finish the comedy example:
 
 ```prolog
-% Escolha fornecida e experiência inferida.
-facto(_, escolha(experiencia(ana), Experiencia)).
-facto(_, experiencia_sessao(ana, Experiencia)).
+% The choice that was given and the experience that was inferred.
+facto(_, escolha(experiencia(ana), Experience)).
+facto(_, experiencia_sessao(ana, Experience)).
 
-% Resposta à pergunta de seguimento.
-resposta_utilizador(prefere_romance_com_humor(ana), Resposta).
+% The answer to the follow-up question.
+resposta_utilizador(prefere_romance_com_humor(ana), Answer).
 
-% Se respondeste sim, explicar a sugestão adicional.
+% If you answered sim, explain the extra suggestion.
 facto(N, sugerir_genero(ana, 'Romantic Comedy')), como(N).
 
-% Se respondeste nao, investigar a ausência dessa sugestão.
+% If you answered nao, investigate why that suggestion is missing.
 whynot(sugerir_genero(ana, 'Romantic Comedy')).
 
-% Repetir a inferência não volta a colocar as perguntas respondidas.
+% Running the inference again does not repeat the questions you answered.
 arranca_motor.
 ```
 
-A escolha inicial fica em `facto/2`, como `escolha(experiencia(U), Valor)`.
-As respostas de seguimento ficam em `resposta_utilizador/2`, por facto e
-utilizador; as afirmativas também acrescentam o facto à memória de trabalho.
-Uma resposta `nao.` não cria um facto de negação explícita. Estes dados ficam
-em memória e não são guardados automaticamente no CSV.
+The first choice is stored in `facto/2` as `escolha(experiencia(U), Value)`. The follow-up answers are stored
+in `resposta_utilizador/2`, by fact and user, and the affirmative ones also add the fact to the working
+memory. A `nao.` answer does not create an explicit negation fact. This data stays in memory and is not saved
+to the CSV.
 
-`porque.` explica a regra em avaliação; `como/1` percorre as justificações das
-conclusões já obtidas. `whynot/1` investiga uma conclusão ausente sem fazer novas
-perguntas. As sugestões de género, tom e preferências de sessão ainda não
-alteram a pontuação de `user_recommendation/4`.
+`porque.` explains the rule being evaluated. `como/1` walks through the justifications of the conclusions
+already reached. `whynot/1` investigates a missing conclusion without asking new questions. The genre, tone
+and session suggestions do not change the score of `user_recommendation/4` yet.
 
-#### Repetir o diálogo ou mudar de utilizador
+### Repeat the dialogue or change user
 
-Para escolher outra experiência ou começar com outro utilizador, repor os
-factos dos CSV e limpar as respostas. Por exemplo, selecionar a Inês:
+To choose another experience or start with another user, restore the CSV facts and clear the answers. For
+example, to select Inês:
 
 ```prolog
 carrega_factos_filmes.
@@ -266,15 +276,14 @@ regista_facto_utilizador(utilizador_atual(ines)).
 arranca_motor.
 ```
 
-A reposição remove a escolha anterior, a seleção da Ana, os factos acrescentados
-pela interação e as conclusões inferidas. Limpar apenas `resposta_utilizador/2`
-não basta: a escolha e os factos afirmativos continuariam na base. Para repetir
-com a Ana, usar `ana` em vez de `ines`.
+Restoring removes the earlier choice, the selection of Ana, the facts added by the interaction and the
+inferred conclusions. Clearing only `resposta_utilizador/2` is not enough: the choice and the affirmative
+facts would stay in the base. To repeat with Ana, use `ana` instead of `ines`.
 
-#### Definir escolhas, perguntas e textos
+### Define choices, questions and texts
 
-`opcoes_pergunta/2` define os valores aceites na escolha inicial e
-`texto_pergunta/2` fornece o texto apresentado:
+`opcoes_pergunta/2` defines the values accepted in the first choice and `texto_pergunta/2` gives the text that
+is shown:
 
 ```prolog
 opcoes_pergunta(experiencia(_),
@@ -285,14 +294,12 @@ texto_pergunta(experiencia(U), Texto) :-
            '~w, que experiência te apetece ter com o filme de hoje?', [U]).
 ```
 
-A condição `escolha(experiencia(U), Experiencia)` é interpretada pelo motor.
-A chave `experiencia(U)` deve estar completamente instanciada; o valor
-`Experiencia` é preenchido com a opção selecionada. Na regra inicial, `user(U)`
-e `utilizador_atual(U)` identificam primeiro a pessoa. Sem utilizador atual,
-o diálogo não começa.
+The engine interprets the condition `escolha(experiencia(U), Experience)`. The key `experiencia(U)` must be
+fully bound, and the value `Experience` is filled with the selected option. In the first rule, `user(U)` and
+`utilizador_atual(U)` identify the person first. With no current user, the dialogue does not start.
 
-Para perguntas de seguimento, `perguntavel/1` declara a informação que pode ser
-pedida e `texto_pergunta/2` define a frase:
+For follow-up questions, `perguntavel/1` declares the information that may be asked for and
+`texto_pergunta/2` defines the sentence:
 
 ```prolog
 perguntavel(prefere_romance_com_humor(_)).
@@ -302,58 +309,45 @@ texto_pergunta(prefere_romance_com_humor(U), Texto) :-
            '~w, preferes humor ligado a uma história romântica?', [U]).
 ```
 
-O motor só faz estas perguntas quando a condição está completamente instanciada,
-o facto ainda não existe e não há uma resposta guardada. As condições de
-experiência e os factos inferidos anteriores controlam quais as perguntas
-alcançadas. Sem texto específico, o motor usa uma pergunta genérica.
+The engine asks these questions only when the condition is fully bound, the fact does not exist yet and no
+answer is saved. The experience conditions and the facts inferred earlier decide which questions are
+reached. Without a specific text, the engine uses a generic question.
 
-#### Validar o diálogo
+---
 
-Na pasta `swi-prolog`, executar:
+## The users CSV format
 
-```bash
-swipl -q -s tests_dialog.pl -g run_tests -t halt
-```
+The pipeline loads `users.csv` through `user_bc.pl` and applies `rules_users.pl` to the profiles and to the
+movie facts. It does not generate Prolog code from the text it receives: the data are `user_fact/1` facts in
+memory. The file in the repository has 10 fictional users with varied preferences to try the
+recommendations: `ana`, `bruno`, `carla`, `diogo`, `eva`, `filipe`, `ines`, `joao`, `mariana` and `tiago`. It
+includes all the optional columns described below.
 
-Os testes cobrem os sete ramos, as respostas negativas, opções inválidas,
-`porque.` na escolha inicial e numa pergunta de seguimento, a proveniência da
-conclusão emocional e a ausência de novas perguntas ao repetir a inferência.
-
-## Formato do CSV de utilizadores
-
-A pipeline carrega `users.csv` através de `user_bc.pl` e aplica `rules_users.pl` aos perfis e aos factos dos filmes. Não gera código Prolog a partir do texto recebido: os dados são factos `user_fact/1` em memória. O ficheiro incluído contém 10 utilizadores fictícios com preferências variadas para experimentar as recomendações: ana, bruno, carla, diogo, eva, filipe, ines, joao, mariana e tiago.
-
-Formato base (uma linha por utilizador, listas separadas por `|`):
+The base format has one line per user and lists separated by `|`:
 
 ```csv
 user_id,age,watched,wishlist,preferred_genres,disliked_genres,preferred_languages,disliked_languages
 demo,25,tt0054215,tt0372784,Action|SciFi,Romance,English,
 ```
 
-Usar IDs de filmes do catálogo e nomes de género/idioma do CSV dos filmes.
-`Sci-Fi` é normalizado para `SciFi`. Campos de listas podem ficar vazios.
-`user_id` deve ser único e não vazio; `age` pode ficar vazio ou conter um inteiro entre 0 e 120.
-Referências a filmes fora do catálogo não produzem recomendações por similaridade.
-O carregamento valida o ficheiro antes de substituir os perfis em memória.
+Use movie ids from the catalogue and genre and language names from the movies CSV. `Sci-Fi` is normalised to
+`SciFi`. List fields may be empty. The `user_id` must be unique and not empty. The `age` may be empty or an
+integer from 0 to 120. References to movies outside the catalogue produce no similarity recommendations.
+Loading validates the file before it replaces the profiles in memory.
 
-O ficheiro vigente (`knowledge_base/users.csv`) tem 10 utilizadores fictícios — `ana`,
-`bruno`, `carla`, `diogo`, `eva`, `filipe`, `ines`, `joao`, `mariana` e `tiago` — e
-inclui todas as colunas opcionais descritas a seguir.
+### Optional preferences
 
-### Novas preferências opcionais
+After the eight original columns, the header of `users.csv` has the columns below. They may be empty or hold
+several values separated by `|`. A file with only the eight original columns, or with a subset of the new
+columns, is also accepted. Invalid enumerated values reject the load.
 
-O cabeçalho de `users.csv` inclui agora as colunas abaixo, depois
-das oito originais. Podem ficar vazias ou conter vários valores separados por `|`.
-Também são aceites ficheiros com apenas as oito colunas originais ou com um
-subconjunto das novas colunas. Valores enumerados inválidos rejeitam o carregamento.
-
-| Coluna | Valores | Pontos por correspondência |
+| Column | Values | Points per match |
 | --- | --- | --- |
-| `preferred_directors` | Nomes de `director`, ex.: `Christopher Nolan` | 10 |
-| `preferred_writers` | Nomes de `writer` | 2 |
-| `preferred_stars` | Nomes de `star`, ex.: `Christian Bale` | 10 |
-| `preferred_countries` | Nomes de `country_origin`, ex.: `United States` | 1 |
-| `preferred_subgenres` | Subgéneros reconhecidos em `rules_movies.pl`, ex.: `Superhero` | 3 |
+| `preferred_directors` | `director` names, for example `Christopher Nolan` | 10 |
+| `preferred_writers` | `writer` names | 2 |
+| `preferred_stars` | `star` names, for example `Christian Bale` | 10 |
+| `preferred_countries` | `country_origin` names, for example `United States` | 1 |
+| `preferred_subgenres` | Subgenres recognised in `rules_movies.pl`, for example `Superhero` | 3 |
 | `preferred_pace` | `slow`, `medium`, `fast` | 2 |
 | `preferred_complexity` | `low`, `medium`, `high` | 2 |
 | `preferred_violence` | `low`, `medium`, `high` | 2 |
@@ -362,287 +356,273 @@ subconjunto das novas colunas. Valores enumerados inválidos rejeitam o carregam
 | `preferred_emotional_tones` | `tense`, `dark`, `sad`, `lighthearted`, `romantic`, `reflective`, `exciting` | 2 |
 | `preferred_themes` | `love`, `family`, `growing_up`, `crime`, `justice`, `war`, `history`, `technology`, `supernatural`, `exploration`, `psychology`, `music`, `sport`, `life_story` | 3 |
 | `preferred_audience` | `mainstream`, `niche` | 1 |
-| `preferred_eras` | `classic` (antes de 2000), `modern` (2000–2019), `recent` (desde 2020) | 1 |
-| `preferred_popularity` | `very_popular` (>= 1 milhão de votos), `popular` (500 mil–999 999), `less_popular` (< 500 mil) | 1 |
+| `preferred_eras` | `classic` (before 2000), `modern` (2000–2019), `recent` (2020 onwards) | 1 |
+| `preferred_popularity` | `very_popular` (1 million votes or more), `popular` (500 thousand to 999,999), `less_popular` (under 500 thousand) | 1 |
 
-São preferências que somam pontos, não limites obrigatórios: `preferred_violence=low`
-favorece baixa violência, mas não exclui outros níveis. As exclusões existentes
-continuam a prevalecer. Valores repetidos não somam pontos extra. Atributos
-inferidos exigem executar `arranca_motor` e seguem as heurísticas de
-`rules_movies.pl`; ausência de informação (`unknown`) não corresponde a uma preferência.
-Época e popularidade usam os anos e votos do catálogo, sem corrigir os dados originais.
+These preferences add points; they are not mandatory limits. `preferred_violence=low` favours low violence
+but does not exclude other levels. The existing exclusions still win. Repeated values do not add extra
+points. Inferred attributes need `arranca_motor` to run and follow the heuristics in `rules_movies.pl`; a
+missing value (`unknown`) does not match a preference. Era and popularity use the catalogue's years and
+votes, without correcting the original data. The weights in the table are subject to the group limits
+described in [How the score is calculated](#how-the-score-is-calculated).
 
-Exemplo de ficheiro com um subconjunto de colunas adicionais:
+Example of a file with a subset of the extra columns:
 
 ```csv
 user_id,age,watched,wishlist,preferred_genres,disliked_genres,preferred_languages,disliked_languages,preferred_directors,preferred_pace,preferred_themes,preferred_eras
 demo,25,,,Action,,English,,Christopher Nolan,fast,justice|exploration,modern
 ```
 
-Os pesos da tabela estão sujeitos aos limites por grupo descritos acima.
+The loader creates, for example, `user_fact(prefers(demo,pace,fast))`. `rules_users.pl` matches this fact with
+`facto(_,pace(Movie,fast))`, adds 2 points and includes `pace(fast)` in the explanation. In the API this is
+`{"type":"pace","value":"fast"}`. No rule written in the CSV is ever run.
 
-O carregador cria, por exemplo, `user_fact(prefers(demo,pace,fast))`.
-`rules_users.pl` cruza esse facto com `facto(_,pace(Movie,fast))`, soma 2 pontos
-e inclui `pace(fast)` na explicação. Na API corresponde a
-`{"type":"pace","value":"fast"}`. Não são executadas regras escritas no CSV.
+### Mandatory limits and the session audience
 
-### Limites obrigatórios e público da sessão
+Optional CSV columns (filled in the 10 fictional profiles, with limits and rejections that agree with their
+wishlists):
 
-Colunas opcionais do CSV (preenchidas nos 10 perfis fictícios incluídos, com
-limites e rejeições compatíveis com as respetivas listas de desejos):
-
-| Coluna | Formato e significado |
+| Column | Format and meaning |
 | --- | --- |
-| `max_duration_minutes` | Inteiro 1–1440; duração máxima inclusiva |
-| `year_from`, `year_to` | Inteiros 1800–3000; intervalo inclusivo; aceita só um extremo |
-| `required_languages` | Idiomas separados por ` | `; basta existir um dos indicados |
-| `disliked_directors`, `disliked_stars` | Nomes exatos do catálogo separados por ` | `; qualquer correspondência exclui |
-| `session_min_age` | Inteiro 0–120; idade do espectador mais novo, substitui a idade do perfil para esta sessão |
-| `min_rating` | Número 0–10; avaliação IMDb pretendida |
-| `rating_tolerance` | Número 0–10; margem abaixo do mínimo; por defeito 0 |
-| `rating_required` | `true` ou `false`; `true` impede qualquer tolerância; por defeito `false` |
+| `max_duration_minutes` | Integer 1–1440; the maximum duration, inclusive |
+| `year_from`, `year_to` | Integers 1800–3000; an inclusive range; you may give only one end |
+| `required_languages` | Languages separated by `\|`; one of them is enough |
+| `disliked_directors`, `disliked_stars` | Exact catalogue names separated by `\|`; any match excludes |
+| `session_min_age` | Integer 0–120; the age of the youngest viewer, which replaces the profile's age for this session |
+| `min_rating` | Number 0–10; the IMDb rating the user wants |
+| `rating_tolerance` | Number 0–10; the margin below the minimum; 0 by default |
+| `rating_required` | `true` or `false`; `true` allows no tolerance; `false` by default |
 
-Campos vazios não impõem limites. Sem idade no perfil e sem idade da sessão,
-não é possível verificar a adequação etária; não se assume um público adulto.
-Não há descritores de linguagem imprópria no catálogo: idiomas e classificação
-MPA não comprovam a ausência de palavrões. A informação de idiomas refere-se ao
-catálogo, sem garantir versões dobradas ou legendadas.
+Empty fields impose no limit. With no age in the profile and no session age, age suitability cannot be
+checked, and the engine does not assume an adult audience. The catalogue has no descriptors of bad language:
+languages and the MPA rating do not prove that a movie has no swearing. The language information refers to
+the catalogue and does not guarantee dubbed or subtitled versions.
 
-`min_rating=8`, `rating_tolerance=0.5`, `rating_required=false`: notas >=8 são
-principais, notas de 7.5 inclusive até 8 exclusive são alternativas, abaixo de
-7.5 são excluídas. Com `rating_required=true`, todas as notas abaixo de 8 são
-excluídas. Tolerância nunca relaxa duração, período, idiomas, rejeições ou idade.
-Definir tolerância ou obrigatoriedade sem mínimo é um erro de validação.
-Intervalos de anos invertidos também são rejeitados antes de substituir os perfis.
+With `min_rating=8`, `rating_tolerance=0.5` and `rating_required=false`: ratings of 8 or more are `main`,
+ratings from 7.5 (inclusive) to 8 (exclusive) are `alternative`, and ratings below 7.5 are excluded. With
+`rating_required=true`, every rating below 8 is excluded. The tolerance never relaxes the duration, the
+period, the languages, the rejections or the age. Setting a tolerance or the mandatory flag without a minimum
+is a validation error. Reversed year ranges are also rejected before the profiles are replaced.
 
-Quando falta informação para verificar um limite explícito, o filme é excluído.
-Durações como `2h 30m`, `2h` e `90m` e avaliações com vírgula são normalizadas
-para cálculo, preservando os valores originais apresentados no objeto do filme.
-A avaliação IMDb ainda é absoluta: não existe calibração por género nem foi
-inventado um ajuste estatístico a partir desta amostra.
+When the information needed to check an explicit limit is missing, the movie is excluded. Durations such as
+`2h 30m`, `2h` and `90m`, and ratings with a comma, are normalised for the calculation, and the original
+values are kept in the movie object. The IMDb rating is still absolute: there is no calibration by genre, and
+no statistical adjustment was invented from this sample.
 
-Exemplo de perfil para uma sessão com crianças:
+Example profile for a session with children:
 
 ```csv
 user_id,age,watched,wishlist,preferred_genres,disliked_genres,preferred_languages,disliked_languages,max_duration_minutes,year_from,year_to,required_languages,session_min_age,min_rating,rating_tolerance,rating_required
 familia,35,,,Animation|Family,Horror,English,,100,2000,2026,English|Portuguese,8,7,0.5,false
 ```
 
-As regras 62–65 acrescentam rejeições de pessoas, incumprimento dos limites e
-exclusão final. `user_constraints.pl` contém normalização, verificações e cálculo.
-`facto(_,exclusion_reason(User,Movie,Reason))` permite consultar a causa de exclusão.
-`recommendation_explanation(User,Movie,Status,Checks,Unmet)` explica filmes elegíveis.
-Na API, requisitos e preferências não satisfeitas têm formato
-`{"type":"rating_below_target","arguments":[7.5,8]}` ou
-`{"type":"duration","arguments":[95,100]}`. Os motivos positivos mantêm o formato anterior. Os pesos isolados das regras não devem ser somados pelo cliente:
-usar `score_breakdown`, que já aplica os limites dos grupos.
+Rules 62–65 add the rejections of people, the failed limits and the final exclusion.
+`user_constraints.pl` holds the normalisation, the checks and the calculation.
+`facto(_,exclusion_reason(User,Movie,Reason))` shows the cause of an exclusion, and
+`recommendation_explanation(User,Movie,Status,Checks,Unmet)` explains the eligible movies. In the API,
+requirements and unmet preferences have the form `{"type":"rating_below_target","arguments":[7.5,8]}` or
+`{"type":"duration","arguments":[95,100]}`. The positive reasons keep the earlier form. The client must not
+add the isolated rule weights: use `score_breakdown`, which already applies the group limits.
 
-### Histórico com avaliação pessoal e pedidos para rever
+### Watch history with a personal rating, and rewatch requests
 
-`watched` guarda pares `filme=nota` separados por `|`, sem parênteses retos:
+`watched` holds `movie=rating` pairs separated by `|`, without square brackets:
 
 ```text
 tt0087469=4|tt7798634=1
 ```
 
-Notas inteiras entre 0 e 5: 0 significa visto mas não classificado; 1–2 indicam
-avaliações negativas; 3 é intermédio; 4–5 indicam filmes apreciados.
-O limiar 4 é uma política ajustável na regra 41. Notas 0–3 não geram bónus por
-semelhança nem exclusões de outros filmes. Não há médias de avaliações pessoais.
-IDs antigos sem `=nota` são aceites como nota 0. Entradas malformadas, notas fora
-do intervalo e filmes duplicados no histórico são rejeitados antes de substituir
-os perfis em memória.
+Ratings are integers from 0 to 5. 0 means watched but not rated; 1–2 are negative ratings; 3 is neutral; 4–5
+mean the user liked the movie. The threshold 4 is a policy that can be adjusted in rule 41. Ratings 0–3 give
+no similarity bonus and exclude no other movie. There are no averages of personal ratings. Old ids without
+`=rating` are accepted as rating 0. Malformed entries, ratings out of range and duplicate movies in the
+history are rejected before the profiles in memory are replaced.
 
-O carregador cria dois factos por entrada:
+The loader creates two facts for each entry:
 
 ```prolog
-% Exemplos de factos carregados:
+% Examples of loaded facts:
 user_fact(watched(ana, tt0087469)).
 user_fact(user_movie_rating(ana, tt0087469, 4)).
-% Consultar todo o histórico e respetivas notas:
+% Query the whole history and its ratings:
 user_fact(user_movie_rating(ana, Movie, Rating)).
 ```
 
-A regra 41 cruza avaliações >=4 com similaridade >=7 e produz
-`liked_similarity(Reference)`. A contribuição total mantém-se em 1 ponto no
-máximo, mesmo com várias referências apreciadas. Na API, o motivo continua a
-usar `type: liked_similarity` e `movie_id`. Esta avaliação pessoal (0–5) é
-independente da nota IMDb (0–10).
+Rule 41 matches ratings of 4 or more with a similarity of 7 or more and produces
+`liked_similarity(Reference)`. The total contribution stays at 1 point at most, even with several liked
+references. In the API the reason keeps `type: liked_similarity` and `movie_id`. This personal rating (0–5) is
+independent of the IMDb rating (0–10).
 
-`allow_rewatch=true` permite recomendar filmes vistos, qualquer que seja a nota;
-vazio ou `false` mantém a exclusão. Os outros requisitos continuam obrigatórios.
-Não existe uma coluna separada para filmes apreciados.
+`allow_rewatch=true` lets watched movies be recommended, whatever the rating. Empty or `false` keeps the
+exclusion. The other requirements stay mandatory. There is no separate column for liked movies.
 
-Os exemplos fornecidos para Ana e Carla foram aplicados, preservando o histórico
-anterior da Carla. Os restantes filmes vistos migraram para nota 0, pois não
-havia avaliações pessoais registadas. Uma nota positiva num filme de terror não
-anula uma rejeição de terror para a sessão atual.
-Após editar o CSV, executar `carrega_factos_filmes.` e `arranca_motor.` na consola, ou chamar `POST /api/reload/users` se a API estiver a correr.
+The examples for Ana and Carla were applied, keeping Carla's earlier history. The other watched movies
+became rating 0, because no personal ratings had been recorded. A positive rating on a horror movie does not
+cancel a rejection of horror for the current session. After you edit the CSV, run `carrega_factos_filmes.`
+and `arranca_motor.` in the console, or call `POST /api/reload/users` if the API is running.
 
-### Regras de produção dos utilizadores
+---
 
-`rules_users.pl` contém as regras 34–65 no formato `regra N se [...] entao
-[cria_facto(...)].`, partilhando o motor com as regras 1–33 dos filmes.
-`rules_user.pl` mantém-se como ficheiro de compatibilidade.
-O carregamento copia também os dados de `user_fact/1` para factos numerados
-`facto/2`, permitindo justificar as conclusões com os dados do inquérito.
+## The user rules
 
-As regras inferem `preference_reason(User,Movie,Reason,Weight)`,
-`excluded_movie(User,Movie)` e `matches_preferences(User,Movie)`.
-Uma correspondência de preferências pode existir para um filme excluído;
-`user_recommendation/4` aplica as exclusões e soma a pontuação só na consulta,
-após terminar o motor, evitando guardar resultados parciais.
+`rules_users.pl` holds rules 34–65 in the form `regra N se [...] entao [cria_facto(...)].`, sharing the
+engine with the movie rules 1–33. `rules_user.pl` is kept as a compatibility file. Loading also copies the
+`user_fact/1` data into numbered `facto/2` facts, so the conclusions can be justified with the survey data.
 
-Depois de alterar o CSV, recarregar os factos e voltar a executar o motor
-(`load_users` isoladamente apenas atualiza `user_fact/1`):
+The rules infer `preference_reason(User,Movie,Reason,Weight)`, `excluded_movie(User,Movie)` and
+`matches_preferences(User,Movie)`. A preference match can exist for an excluded movie.
+`user_recommendation/4` applies the exclusions and adds up the score only at query time, after the engine
+finishes, so partial results are never stored.
+
+After you change the CSV, reload the facts and run the engine again (`load_users` on its own only updates
+`user_fact/1`):
 
 ```prolog
 carrega_factos_filmes.
 arranca_motor.
 user_recommendation(demo, Movie, Score, Reasons).
 facto(N, preference_reason(demo, Movie, pace(fast), 2)).
-% No sp_exp2, usar o N obtido acima:
+% In sp_exp2, use the N from the line above:
 como(N).
 ```
 
-As características de violência, ritmo e restantes atributos continuam a
-classificar filmes; as novas conclusões relacionam cada utilizador com um filme.
+Violence, pace and the other attributes still classify movies. The new conclusions relate each user to a
+movie.
 
-## Consultar utilizadores e regras na consola
+---
 
-O ficheiro `users.csv` contém 10 utilizadores fictícios: `ana`,
-`bruno`, `carla`, `diogo`, `eva`, `filipe`, `ines`, `joao`, `mariana` e `tiago`.
-Cada linha guarda a idade, filmes vistos, lista de desejos e preferências.
-Os valores múltiplos são separados por `|`; um campo vazio não define preferência.
-Os filmes são identificados pelo ID do catálogo, por exemplo `tt0870154`.
+## Querying users and rules in the console
 
-Na pasta do projeto, iniciar uma sessão com:
+`users.csv` has 10 fictional users: `ana`, `bruno`, `carla`, `diogo`, `eva`, `filipe`, `ines`, `joao`,
+`mariana` and `tiago`. Each line holds the age, the watched movies, the wishlist and the preferences.
+Multiple values are separated by `|`, and an empty field defines no preference. Movies are identified by the
+catalogue id, for example `tt0870154`.
+
+In the project folder, start a session with:
 
 ```bash
 swipl -q -s filmes_bc.pl
 ```
 
-Este comando carrega os dois CSV, as regras dos filmes e `rules_users.pl`, usando
-por defeito `sp_exp1.pl`. No prompt do Prolog, executar:
+This loads both CSV files, the movie rules and `rules_users.pl`, using `sp_exp1.pl` by default. At the Prolog
+prompt, run:
 
 ```prolog
 arranca_motor.
 ```
 
-Se já carregaste `filmes_bc.pl` e executaste o motor na sessão atual, podes passar
-diretamente às consultas. Escrever cada consulta com um ponto final; usar `;`
-para pedir outra solução ou Enter para terminar a consulta.
+If you already loaded `filmes_bc.pl` and ran the engine in the current session, go straight to the queries.
 
-### Consultar os dados dos utilizadores
+### Query the user data
 
-`user_fact/1` contém os dados carregados do CSV. O carregamento da base também
-os copia para `facto/2`, onde o motor consulta as premissas das regras.
+`user_fact/1` holds the data loaded from the CSV. Loading the base also copies it to `facto/2`, where the
+engine reads the premises of the rules.
 
 ```prolog
-% Listar os 10 utilizadores numa única resposta.
+% List the 10 users in a single answer.
 findall(User, user_fact(user(User)), Users).
 
-% Consultar a idade da Inês (19).
+% The age of Inês (19).
 user_fact(user_age(ines, Age)).
 
-% Géneros preferidos: Adventure, Fantasy e Comedy.
+% Preferred genres: Adventure, Fantasy and Comedy.
 user_fact(likes_genre(ines, Genre)).
 
-% Género rejeitado: Horror.
+% Rejected genre: Horror.
 user_fact(dislikes_genre(ines, Genre)).
 
-% Idiomas preferidos: English e Portuguese.
+% Preferred languages: English and Portuguese.
 user_fact(likes_language(ines, Language)).
 
-% Características preferidas: ritmo, temas, realizador, atores, etc.
+% Preferred characteristics: pace, themes, director, actors and so on.
 user_fact(prefers(ines, Attribute, Value)).
 
-% Filme visto pela Inês: Hotel Transylvania 2.
+% A movie Inês watched: Hotel Transylvania 2.
 user_fact(watched(ines, Movie)), facto(_, movie(Movie, Title)).
 
-% Filme na lista de desejos: Jungle Cruise.
+% A movie on her wishlist: Jungle Cruise.
 user_fact(wishlist(ines, Movie)), facto(_, movie(Movie, Title)).
 
-% Consultar a mesma preferência na base numerada usada pelo motor.
+% The same preference in the numbered base that the engine uses.
 facto(N, prefers(ines, pace, fast)).
 ```
 
-### Consultar as conclusões das regras
+### Query the conclusions of the rules
 
-As regras 34–37 inferem motivos de exclusão, as regras 38–60 inferem motivos e respetivos
-pesos, e a regra 61 identifica pares utilizador–filme com preferências
-correspondentes. As regras 62–64 acrescentam rejeições de atores/realizadores e
-limites obrigatórios; a regra 65 conclui a exclusão final. Estas consultas exigem que `arranca_motor` tenha terminado.
+Rules 34–37 infer the reasons for exclusion, rules 38–60 infer the reasons and their weights, and rule 61
+identifies the user–movie pairs with matching preferences. Rules 62–64 add the rejections of actors and
+directors and the mandatory limits, and rule 65 concludes the final exclusion. These queries need
+`arranca_motor` to have finished.
 
 ```prolog
-% Motivos pelos quais Jungle Cruise corresponde às preferências da Inês.
+% Why Jungle Cruise matches Inês's preferences.
 preference_reason(ines, tt0870154, Reason, Weight).
 
-% Verificar se há pelo menos uma preferência correspondente.
+% Is there at least one matching preference?
 matches_preferences(ines, tt0870154).
 
-% Listar os filmes excluídos para a Inês.
+% List the movies excluded for Inês.
 findall(Movie-Title,
         (excluded_movie(ines, Movie), facto(_, movie(Movie, Title))),
         Excluded).
 
-% Hotel Transylvania 2 é excluído porque a Inês já o viu.
+% Hotel Transylvania 2 is excluded because Inês has already watched it.
 facto(N, excluded_movie(ines, tt2510894)),
 justifica(N, Rule, SourceFacts).
 
-% A regra 47 atribui 2 pontos à correspondência de ritmo rápido.
+% Rule 47 gives 2 points to a fast-pace match.
 facto(N, preference_reason(ines, tt0870154, pace(fast), 2)),
 justifica(N, Rule, SourceFacts).
 ```
 
-`matches_preferences/2` não garante uma recomendação: um filme pode corresponder
-a preferências e, ao mesmo tempo, estar excluído.
+`matches_preferences/2` does not guarantee a recommendation: a movie can match preferences and be excluded at
+the same time.
 
-Depois de editar o CSV, reconstruir os factos e as inferências:
+After you edit the CSV, rebuild the facts and the inferences:
 
 ```prolog
 carrega_factos_filmes.
 arranca_motor.
 ```
 
-Executar apenas `load_users` atualiza `user_fact/1`, mas não reconstrói os factos
-numerados nem elimina conclusões antigas. `rules_user.pl` é apenas um ficheiro
-de compatibilidade; as regras estão em `rules_users.pl`.
+Running only `load_users` updates `user_fact/1` but does not rebuild the numbered facts or remove old
+conclusions. `rules_user.pl` is only a compatibility file; the rules are in `rules_users.pl`.
 
-## Recomendações
+---
 
-Depois de carregar a base e executar o motor, `user_recommendation/4` devolve o
-filme, a pontuação e os motivos. Exclui filmes já vistos, com géneros ou idiomas
-rejeitados, ou incompatíveis com a política de idade. As restantes preferências
-somam pontos; não são requisitos obrigatórios.
+## Recommendations
 
-### Consultar recomendações para a Inês
+After you load the base and run the engine, `user_recommendation/4` returns the movie, the score and the
+reasons. It excludes movies that were already watched, that have rejected genres or languages, or that fail
+the age policy. The other preferences add points; they are not mandatory.
+
+### Recommendations for Inês
 
 ```prolog
-% Obter recomendações, uma solução de cada vez (sem ordenação por pontuação).
+% Get recommendations, one solution at a time (not sorted by score).
 user_recommendation(ines, Movie, Score, Reasons),
 facto(_, movie(Movie, Title)).
 
-% Consultar apenas os IDs recomendados.
+% Only the recommended ids.
 recommend(ines, Movie).
 
-% Ver a pontuação e os motivos de um filme específico.
+% The score and the reasons for one movie.
 user_recommendation(ines, tt0870154, Score, Reasons).
 ```
 
-Com os dados atuais, `Jungle Cruise` (`tt0870154`) é a melhor recomendação para a
-Inês, com **88,8 pontos**. Corresponde, entre outros critérios, a aventura, fantasia,
-comédia, ritmo rápido, humor elevado e temas de exploração e sobrenatural.
-Também está na lista de desejos. A pontuação é uma soma de pesos, não uma
-percentagem nem uma garantia de que o utilizador gostará do filme.
+With the current data, **Jungle Cruise** (`tt0870154`) is the best recommendation for Inês, with **88.8
+points**. It matches adventure, fantasy, comedy, a fast pace, a high level of humour and the themes of
+exploration and the supernatural, among other criteria. It is also on her wishlist and it is not in her
+rejected genre, horror. The score is a sum of weights: it is not a percentage and it does not guarantee that
+the user will like the movie.
 
-### Ordenar e escolher a melhor recomendação
+### Sort and pick the best recommendation
 
-A chave de `recommendation_key/4` coloca opções principais antes das alternativas,
-seguindo-se pontuação, avaliação e ID. `findall/3` devolve uma lista vazia quando não há recomendações.
+The key of `recommendation_key/4` places `main` options before `alternative` ones, followed by score, rating
+and id. `findall/3` returns an empty list when there are no recommendations.
 
 ```prolog
-% Listar todas as recomendações por ordem de pontuação.
+% List every recommendation by score.
 findall(Key-Movie-Title-Score-Reasons,
         (user_recommendation(ines, Movie, Score, Reasons),
          facto(_, movie(Movie, Title)),
@@ -650,7 +630,7 @@ findall(Key-Movie-Title-Score-Reasons,
         Candidates),
 sort(Candidates, Ranked).
 
-% Obter apenas a melhor recomendação.
+% Get only the best recommendation.
 findall(Key-Movie-Title-Score-Reasons,
         (user_recommendation(ines, Movie, Score, Reasons),
          facto(_, movie(Movie, Title)),
@@ -659,40 +639,36 @@ findall(Key-Movie-Title-Score-Reasons,
 sort(Candidates, [_-BestMovie-BestTitle-BestScore-BestReasons|_]).
 ```
 
-A segunda consulta devolve `false` se não existir nenhum candidato.
-Para consultar outro perfil, substituir `ines` por um dos IDs do CSV, por exemplo
-`diogo` ou `carla`.
+The second query returns `false` if there is no candidate. For another profile, replace `ines` with one of
+the ids in the CSV, for example `diogo` or `carla`.
 
-### Como é calculada a pontuação
+### How the score is calculated
 
-A pontuação é calculada por grupos, depois de aplicar as exclusões:
+The score is calculated by groups, after the exclusions are applied:
 
-| Grupo | Contribuição máxima |
+| Group | Maximum contribution |
 | --- | --- |
-| Pelo menos um género preferido | 40 |
-| Avaliação IMDb | 30 (`3 × nota`) |
-| Pelo menos um realizador preferido | 10 |
-| Pelo menos um ator preferido | 10 |
-| Restantes motivos, incluindo lista de desejos e histórico | 9 |
+| At least one preferred genre | 40 |
+| IMDb rating | 30 (`3 × rating`) |
+| At least one preferred director | 10 |
+| At least one preferred actor | 10 |
+| The other reasons, including the wishlist and the history | 9 |
 
-Vários atores ou géneros não multiplicam a contribuição do grupo. Os restantes
-motivos conservam os pesos das regras, mas a soma é limitada a 9 pontos.
-Esta pontuação substitui a anterior soma sem limites. Não é uma percentagem.
-As avaliações são absolutas, ainda sem ajuste por género.
+Several actors or genres do not multiply the contribution of the group. The other reasons keep the weights
+of their rules, but their sum is limited to 9 points. This score replaces the earlier sum without limits. It
+is not a percentage. Ratings are absolute, with no adjustment by genre.
 
 ```prolog
 score_breakdown(ines, tt0870154, Breakdown).
 recommendation_explanation(ines, tt0870154, Status, Checks, Unmet).
 ```
 
-`Status` é `main` ou `alternative`. `Checks` lista requisitos verificados;
-`Unmet` identifica preferências não satisfeitas, incluindo uma avaliação abaixo
-do objetivo quando admitida pela tolerância. Perfis sem preferências pontuáveis
-também podem receber filmes elegíveis, ordenados pela avaliação.
+`Status` is `main` or `alternative`. `Checks` lists the requirements that were checked. `Unmet` identifies
+the preferences that were not met, including a rating below the target when the tolerance allows it.
+Profiles with no scoring preferences can also receive eligible movies, ordered by rating.
 
-As exclusões prevalecem sobre a pontuação e a lista de desejos. Por exemplo, o
-João rejeita `Horror`, pelo que `tt0067500` é excluído. A sua lista de desejos
-contém agora o western `The Undefeated` (`tt0065150`), compatível com o perfil:
+Exclusions win over the score and the wishlist. For example, João rejects `Horror`, so `tt0067500` is
+excluded. His wishlist now holds the western `The Undefeated` (`tt0065150`), which fits his profile:
 
 ```prolog
 excluded_movie(joao, tt0067500).
@@ -702,53 +678,39 @@ recommend(joao, tt0067500).
 % false
 ```
 
-Para menores, a política implementada permite G/PG, permite PG-13 a partir dos
-13 anos e exclui classificações ausentes ou não reconhecidas. R/NC-17 exigem 18
-anos. Assim, as recomendações do Diogo, de 12 anos, também passam por esse filtro.
+For minors, the policy allows G and PG, allows PG-13 from age 13 and excludes missing or unrecognised
+ratings. R and NC-17 need age 18. The recommendations for Diogo, who is 12, also go through this filter.
 
-### Explicar uma recomendação com o segundo motor
+### Explain a recommendation with engine 2
 
-Numa sessão nova, iniciar:
+In a new session, start:
 
 ```bash
 swipl -q -s sp_exp2.pl
 ```
 
-Depois, no prompt do Prolog:
+Then, at the Prolog prompt:
 
 ```prolog
 carrega_bc.
 'filmes_bc.pl'.
 arranca_motor.
 
-% Ver a recomendação completa e os seus motivos.
+% See the whole recommendation and its reasons.
 user_recommendation(ines, tt0870154, Score, Reasons).
 
-% Explicar um dos motivos, incluindo as premissas que o originaram.
+% Explain one of the reasons, including the premises that produced it.
 facto(N, preference_reason(ines, tt0870154, pace(fast), 2)),
 como(N).
 
-% Explicar a exclusão de um filme já visto.
+% Explain the exclusion of a movie that was already watched.
 facto(N, excluded_movie(ines, tt2510894)),
 como(N).
 
-% Investigar um motivo que não foi inferido.
+% Investigate a reason that was not inferred.
 whynot(preference_reason(ines, tt0870154, pace(slow), 2)).
 ```
 
-Usar `como/1` e `whynot/1` sobre factos inferidos, como `preference_reason/4` ou
-`excluded_movie/2`. `user_recommendation/4` é uma consulta auxiliar que agrega os
-resultados, não uma conclusão produzida por `cria_facto`.
-
-### Recomendação para a ines que ela goste
-
-Recomendo **Jungle Cruise** (`tt0870154`): foi o filme com maior pontuação para a Inês, com **88,8 pontos**.
-
-Segundo a base de conhecimento, combina os gostos dela por:
-
-- **Aventura, comédia e fantasia**;
-- Ritmo rápido e bastante humor;
-- Temas de exploração e sobrenatural;
-- Dwayne Johnson e o realizador Jaume ColletSerra.
-
-Também já está na lista de filmes que ela quer ver e não corresponde ao género rejeitado, terror (Horror).
+Use `como/1` and `whynot/1` on inferred facts, such as `preference_reason/4` or `excluded_movie/2`.
+`user_recommendation/4` is a helper query that gathers the results, not a conclusion produced by
+`cria_facto`.
