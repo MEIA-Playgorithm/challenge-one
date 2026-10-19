@@ -1,8 +1,11 @@
 .git
 .idea
-**/target
 **/node_modules
-frontend/dist
+**/dist
+**/target
+**/*.tsbuildinfo
+**/.env
+**/.env.*
 *.log
 hs_err_pid*
 replay_pid*

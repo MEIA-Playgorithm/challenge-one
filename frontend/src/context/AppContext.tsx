@@ -1,53 +1,70 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { Box, CircularProgress, Typography } from "@mui/material";
 import type { User } from "../types/User";
-import { MOCK_USERS } from "../mocks/data";
+import type { Movie } from "../types/Movie";
+import type { EngineId } from "../lib/config";
+import { getMovies } from "../api/movies";
+import { useEngines, type EngineStatus } from "../hooks/useEngines";
+import { useUsers } from "../hooks/useUsers";
 
+// As ações de escrita devolvem uma mensagem de erro, ou null se correram bem.
 type AppContextType = {
+    engines: EngineId[];
+    setEngines: (engines: EngineId[]) => void;
+    engineStatus: Record<EngineId, EngineStatus>;
     users: User[];
+    movies: Movie[];
+    movieById: Map<string, Movie>;
     currentUser: User;
     setCurrentUser: (user: User) => void;
-    createUser: (user: User) => string | null;
-    updateUser: (previousId: string, user: User) => string | null;
-    deleteUser: (userId: string) => void;
+    createUser: (user: User) => Promise<string | null>;
+    updateUser: (previousId: string, user: User) => Promise<string | null>;
+    deleteUser: (userId: string) => Promise<string | null>;
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-    const [users, setUsers] = useState<User[]>(MOCK_USERS);
-    const [currentUser, setCurrentUser] = useState<User>(MOCK_USERS[0]);
+    const { engines, setEngines, engineStatus, reloadEngines } = useEngines();
+    const { users, currentUser, setCurrentUser, refresh, createUser, updateUser, deleteUser } = useUsers(reloadEngines);
+    const [movies, setMovies] = useState<Movie[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
 
-    const createUser = (user: User) => {
-        const userId = user.user_id.trim();
-        if (!userId) return "Name is required";
-        if (users.some((item) => item.user_id === userId)) return "Please choose another name, this one is already taken.";
-        const saved = { ...user, user_id: userId };
-        setUsers((prev) => [...prev, saved]);
-        setCurrentUser(saved);
-        return null;
-    };
+    useEffect(() => {
+        Promise.all([refresh(), getMovies().then(setMovies)])
+            .catch((err: Error) => setLoadError(err.message))
+            .finally(() => setLoading(false));
+    }, []);
 
-    const updateUser = (previousId: string, user: User) => {
-        const userId = user.user_id.trim();
-        if (!userId) return "Name is required";
-        if (users.some((item) => item.user_id === userId && item.user_id !== previousId)) return "Please choose another name, this one is already taken.";
-        const saved = { ...user, user_id: userId };
-        setUsers((prev) => prev.map((item) => (item.user_id === previousId ? saved : item)));
-        setCurrentUser(saved);
-        return null;
-    };
-
-    const deleteUser = (userId: string) => {
-        if (users.length <= 1) return;
-        const index = users.findIndex((user) => user.user_id === userId);
-        if (index === -1) return;
-        const remaining = users.filter((user) => user.user_id !== userId);
-        setUsers(remaining);
-        setCurrentUser((current) => (current.user_id === userId ? remaining[Math.min(index, remaining.length - 1)] : current));
-    };
+    if (loading || loadError || !currentUser) {
+        return (
+            <Box sx={{ height: "100%", display: "grid", placeContent: "center", textAlign: "center" }}>
+                {loading ? (
+                    <CircularProgress />
+                ) : (
+                    <Typography color="error">{loadError ?? "No users found in the knowledge base"}</Typography>
+                )}
+            </Box>
+        );
+    }
 
     return (
-        <AppContext.Provider value={{ users, currentUser, setCurrentUser, createUser, updateUser, deleteUser }}>
+        <AppContext.Provider
+            value={{
+                engines,
+                setEngines,
+                engineStatus,
+                users,
+                movies,
+                movieById: new Map(movies.map((movie) => [movie.id, movie])),
+                currentUser,
+                setCurrentUser,
+                createUser,
+                updateUser,
+                deleteUser,
+            }}
+        >
             {children}
         </AppContext.Provider>
     );

@@ -1,16 +1,16 @@
-# Flowchart - Movie Recommendation System
+# Flowchart: movie recommendation system
 
-## Brief Repository Analysis
+## What the project contains today
 
-The current repository does not yet contain a Prolog, Drools, Java, or inference engine implementation in the checked-out branch. The current structure only contains base documentation:
+The flowchart below describes the recommendation flow. It is based on the goal of the system and on the
+interview with the expert Joao Mota. The project implements it in two engines:
 
-- `README.md`: identifies the project as `Inference Engine` and describes the branch policy.
-- `docs/branch-management.md`: operational guide for creating, synchronizing, and merging branches.
-- `origin/feature/docs-fluxogram`: remote branch with an initial PlantUML draft for the recommendation flow.
+- the Prolog engine (`swi-prolog/`), documented in [swi-prolog/README.md](../swi-prolog/README.md);
+- the Drools engine (`drools/`), documented in [drools/README.md](../drools/README.md);
+- the knowledge base service (`knowledge_base/`), which serves the movies and users to both engines;
+- the frontend (`frontend/`), where the user edits a profile and compares the recommendations.
 
-Therefore, the flowchart below is a conceptual proposal for the future implementation, based on the system goal and the interview with expert Joao Mota.
-
-## Knowledge Extracted From The Interview
+## Knowledge extracted from the interview
 
 The system should recommend movies that the user will probably enjoy, while also helping them discover new options. The recommendation should first respect mandatory criteria and only then calculate suitability through scoring.
 
@@ -41,49 +41,47 @@ Suggested ranking hierarchy:
 5. Director and actors.
 6. Practical availability.
 
-## Role Of Prolog And Drools
+## The role of Prolog and Drools
 
-Prolog can be used to represent facts and logical queries: movies, genres, actors, ratings, user restrictions, and similarity relationships.
+The two engines are independent implementations of the same recommendation logic. Each one reads the movies and
+the users from the knowledge base service, applies the same exclusions and scoring, and answers the same HTTP
+API. They never exchange results: the frontend asks one or both and shows the answers side by side, so the
+results can be compared.
 
-Drools can be used to apply business rules with weights, exclusions, scoring, tolerance margins, and explanations. The same conceptual base should be maintained across both engines so that the results can be compared.
+- **Prolog** states the rules as production rules over facts (`swi-prolog/rules_movies.pl` and
+  `swi-prolog/rules_users.pl`), and explains its conclusions with `como` and `whynot` in the console.
+- **Drools** states them as forward-chaining rules over the facts in a rule unit (`rules.drl`), and exposes the
+  explanations (`how`, `why-not`, `trace`) as endpoints.
 
-## Sample Flowchart
+## Sample flowchart
 
 ```mermaid
 flowchart TD
-    A([Start]) --> B[Load movie catalog]
-    B --> C[Load user profile]
-    C --> D[Normalize preferences and restrictions]
+    A([Start]) --> B[Frontend: choose a user and one or both engines]
+    B --> C[Knowledge base serves movies.csv and users.csv]
+    C --> D[Each engine reads the CSV files and builds its facts]
 
-    D --> E[Send facts to Prolog]
-    D --> F[Send facts to Drools]
+    D --> E{For each movie: does it violate a mandatory criterion?}
+    E -- Yes --> F[Exclude the movie and store the reason]
+    E -- No --> G[Add the points of every matching preference]
 
-    E --> G[Infer logical relationships]
-    G --> G1[Similarity, compatible genre, watched movie, restrictions]
+    G --> H[Apply the group limits to the score]
+    H --> I{Is the rating below the minimum, within the tolerance?}
+    I -- Yes --> J[Mark as alternative]
+    I -- No --> K[Mark as main]
 
-    F --> H[Apply business rules]
-    H --> H1[Weights, tolerances, exclusions, bonuses, penalties]
+    J --> L[Rank: main first, then score, rating and id]
+    K --> L
+    L --> M{Are there eligible movies?}
 
-    G1 --> I[Merge inference results]
-    H1 --> I
-
-    I --> J{Does the movie violate a mandatory criterion?}
-    J -- Yes --> K[Exclude movie and store justification]
-    J -- No --> L[Calculate recommendation score]
-
-    L --> M[Calculate confidence]
-    M --> N[Rank candidates]
-    N --> O{Are there eligible candidates?}
-
-    O -- No --> P[Show reasons for no recommendation]
-    O -- Yes --> Q[Select Top N]
-    Q --> R[Generate explanation]
-    R --> S[Present recommendations]
-    P --> T([End])
-    S --> T
+    M -- No --> N[Return an empty list]
+    M -- Yes --> O[Return the page with reasons and score breakdown]
+    N --> P[Frontend shows each engine's answer]
+    O --> P
+    P --> Q([End])
 ```
 
-## Example Extracted Rules
+## Example rules extracted
 
 - If the movie belongs to an explicitly rejected genre, then it must be excluded.
 - If the movie violates mandatory duration, language, or period, then it must be excluded.

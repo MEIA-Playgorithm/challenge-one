@@ -26,12 +26,13 @@ writer.writerow(dict(user_id='strict',age=25,min_rating=8.5,rating_tolerance=0.5
 writer.writerow(dict(user_id='family',age=35,session_min_age=8,max_duration_minutes=100))
 users_file.close()
 env = dict(os.environ, USERS_CSV=users_file.name)
-server = subprocess.Popen(['swipl', '-q', '-s', str(root / 'api/consulta.pl'),
-    '-g', f'consulta:start({port}), thread_get_message(stop)'], cwd='/tmp', env=env)
+server = subprocess.Popen(['swipl', '-q', '-s', str(root / 'api/server.pl'),
+    '-g', f'server:start({port}), thread_get_message(stop)'], cwd=tempfile.gettempdir(), env=env)
 base = f'http://localhost:{port}/api/'
-def get(path, status=200):
+def get(path, status=200, method=None):
     try:
-        response = urllib.request.urlopen(base + path, timeout=10)
+        response = urllib.request.urlopen(urllib.request.Request(
+            base + path, data=b'' if method == 'POST' else None, method=method), timeout=30)
     except urllib.error.HTTPError as error:
         response = error
     with response:
@@ -69,28 +70,43 @@ try:
                    for c in x['satisfied_requirements']) for x in family)
     get('recomendacoes_utilizador?user_id=missing', 404)
     get('recomendacoes_utilizador', 400)
-    result = get('filmes?pace=fast&limit=3')
-    assert len(result['items']) == 3
-    assert all(movie['pace'] == 'fast' for movie in result['items'])
-    assert get('filmes?offset=10000')['items'] == []
-    movie = get('filme?id=tt0372784')
-    assert movie['title'] == 'Batman Begins' and 'Action' in movie['genre']
     result = get('recomendacoes?id=tt0372784&limit=5')
     scores = [item['score'] for item in result['items']]
     assert len(scores) == 5 and scores == sorted(scores, reverse=True)
     assert all(item['movie']['id'] != 'tt0372784' for item in result['items'])
-    for path in ['filmes?limit=0', 'filmes?limit=x', 'filmes?pace=invalid',
-                 'filme', 'recomendacoes?id=tt0372784&min_score=12']:
+    for path in ['recomendacoes?id=tt0372784&limit=0', 'recomendacoes?id=tt0372784&limit=x',
+                 'recomendacoes', 'recomendacoes?id=tt0372784&min_score=12']:
         get(path, 400)
-    get('filme?id=inexistente', 404)
-    with urllib.request.urlopen(urllib.request.Request(base+'filmes', method='OPTIONS')) as response:
+    get('recomendacoes?id=inexistente', 404)
+    with urllib.request.urlopen(urllib.request.Request(base+'recomendacoes', method='OPTIONS')) as response:
         assert response.status == 200
     try:
-        urllib.request.urlopen(urllib.request.Request(base+'filmes', data=b'', method='POST'))
+        urllib.request.urlopen(urllib.request.Request(base+'recomendacoes', data=b'', method='POST'))
     except urllib.error.HTTPError as error:
         assert error.code == 405
     else:
         raise AssertionError('POST deveria devolver 405')
+    for scope in ['reload', 'reload/users', 'reload/movies']:
+        result = get(scope, method='POST')
+        assert result['status'] == 'ok' and result['movies'] > 0 and result['users'] == 4
+        try:
+            urllib.request.urlopen(base + scope)
+        except urllib.error.HTTPError as error:
+            assert error.code == 405
+        else:
+            raise AssertionError('GET ' + scope + ' deveria devolver 405')
+    # Novo utilizador no CSV só aparece depois do reload dos utilizadores.
+    get('recomendacoes_utilizador?user_id=added', 404)
+    with open(users_file.name, 'a', newline='') as handle:
+        csv.DictWriter(handle, fieldnames=columns).writerow(dict(user_id='added', age=30))
+    get('recomendacoes_utilizador?user_id=added', 404)
+    assert get('reload/users', method='POST')['users'] == 5
+    assert get('recomendacoes_utilizador?user_id=added')['total'] > 0
+    # CSV inválido: 422 e a base anterior mantém-se.
+    with open(users_file.name, 'a', newline='') as handle:
+        csv.DictWriter(handle, fieldnames=columns).writerow(dict(user_id='added', age=30))
+    get('reload/users', 422, method='POST')
+    assert get('recomendacoes_utilizador?user_id=added')['total'] > 0
     print('OK: endpoints, filtros, paginação, recomendações, erros, CORS e métodos HTTP')
 finally:
     server.terminate()

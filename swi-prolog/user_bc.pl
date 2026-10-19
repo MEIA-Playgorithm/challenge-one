@@ -1,14 +1,22 @@
 % Dados do inquérito, separados das regras. Não executa termos vindos do CSV.
-:- use_module(library(csv)).
+:- use_module(csv_source).
+
+% CSV (URL ou ficheiro): variável de ambiente USERS_CSV ou ../knowledge_base/users.csv.
+:- prolog_load_context(directory, Dir),
+   directory_file_path(Dir, '../knowledge_base/users.csv', Default),
+   asserta(default_users_csv(Default)).
+:- dynamic default_users_csv/1.
+users_csv(File) :-
+    (   getenv('USERS_CSV', File) -> true
+    ;   default_users_csv(File)
+    ).
 :- dynamic user_fact/1.
 
 load_users :-
-    getenv('USERS_CSV', File), File \== '', !, load_users(File).
-load_users :-
-    source_file(load_users, Source), file_directory_name(Source, Dir),
-    directory_file_path(Dir, 'knowledge_base_users.csv', File), load_users(File).
+    users_csv(File),
+    load_users(File).
 load_users(File) :-
-    csv_read_file(File, [Header|Rows], [functor(user_row), convert(false)]),
+    read_csv(File, [Header|Rows], [functor(user_row), convert(false)]),
     Header =.. [user_row|Columns],
     Base = [user_id,age,watched,wishlist,preferred_genres,disliked_genres,
             preferred_languages,disliked_languages],

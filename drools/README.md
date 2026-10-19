@@ -1,32 +1,191 @@
-# Drools recommendation engine
+# Drools engine
 
-This module contains the Drools version of the movie recommendation engine.
-It mirrors the Prolog recommendation logic with a forward-chaining Drools
-knowledge base, explicit eligibility rules, scoring rules, explanation data, and
-traceable rule execution.
+The Drools version of the movie recommendation engine. It follows the same logic as the Prolog engine, using
+forward chaining over a Drools knowledge base with exclusion rules, scoring rules, explanations and a
+rule trace. It answers the same HTTP API as the Prolog engine.
 
-## Run the automated tests
+---
 
-From this folder:
+## Run with Docker
+
+Run every command in a terminal opened at the **repository root** (the folder that holds
+`docker-compose.yml`).
+
+### Step 1. Open Docker Desktop
+
+Check that it is open and running.
+
+### Step 2. Start the engine
 
 ```bash
-mvn test
+docker compose up -d --build drools
 ```
 
-## Try the interactive console
+This starts the Drools engine and the knowledge base, where the engine reads the CSV files. The first run
+takes a few minutes because it builds the images.
 
-The console asks for the candidate profile, runs the Drools knowledge base, then
-opens a small query shell over the inferred facts and trace events. It loads the
-same `swi-prolog/knowledge_base_movies.csv` catalogue used by the Prolog module,
-so the Drools demo can query the same 100 movie facts.
+### Step 3. Check that it works
 
-From this folder:
+Open [http://localhost:8082/api/health](http://localhost:8082/api/health). You should see
+`{"status":"ok"}`. Swagger is at [http://localhost:8082/docs](http://localhost:8082/docs).
+
+### Step 4. Change the data
+
+1. Edit `knowledge_base/users.csv` (or `movies.csv`) and save.
+2. Ask the engine to read the files again. These are `POST` requests, so they do not work in the browser.
+   Pick the one that matches what you changed:
+
+   | What you changed | Command |
+   | --- | --- |
+   | Both files | `curl -X POST http://localhost:8082/api/reload` |
+   | Only `users.csv` | `curl -X POST http://localhost:8082/api/reload/users` |
+   | Only `movies.csv` | `curl -X POST http://localhost:8082/api/reload/movies` |
+
+   In PowerShell, write `curl.exe` instead of `curl`.
+
+3. The answer has `"status":"ok"`, the scope and the counts of movies and users. If a CSV cannot be read (for
+   example, it has no `id` column), the answer is `422` and the engine keeps the previous data. The engine does
+   not check the other columns.
+
+### Step 5. See the logs and stop
+
+Follow the requests as they arrive (Ctrl+C to leave):
+
+```bash
+docker compose logs -f drools
+```
+
+Stop everything:
+
+```bash
+docker compose down
+```
+
+After you change the source code, go back to Step 2 to rebuild the image.
+
+---
+
+## Run manually
+
+You need **JDK 17 or newer** and **Maven 3.9 or newer**. The commands run inside the `drools` folder.
+
+### Step 1. Go to the folder
+
+From the repository root:
+
+```bash
+cd drools
+```
+
+### Step 2. Choose where the CSV files come from
+
+**Option A: the files in the repository.** Do nothing. The engine reads `../knowledge_base/movies.csv`
+and `../knowledge_base/users.csv`.
+
+**Option B: the knowledge base service** (port 8090). Start it with Docker from the repository root:
+
+```bash
+docker compose up -d knowledge-base
+```
+
+Then, in the terminal where you will run the engine, set the addresses.
+
+Linux, macOS or Git Bash:
+
+```bash
+export MOVIES_CSV=http://localhost:8090/movies.csv
+export USERS_CSV=http://localhost:8090/users.csv
+```
+
+PowerShell:
+
+```powershell
+$env:MOVIES_CSV = "http://localhost:8090/movies.csv"
+$env:USERS_CSV = "http://localhost:8090/users.csv"
+```
+
+### Step 3. Start
+
+Choose **one**.
+
+**Option 1: the API** (at http://localhost:8080).
+
+Linux, macOS or Git Bash:
+
+```bash
+./run.sh
+```
+
+Windows:
+
+```bat
+run.bat
+```
+
+Open [http://localhost:8080/api/health](http://localhost:8080/api/health). To use another port, set `PORT`
+before you run the script.
+
+**Option 2: the console**, an interactive shell (see "The console" below):
 
 ```bash
 ./run-console.sh
 ```
 
-Example answers to see a recommendation quickly:
+On Windows, run `run-console.bat`.
+
+**Option 3: the tests**:
+
+```bash
+mvn test
+```
+
+The scripts build the project first (`mvn package`), so they need Maven on the `PATH`, or its location in
+`MAVEN_BIN`.
+
+---
+
+## Endpoints
+
+The API uses the same route names, query parameters, pagination and field names as the Prolog engine.
+Errors always have the shape `{"error": "message"}`.
+
+| Method | Endpoint | What it does |
+| --- | --- | --- |
+| GET | `/api/health` | Checks that the API is running |
+| GET | `/api/filmes` | Lists movies, with `genre`, `pace`, `complexity`, `limit` and `offset` |
+| GET | `/api/filme` | Returns one movie, by `id` |
+| GET | `/api/recomendacoes` | Lists movies similar to a movie, with `id`, `min_score` and `limit` |
+| GET | `/api/recomendacoes_utilizador` | Recommends movies to a user, with `user_id`, `limit` and `offset` |
+| POST | `/api/reload` | Reads both CSV files again |
+| POST | `/api/reload/users` | Reads only `users.csv` again |
+| POST | `/api/reload/movies` | Reads only `movies.csv` again |
+| GET | `/api/how` | Explains how a recommendation was reached, with `user_id` and `movie` |
+| GET | `/api/why-not` | Explains why a movie was not recommended, with `user_id` and `movie` |
+| GET | `/api/trace` | Returns the rule trace for `user_id`, optionally filtered by `movie` |
+| GET | `/docs` | Swagger UI |
+| GET | `/openapi.json` | OpenAPI specification, generated from the controllers |
+
+The last three explanation endpoints exist only in the Drools engine.
+
+Examples (port 8082 with Docker, 8080 when run manually):
+
+```bash
+curl 'http://localhost:8082/api/filmes?pace=fast&complexity=medium&limit=10'
+curl 'http://localhost:8082/api/filme?id=tt0372784'
+curl 'http://localhost:8082/api/recomendacoes?id=tt0372784&min_score=7&limit=5'
+curl 'http://localhost:8082/api/recomendacoes_utilizador?user_id=ana&limit=10&offset=0'
+curl 'http://localhost:8082/api/how?user_id=ana&movie=Batman%20Begins'
+curl 'http://localhost:8082/api/why-not?user_id=ana&movie=Psycho'
+```
+
+---
+
+## The console
+
+The console asks for a candidate profile, runs the knowledge base, then opens a small query shell over the
+inferred facts and the trace events. It loads the same `movies.csv` as the API.
+
+Answers that give a recommendation quickly:
 
 ```text
 Candidate age: 25
@@ -41,131 +200,58 @@ Preferred actors:
 Preferred themes: justice
 ```
 
-Mandatory fields, such as mandatory genres, directors, actors, required
-languages, and mandatory rating, discard movies when they do not match. Flexible
-preferences increase the score and appear in the explanation.
+Mandatory fields (genres, directors, actors, required languages and a mandatory rating) discard the movies
+that do not match. Flexible preferences add to the score and appear in the explanation.
 
 After the recommendation run, use these commands:
 
-```text
-recommend
-how Batman Begins
-why-not Inception
-trace
-facts
-exit
-```
-
-`how` corresponds to a "How?" explanation: it shows the inference path that
-produced a recommendation. `why-not` corresponds to a "Why not?" explanation:
-it shows the mandatory rules or rejection rules that prevented a movie from
-becoming a recommendation. A strict "Why?" explanation is normally used when an
-expert system explains why it is asking the user for a fact; this console asks
-all candidate facts upfront, so the useful runtime explanations are `how`,
-`why-not`, `trace`, and `facts`.
-
-## Run the REST API
-
-The REST API exposes the same Drools recommendation engine through HTTP. It also
-loads the same Prolog CSV catalogue used by the console.
-
-From this folder:
-
-```bash
-./run-api.sh
-```
-
-## Run the REST API with Docker
-
-This follows the same module-level Docker pattern used by the Prolog and
-frontend modules. The compose file builds from the repository root because the
-Drools API needs the shared Prolog CSV catalogues at runtime.
-
-From this folder:
-
-```bash
-docker compose up --build -d
-```
-
-Open the API at [http://localhost:8082/api/health](http://localhost:8082/api/health)
-or Swagger at [http://localhost:8082/docs](http://localhost:8082/docs).
-
-To use another host port:
-
-```bash
-PORT=8083 docker compose up --build -d
-```
-
-To stop it:
-
-```bash
-docker compose down
-```
-
-The main contract follows the existing SWI-Prolog API, so clients can use the
-same `/api/...` route names, query parameters, pagination envelope, and movie
-field names.
-
-| Route | Method | Purpose |
-| --- | --- | --- |
-| `/api/health` | `GET` | Checks that the API is running. |
-| `/api/filmes` | `GET` | Lists movie facts with `genre`, `pace`, `complexity`, `limit`, and `offset`. |
-| `/api/filme` | `GET` | Reads one movie by `id`. |
-| `/api/recomendacoes` | `GET` | Lists similar movies for a source movie using `id`, `min_score`, and `limit`. |
-| `/api/recomendacoes_utilizador` | `GET` | Runs the Drools recommendation engine for a CSV user profile using `user_id`, `limit`, and `offset`. |
-| `/api/how` | `GET` | Explains how a recommendation conclusion was inferred for `user_id` and `movie`. |
-| `/api/why-not` | `GET` | Explains why a movie was not recommended for `user_id` and `movie`. |
-| `/api/why_not` | `GET` | Alias for `/api/why-not`. |
-| `/api/trace` | `GET` | Returns rule trace events for `user_id`, optionally filtered by `movie`. |
-| `/openapi.json` | `GET` | Serves the OpenAPI specification. |
-| `/docs` | `GET` | Opens Swagger UI for trying the API in the browser. |
-
-Example request:
-
-```bash
-curl 'http://localhost:8080/api/filmes?pace=fast&complexity=medium&limit=10'
-curl 'http://localhost:8080/api/filme?id=tt0372784'
-curl 'http://localhost:8080/api/recomendacoes?id=tt0372784&min_score=7&limit=5'
-curl 'http://localhost:8080/api/recomendacoes_utilizador?user_id=ana&limit=10&offset=0'
-```
-
-Example explanation request:
-
-```bash
-curl 'http://localhost:8080/api/how?user_id=ana&movie=Batman%20Begins'
-curl 'http://localhost:8080/api/why-not?user_id=ana&movie=Psycho'
-```
-
-The earlier JSON `POST` routes remain available as debugging aliases, but the
-Prolog-compatible `GET /api/...` routes are the preferred integration surface.
-
-## Course-material alignment
-
-| Course topic / PDF | Implementation evidence |
+| Command | What it does |
 | --- | --- |
-| Expert-system architecture: knowledge base, working memory, inference engine, explanation module, and interface (`04-ArquitSP.pdf`) | `rules.drl` is the knowledge base; `MovieRecommendationUnit` exposes Drools working-memory data stores; `DroolsRecommendationService` runs the inference engine; `MovieRecommendationConsole` and `MovieRecommendationApi` are interfaces; `Recommendation`, `TraceEvent`, `how`, `why-not`, `trace`, and `facts` form the explanation module. |
-| Forward chaining / data-driven inference (`05-EstratRac.pdf`) | Drools fires rules from inserted facts: user preferences and movie facts are inserted into `MovieRecommendationUnit`, then `instance.fire()` derives exclusions, preference reasons, recommendations, and trace events. |
-| Conflict resolution and rule priority (`05-EstratRac.pdf`) | `rules.drl` uses `salience`: exclusion rules run first, preference rules run next, and the recommendation creation rule runs last. This keeps mandatory constraints ahead of scoring. |
-| Separation between knowledge and control (`01-IntrodSBC_and_SP.pdf`, `03-ReprCon.pdf`) | Recommendation knowledge is declarative in `rules.drl`; Java classes hold facts and execution plumbing. Domain knowledge is not hard-coded inside the console. |
-| Expert interview knowledge acquisition (`02-IntrodSP.pdf`, `Entrevista_Joao_Mota_Revista.pdf`) | The rules encode the expert decisions captured from the interview: mandatory limits discard movies; flexible preferences affect score; rejected genres/directors/actors exclude; recommendations expose satisfied and unmet preferences. |
-| Drools working memory and rule execution (`Drools-HelloWorld.pdf`) | `MovieRecommendationUnit` contains `DataStore<Movie>`, `DataStore<UserPreferences>`, `DataStore<Recommendation>`, and `DataStore<TraceEvent>`. Rules combine working-memory facts with the knowledge base to create new facts. |
-| Drools monitoring and queries (`Monitorização Drools.pdf`) | `rules.drl` defines `FindRecommendations` and `FindTraceEvents` queries. `TraceEvent` records rule firings for exclusions, preference matches, and recommendation creation. |
-| Explanation types: How, Why, Why not (`04-ArquitSP.pdf`, `05-EstratRac.pdf`, `WhyNot.pdf`) | `how <movie>` and `POST /how` explain how a recommendation was produced; `why-not <movie>` and `POST /why-not` explain why it was not produced; `trace` and `POST /trace` show the fired-rule path; `facts` and `GET /facts` expose the known facts. |
-| Truth Maintenance Systems (`12-SP-TMS.pdf`) | The current implementation stores explicit trace facts. A future improvement can use Drools `insertLogical` for conclusions that should be automatically retracted when their supporting facts stop being true. |
-| Fuzzy reasoning (`07-SP-Fuzzy.pdf`) | Current scoring is weighted and deterministic. Fuzzy logic is a suitable future extension for vague concepts such as "short movie", "recent movie", "close to minimum rating", and "high popularity". |
-| Bayesian reasoning (`09-SP-Bayes.pdf`) | Bayesian reasoning is not implemented because the current project has no reliable prior and conditional probabilities. It should only be added if the catalogue/user data supports probabilistic evidence. |
-| Ontologies and knowledge reuse (`13-Ontologies_en.pdf`, `14-KnowledgeManagement_en.pdf`) | The current model uses Java facts and Drools rules. A future ontology layer could formalize concepts such as genre, subgenre, actor, director, audience, and platform availability for reuse and interoperability. |
+| `recommend` | Shows the recommendations again |
+| `how Batman Begins` | The inference path that produced a recommendation |
+| `why-not Inception` | The rules that stopped a movie from being recommended |
+| `trace` | The rules that fired, in order |
+| `facts` | The inferred facts |
+| `exit` | Leaves the console |
+
+A strict "Why?" explanation says why the system asks the user for a fact. The console asks for every fact up
+front, so the useful explanations here are `how`, `why-not`, `trace` and `facts`.
+
+---
 
 ## Code map
 
-| File | Role |
+Java packages under `src/main/java/meia/playgorithm`:
+
+| Package or file | Role |
 | --- | --- |
-| `src/main/resources/meia/playgorithm/rules.drl` | Drools knowledge base: exclusions, scoring reasons, recommendation creation, and queries. |
-| `src/main/java/meia/playgorithm/MovieRecommendationUnit.java` | RuleUnit working memory: movies, preferences, recommendations, and trace events. |
-| `src/main/java/meia/playgorithm/DroolsRecommendationService.java` | Executes the Drools inference engine and returns inferred results. |
-| `src/main/java/meia/playgorithm/MovieRecommendationConsole.java` | Interactive interface for asking the knowledge base for recommendations and explanations. |
-| `src/main/java/meia/playgorithm/MovieRecommendationApi.java` | REST interface with recommendations, fact inspection, health check, OpenAPI, Swagger UI, and explanation routes. |
-| `src/main/java/meia/playgorithm/SampleMovieCatalog.java` | Loads the Prolog movie CSV into Drools movie facts. |
-| `src/main/java/meia/playgorithm/TraceEvent.java` | Observable explanation fact emitted by rules. |
-| `src/main/java/meia/playgorithm/Recommendation.java` | Final recommendation fact with score, status, reasons, unmet preferences, and score breakdown. |
-| `src/test/java/meia/playgorithm/MovieRecommendationTest.java` | Automated validation of exclusions, alternatives, scoring, compatibility, and trace events. |
+| `model/` | Facts and results: `Movie`, `UserPreferences`, `Recommendation` (score, status, reasons, unmet preferences, score breakdown), `RecommendationResult`, `TraceEvent` and `PreferenceReason` |
+| `engine/` | `MovieRecommendationUnit` (the rule unit and its working memory) and `DroolsRecommendationService` (runs the inference). The knowledge base is `src/main/resources/meia/playgorithm/engine/rules.drl`: exclusions, scoring reasons, recommendation creation and queries |
+| `catalog/` | `MovieCatalog` and `UserCatalog` (Spring beans) keep the CSV data in memory (`reload()` reads it again). `CsvSource` reads a URL or a file |
+| `api/controller/` | Thin controllers (`MovieController`, `UserRecommendationController`, `ExplanationController`, `ReloadController`, `HealthController`). They declare their routes with annotations, validate the parameters and call a service |
+| `api/dto/` | The response records, one per response shape, with snake_case JSON |
+| `api/` | `ApiErrors` turns every error into `{"error": "..."}`, `Validation` holds the parameter limits and `WebConfig` opens CORS |
+| `service/` | `MovieService` (listing, filters, similar movies), `RecommendationService` (recommendations and the how, why-not and trace explanations) and `KnowledgeBaseService` (reload). They receive the catalogs and the engine by constructor injection |
+| `console/` | `MovieRecommendationConsole`, the interactive interface |
+| `run.sh`, `run.bat`, `run-console.sh`, `run-console.bat` | Build and start the API or the console without Docker |
+| `Application` | Entry point. It starts the API, and `Application console` starts the console |
+| `src/test/java/.../MovieRecommendationTest.java` | Tests for exclusions, alternatives, scoring, compatibility and trace events |
+
+---
+
+## Course material alignment
+
+| Course topic | Where it is in the implementation |
+| --- | --- |
+| Expert-system architecture: knowledge base, working memory, inference engine, explanation module and interface | `rules.drl` is the knowledge base. `MovieRecommendationUnit` is the working memory. `DroolsRecommendationService` is the inference engine. The console and the API are the interfaces. `Recommendation`, `TraceEvent` and the how, why-not and trace explanations are the explanation module |
+| Forward chaining | Drools fires rules from the inserted facts. The user preferences and the movies go into `MovieRecommendationUnit`, then `instance.fire()` derives exclusions, preference reasons, recommendations and trace events |
+| Conflict resolution and rule priority | `rules.drl` uses `salience`: exclusion rules run first, preference rules next and the recommendation rule last. Mandatory constraints therefore come before scoring |
+| Knowledge separated from control | The recommendation knowledge is declarative in `rules.drl`. The Java classes only hold facts and run the engine |
+| Knowledge acquisition from an expert interview | The rules encode the interview: mandatory limits discard movies, flexible preferences change the score, rejected genres, directors and actors exclude, and recommendations list the satisfied and unmet preferences |
+| Drools working memory and rule execution | `MovieRecommendationUnit` holds a `DataStore` of movies, preferences, recommendations and trace events. The rules combine them to create new facts |
+| Drools monitoring and queries | `rules.drl` defines the `FindRecommendations` and `FindTraceEvents` queries. `TraceEvent` records each rule that fires |
+| Explanation types: how, why and why not | `how` and `GET /api/how` explain how a recommendation was produced. `why-not` and `GET /api/why-not` explain why it was not. `trace` and `GET /api/trace` show the rules that fired. `facts` shows the known facts |
+| Truth maintenance | The implementation stores explicit trace facts. A future version could use `insertLogical` for conclusions that should disappear when their supporting facts stop being true |
+| Fuzzy reasoning | The scoring is weighted and deterministic. Fuzzy logic would suit vague ideas such as "short movie", "recent movie" or "close to the minimum rating" |
+| Bayesian reasoning | Not implemented, because the project has no reliable prior or conditional probabilities |
+| Ontologies and knowledge reuse | The model uses Java facts and Drools rules. An ontology could formalise genre, subgenre, actor, director, audience and platform availability |

@@ -1,0 +1,41 @@
+package meia.playgorithm.engine;
+
+import meia.playgorithm.model.Movie;
+import meia.playgorithm.model.Recommendation;
+import meia.playgorithm.model.TraceEvent;
+import meia.playgorithm.model.UserPreferences;
+
+import org.drools.ruleunits.api.DataStore;
+import org.drools.ruleunits.api.DataSource;
+import org.drools.ruleunits.api.RuleUnitData;
+
+public class MovieRecommendationUnit implements RuleUnitData {
+
+    private final DataStore<Movie> movies;
+    private final DataStore<UserPreferences> preferences;
+    private final DataStore<Recommendation> recommendations;
+    private final DataStore<TraceEvent> traceEvents;
+
+    public MovieRecommendationUnit() {
+        this.movies = DataSource.createStore();
+        this.preferences = DataSource.createStore();
+        this.recommendations = DataSource.createStore();
+        this.traceEvents = DataSource.createStore();
+    }
+
+    public DataStore<Movie> getMovies() {
+        return movies;
+    }
+
+    public DataStore<UserPreferences> getPreferences() {
+        return preferences;
+    }
+
+    public DataStore<Recommendation> getRecommendations() {
+        return recommendations;
+    }
+
+    public DataStore<TraceEvent> getTraceEvents() {
+        return traceEvents;
+    }
+}

@@ -25,3 +25,7 @@ replay_pid*
 
 # Local IDE metadata
 .idea/
+__pycache__/
+
+# Local IDE settings
+.vscode/

@@ -1,0 +1,4 @@
+# SWI-Prolog
+*.qlf
+.swipl*
+.swipl_history
