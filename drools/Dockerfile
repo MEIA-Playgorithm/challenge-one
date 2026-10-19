@@ -6,7 +6,7 @@ COPY drools/pom.xml .
 RUN mvn -q -DskipTests dependency:go-offline
 
 COPY drools .
-RUN mvn -q -DskipTests package dependency:copy-dependencies
+RUN mvn -q -DskipTests package dependency:copy-dependencies -DincludeScope=runtime
 
 FROM eclipse-temurin:17-jre
 

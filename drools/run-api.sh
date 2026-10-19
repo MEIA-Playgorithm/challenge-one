@@ -1,6 +1,8 @@
 #!/usr/bin/env sh
 set -eu
 
+cd "$(dirname "$0")"
+
 if [ -n "${MAVEN_BIN:-}" ]; then
   MVN="$MAVEN_BIN"
 elif command -v mvn >/dev/null 2>&1; then
@@ -10,16 +12,13 @@ else
   exit 1
 fi
 
-M2_REPO="${M2_REPO:-$HOME/.m2/repository}"
+# Maven writes the runtime dependencies of pom.xml (no test jars) to classpath.txt.
+"$MVN" -q compile dependency:build-classpath -DincludeScope=runtime -Dmdep.outputFile=target/classpath.txt < /dev/null
 
-"$MVN" -Dmaven.repo.local="$M2_REPO" -q test-compile
+# Java on Windows (Git Bash) separates classpath entries with ";".
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*) SEP=";" ;;
+  *) SEP=":" ;;
+esac
 
-CP="target/classes"
-for jar in $(find "$M2_REPO" -name '*.jar'); do
-  case "$jar" in
-    */org/slf4j/slf4j-api/1.*) continue ;;
-  esac
-  CP="$CP:$jar"
-done
-
-java -cp "$CP" meia.playgorithm.MovieRecommendationApi
+java -cp "target/classes$SEP$(cat target/classpath.txt)" meia.playgorithm.MovieRecommendationApi

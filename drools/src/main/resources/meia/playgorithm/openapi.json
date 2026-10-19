@@ -1,0 +1,278 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Playgorithm Drools Recommendation API",
+    "version": "1.0.0",
+    "description": "Movie recommendations inferred by the Drools knowledge base (movies.drl and users.drl). The GET routes use the user profiles of the CSV catalog; the POST routes run the rules for a profile sent in the request body."
+  },
+  "tags": [
+    { "name": "Catalog", "description": "Movie facts and what the rules inferred about them" },
+    { "name": "CSV users", "description": "Recommendations and explanations for the users of the CSV catalog" },
+    { "name": "Custom profile", "description": "Runs the rules for a profile sent in the request body" }
+  ],
+  "paths": {
+    "/api/health": {
+      "get": {
+        "tags": ["Catalog"],
+        "summary": "Check API health",
+        "responses": { "200": { "$ref": "#/components/responses/Json" } }
+      }
+    },
+    "/api/filmes": {
+      "get": {
+        "tags": ["Catalog"],
+        "summary": "List movie facts with pagination and filters",
+        "parameters": [
+          { "name": "genre", "in": "query", "schema": { "type": "string" }, "example": "Drama" },
+          { "name": "pace", "in": "query", "schema": { "type": "string", "enum": ["slow", "medium", "fast", "unknown"] } },
+          { "name": "complexity", "in": "query", "schema": { "type": "string", "enum": ["low", "medium", "high", "unknown"] } },
+          { "$ref": "#/components/parameters/Limit20" },
+          { "$ref": "#/components/parameters/Offset" }
+        ],
+        "responses": {
+          "200": { "$ref": "#/components/responses/Json" },
+          "400": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/filme": {
+      "get": {
+        "tags": ["Catalog"],
+        "summary": "Read one movie by id",
+        "parameters": [
+          { "name": "id", "in": "query", "required": true, "schema": { "type": "string" }, "example": "tt0372784" }
+        ],
+        "responses": {
+          "200": { "$ref": "#/components/responses/Json" },
+          "400": { "$ref": "#/components/responses/Error" },
+          "404": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/recomendacoes": {
+      "get": {
+        "tags": ["Catalog"],
+        "summary": "List similar movies for a source movie",
+        "description": "SimilarityScore facts of the \"Similarity score\" rule, best score first.",
+        "parameters": [
+          { "name": "id", "in": "query", "required": true, "schema": { "type": "string" }, "example": "tt0372784" },
+          { "name": "min_score", "in": "query", "schema": { "type": "integer", "minimum": 0, "maximum": 11, "default": 0 } },
+          { "$ref": "#/components/parameters/Limit10" }
+        ],
+        "responses": {
+          "200": { "$ref": "#/components/responses/Json" },
+          "400": { "$ref": "#/components/responses/Error" },
+          "404": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/recomendacoes_utilizador": {
+      "get": {
+        "tags": ["CSV users"],
+        "summary": "List recommendations for a CSV user profile",
+        "parameters": [
+          { "$ref": "#/components/parameters/UserId" },
+          { "$ref": "#/components/parameters/Limit10" },
+          { "$ref": "#/components/parameters/Offset" }
+        ],
+        "responses": {
+          "200": { "$ref": "#/components/responses/Json" },
+          "400": { "$ref": "#/components/responses/Error" },
+          "404": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/how": {
+      "get": {
+        "tags": ["CSV users"],
+        "summary": "Explain how a recommendation was inferred",
+        "parameters": [
+          { "$ref": "#/components/parameters/UserId" },
+          { "$ref": "#/components/parameters/Movie" }
+        ],
+        "responses": {
+          "200": { "$ref": "#/components/responses/Json" },
+          "400": { "$ref": "#/components/responses/Error" },
+          "404": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/why-not": {
+      "get": {
+        "tags": ["CSV users"],
+        "summary": "Explain why a movie was not recommended",
+        "parameters": [
+          { "$ref": "#/components/parameters/UserId" },
+          { "name": "movie", "in": "query", "required": true, "description": "Movie id or title", "schema": { "type": "string" }, "example": "Psycho" }
+        ],
+        "responses": {
+          "200": { "$ref": "#/components/responses/Json" },
+          "400": { "$ref": "#/components/responses/Error" },
+          "404": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/api/trace": {
+      "get": {
+        "tags": ["CSV users"],
+        "summary": "Return the fired rule trace of a user",
+        "parameters": [
+          { "$ref": "#/components/parameters/UserId" },
+          { "name": "movie", "in": "query", "description": "Movie id or title; without it, the trace of every movie", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "$ref": "#/components/responses/Json" },
+          "400": { "$ref": "#/components/responses/Error" },
+          "404": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/recommendations": {
+      "post": {
+        "tags": ["Custom profile"],
+        "summary": "Recommendations for the profile in the body",
+        "requestBody": { "$ref": "#/components/requestBodies/Profile" },
+        "responses": {
+          "200": { "$ref": "#/components/responses/Json" },
+          "400": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/how": {
+      "post": {
+        "tags": ["Custom profile"],
+        "summary": "Explain how a recommendation was inferred (field movie is required)",
+        "requestBody": { "$ref": "#/components/requestBodies/Profile" },
+        "responses": {
+          "200": { "$ref": "#/components/responses/Json" },
+          "400": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/why-not": {
+      "post": {
+        "tags": ["Custom profile"],
+        "summary": "Explain why a movie was not recommended (field movie is required)",
+        "requestBody": { "$ref": "#/components/requestBodies/Profile" },
+        "responses": {
+          "200": { "$ref": "#/components/responses/Json" },
+          "400": { "$ref": "#/components/responses/Error" },
+          "404": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/trace": {
+      "post": {
+        "tags": ["Custom profile"],
+        "summary": "Fired rule trace for the profile in the body (field movie is optional)",
+        "requestBody": { "$ref": "#/components/requestBodies/Profile" },
+        "responses": {
+          "200": { "$ref": "#/components/responses/Json" },
+          "400": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "UserId": {
+        "name": "user_id", "in": "query", "required": true,
+        "description": "A user of the CSV catalog: ana, bruno, carla, diogo, eva, filipe, ines, joao, mariana or tiago",
+        "schema": { "type": "string" }, "example": "ana"
+      },
+      "Movie": {
+        "name": "movie", "in": "query", "required": true,
+        "description": "Movie id or title",
+        "schema": { "type": "string" }, "example": "tt0372784"
+      },
+      "Limit10": {
+        "name": "limit", "in": "query",
+        "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 10 }
+      },
+      "Limit20": {
+        "name": "limit", "in": "query",
+        "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 20 }
+      },
+      "Offset": {
+        "name": "offset", "in": "query",
+        "schema": { "type": "integer", "minimum": 0, "default": 0 }
+      }
+    },
+    "requestBodies": {
+      "Profile": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/RecommendationRequest" },
+            "example": {
+              "userId": "api-user",
+              "movie": "tt0372784",
+              "age": 25,
+              "likedGenres": ["Action", "Drama"],
+              "likedLanguages": ["English"],
+              "preferredDirectors": ["Christopher Nolan"],
+              "minimumRating": 7.0
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "Json": {
+        "description": "OK",
+        "content": { "application/json": { "schema": { "type": "object" } } }
+      },
+      "Error": {
+        "description": "Error",
+        "content": {
+          "application/json": {
+            "schema": { "type": "object", "properties": { "error": { "type": "string" } } }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "StringList": { "type": "array", "items": { "type": "string" } },
+      "RecommendationRequest": {
+        "type": "object",
+        "properties": {
+          "userId": { "type": "string", "default": "api-user" },
+          "movie": { "type": "string", "description": "Movie id or title, for /how, /why-not and /trace" },
+          "age": { "type": "integer" },
+          "sessionMinimumAge": { "type": "integer" },
+          "maximumDurationMinutes": { "type": "integer" },
+          "yearFrom": { "type": "integer" },
+          "yearTo": { "type": "integer" },
+          "minimumRating": { "type": "number" },
+          "ratingTolerance": { "type": "number" },
+          "ratingRequired": { "type": "boolean" },
+          "allowRewatch": { "type": "boolean" },
+          "watchedMovieIds": { "$ref": "#/components/schemas/StringList" },
+          "wishlistMovieIds": { "$ref": "#/components/schemas/StringList" },
+          "likedGenres": { "$ref": "#/components/schemas/StringList" },
+          "dislikedGenres": { "$ref": "#/components/schemas/StringList" },
+          "likedLanguages": { "$ref": "#/components/schemas/StringList" },
+          "dislikedLanguages": { "$ref": "#/components/schemas/StringList" },
+          "requiredLanguages": { "$ref": "#/components/schemas/StringList" },
+          "preferredDirectors": { "$ref": "#/components/schemas/StringList" },
+          "dislikedDirectors": { "$ref": "#/components/schemas/StringList" },
+          "preferredWriters": { "$ref": "#/components/schemas/StringList" },
+          "preferredStars": { "$ref": "#/components/schemas/StringList" },
+          "dislikedStars": { "$ref": "#/components/schemas/StringList" },
+          "preferredCountries": { "$ref": "#/components/schemas/StringList" },
+          "preferredSubgenres": { "$ref": "#/components/schemas/StringList" },
+          "preferredPace": { "$ref": "#/components/schemas/StringList" },
+          "preferredComplexity": { "$ref": "#/components/schemas/StringList" },
+          "preferredViolence": { "$ref": "#/components/schemas/StringList" },
+          "preferredHumor": { "$ref": "#/components/schemas/StringList" },
+          "preferredPsychologicalIntensity": { "$ref": "#/components/schemas/StringList" },
+          "preferredEmotionalTones": { "$ref": "#/components/schemas/StringList" },
+          "preferredThemes": { "$ref": "#/components/schemas/StringList" },
+          "preferredAudience": { "$ref": "#/components/schemas/StringList" },
+          "preferredEras": { "$ref": "#/components/schemas/StringList" },
+          "preferredPopularity": { "$ref": "#/components/schemas/StringList" }
+        }
+      }
+    }
+  }
+}

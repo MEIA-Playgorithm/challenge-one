@@ -81,7 +81,10 @@ public class MovieRecommendationApi {
             } else if ("POST".equals(method) && "/trace".equals(path)) {
                 trace(exchange);
             } else if ("GET".equals(method) && "/openapi.json".equals(path)) {
-                json(exchange, 200, openApi());
+                openApi(exchange);
+            } else if ("GET".equals(method) && "/".equals(path)) {
+                exchange.getResponseHeaders().set("Location", "/docs");
+                exchange.sendResponseHeaders(302, -1);
             } else if ("GET".equals(method) && "/docs".equals(path)) {
                 html(exchange, swaggerUi());
             } else if (path.startsWith("/api/")) {
@@ -544,22 +547,15 @@ public class MovieRecommendationApi {
         }
     }
 
-    private static Map<String, Object> openApi() {
-        return Map.of(
-            "openapi", "3.0.3",
-            "info", Map.of("title", "Playgorithm Drools Recommendation API", "version", "1.0.0"),
-            "paths", Map.ofEntries(
-                Map.entry("/api/health", Map.of("get", Map.of("summary", "Check API health"))),
-                Map.entry("/api/filmes", Map.of("get", Map.of("summary", "List movie facts with pagination and filters"))),
-                Map.entry("/api/filme", Map.of("get", Map.of("summary", "Read one movie by id"))),
-                Map.entry("/api/recomendacoes", Map.of("get", Map.of("summary", "List similar movies for a source movie"))),
-                Map.entry("/api/recomendacoes_utilizador", Map.of("get", Map.of("summary", "List recommendations for a CSV user profile"))),
-                Map.entry("/api/how", Map.of("get", Map.of("summary", "Explain how a recommendation was inferred"))),
-                Map.entry("/api/why-not", Map.of("get", Map.of("summary", "Explain why a movie was not recommended"))),
-                Map.entry("/api/why_not", Map.of("get", Map.of("summary", "Alias for /api/why-not"))),
-                Map.entry("/api/trace", Map.of("get", Map.of("summary", "Return trace events")))
-            )
-        );
+    /** The OpenAPI description (parameters, bodies and responses) that Swagger UI reads at /docs. */
+    private static void openApi(HttpExchange exchange) throws IOException {
+        try (InputStream input = MovieRecommendationApi.class.getResourceAsStream("/meia/playgorithm/openapi.json")) {
+            if (input == null) {
+                throw new IllegalStateException("Missing openapi.json");
+            }
+            exchange.getResponseHeaders().set("Content-Type", "application/json; charset=utf-8");
+            send(exchange, 200, input.readAllBytes());
+        }
     }
 
     private static String swaggerUi() {

@@ -19,7 +19,7 @@ if defined MAVEN_BIN (
 )
 
 rem "< nul" keeps Maven from consuming the console input.
-call %MVN% -q test-compile dependency:build-classpath -Dmdep.outputFile=target\classpath.txt < nul
+call %MVN% -q compile dependency:build-classpath -DincludeScope=runtime -Dmdep.outputFile=target\classpath.txt < nul
 if errorlevel 1 exit /b %ERRORLEVEL%
 
 rem for /f reads the whole line (set /p stops at 1024 characters).
