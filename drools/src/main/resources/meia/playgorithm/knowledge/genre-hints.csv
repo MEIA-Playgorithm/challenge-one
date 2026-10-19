@@ -1,0 +1,79 @@
+kind,attribute,value,priority,genres
+LEVEL,PACE,fast,1,Action|Adventure|Thriller|Slapstick
+LEVEL,PACE,slow,2,Psychological Drama|Period Drama|Documentary
+LEVEL,PACE,medium,3,Drama|Comedy|Romance|Family
+LEVEL,COMPLEXITY,high,1,Psychological Thriller|Psychological Drama|Mystery|Suspense Mystery|Cyberpunk|Legal Drama
+LEVEL,COMPLEXITY,medium,2,Crime|SciFi|Fantasy|History|Drama
+LEVEL,COMPLEXITY,low,3,Slapstick|Holiday Family|Family
+LEVEL,VIOLENCE,high,1,Splatter Horror|Slasher Horror|War|OnePerson Army Action
+LEVEL,VIOLENCE,medium,2,Action|Crime|Horror|Western|Wuxia
+LEVEL,VIOLENCE,low,3,Family|Romantic Comedy|Holiday Family
+LEVEL,HUMOR,high,1,Comedy|Slapstick|Parody|Buddy Comedy|Dark Comedy|Romantic Comedy|HighConcept Comedy
+LEVEL,HUMOR,medium,2,Satire|Mockumentary
+LEVEL,HUMOR,low,3,Tragedy|Psychological Horror|War
+LEVEL,PSYCHOLOGICAL_INTENSITY,high,1,Psychological Thriller|Psychological Horror|Psychological Drama|Tragedy
+LEVEL,PSYCHOLOGICAL_INTENSITY,medium,2,Thriller|Suspense Mystery|Horror|Mystery|Crime|War|Drama
+LEVEL,PSYCHOLOGICAL_INTENSITY,low,3,Family|Slapstick|Holiday Family
+TAG,EMOTIONAL_TONE,tense,0,Thriller|Suspense Mystery|Crime
+TAG,EMOTIONAL_TONE,dark,0,Horror|Psychological Horror|Psychological Thriller|Dark Comedy|Cyberpunk
+TAG,EMOTIONAL_TONE,sad,0,Tragedy
+TAG,EMOTIONAL_TONE,lighthearted,0,Comedy|Romantic Comedy|Slapstick|Holiday Family
+TAG,EMOTIONAL_TONE,romantic,0,Romance|Romantic Comedy|Romantic Epic
+TAG,EMOTIONAL_TONE,reflective,0,Psychological Drama|Biography|Drama
+TAG,EMOTIONAL_TONE,exciting,0,Action|Adventure|Superhero
+TAG,THEMES,love,0,Romance|Romantic Comedy|Romantic Epic
+TAG,THEMES,family,0,Family|Holiday Family
+TAG,THEMES,growing_up,0,ComingofAge
+TAG,THEMES,crime,0,Crime|True Crime|Heist|Cop Drama
+TAG,THEMES,justice,0,Legal Drama|Cop Drama|Superhero
+TAG,THEMES,war,0,War
+TAG,THEMES,history,0,History|Period Drama|Sword Sandal
+TAG,THEMES,technology,0,SciFi|SciFi Epic|Cyberpunk
+TAG,THEMES,supernatural,0,Supernatural Fantasy|Fantasy
+TAG,THEMES,exploration,0,Adventure|Quest|Sea Adventure|Jungle Adventure|Globetrotting Adventure
+TAG,THEMES,psychology,0,Psychological Drama|Psychological Thriller|Psychological Horror
+TAG,THEMES,music,0,Music|Musical
+TAG,THEMES,sport,0,Sport
+TAG,THEMES,life_story,0,Biography
+SUBGENRE,SUBGENRE,Action Epic,0,Action Epic
+SUBGENRE,SUBGENRE,Adult Animation,0,Adult Animation
+SUBGENRE,SUBGENRE,Adventure Epic,0,Adventure Epic
+SUBGENRE,SUBGENRE,Anime,0,Anime
+SUBGENRE,SUBGENRE,Buddy Comedy,0,Buddy Comedy
+SUBGENRE,SUBGENRE,ComingofAge,0,ComingofAge
+SUBGENRE,SUBGENRE,Computer Animation,0,Computer Animation
+SUBGENRE,SUBGENRE,Cop Drama,0,Cop Drama
+SUBGENRE,SUBGENRE,Cyberpunk,0,Cyberpunk
+SUBGENRE,SUBGENRE,Dark Comedy,0,Dark Comedy
+SUBGENRE,SUBGENRE,Globetrotting Adventure,0,Globetrotting Adventure
+SUBGENRE,SUBGENRE,HandDrawn Animation,0,HandDrawn Animation
+SUBGENRE,SUBGENRE,Heist,0,Heist
+SUBGENRE,SUBGENRE,HighConcept Comedy,0,HighConcept Comedy
+SUBGENRE,SUBGENRE,Holiday Family,0,Holiday Family
+SUBGENRE,SUBGENRE,Jungle Adventure,0,Jungle Adventure
+SUBGENRE,SUBGENRE,Kaiju,0,Kaiju
+SUBGENRE,SUBGENRE,Legal Drama,0,Legal Drama
+SUBGENRE,SUBGENRE,Mockumentary,0,Mockumentary
+SUBGENRE,SUBGENRE,OnePerson Army Action,0,OnePerson Army Action
+SUBGENRE,SUBGENRE,Parody,0,Parody
+SUBGENRE,SUBGENRE,Period Drama,0,Period Drama
+SUBGENRE,SUBGENRE,Psychological Drama,0,Psychological Drama
+SUBGENRE,SUBGENRE,Psychological Horror,0,Psychological Horror
+SUBGENRE,SUBGENRE,Psychological Thriller,0,Psychological Thriller
+SUBGENRE,SUBGENRE,Quest,0,Quest
+SUBGENRE,SUBGENRE,Road Trip,0,Road Trip
+SUBGENRE,SUBGENRE,Romantic Comedy,0,Romantic Comedy
+SUBGENRE,SUBGENRE,Romantic Epic,0,Romantic Epic
+SUBGENRE,SUBGENRE,Satire,0,Satire
+SUBGENRE,SUBGENRE,SciFi Epic,0,SciFi Epic
+SUBGENRE,SUBGENRE,Sea Adventure,0,Sea Adventure
+SUBGENRE,SUBGENRE,Slapstick,0,Slapstick
+SUBGENRE,SUBGENRE,Slasher Horror,0,Slasher Horror
+SUBGENRE,SUBGENRE,Splatter Horror,0,Splatter Horror
+SUBGENRE,SUBGENRE,Superhero,0,Superhero
+SUBGENRE,SUBGENRE,Supernatural Fantasy,0,Supernatural Fantasy
+SUBGENRE,SUBGENRE,Suspense Mystery,0,Suspense Mystery
+SUBGENRE,SUBGENRE,Swashbuckler,0,Swashbuckler
+SUBGENRE,SUBGENRE,Sword Sandal,0,Sword Sandal
+SUBGENRE,SUBGENRE,True Crime,0,True Crime
+SUBGENRE,SUBGENRE,Wuxia,0,Wuxia

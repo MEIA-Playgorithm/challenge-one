@@ -4,6 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
+import meia.playgorithm.facts.Attribute;
+import meia.playgorithm.facts.Limit;
+import meia.playgorithm.facts.Movie;
+import meia.playgorithm.facts.SimilarityScore;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -22,6 +27,15 @@ public class MovieRecommendationApi {
 
     private static final ObjectMapper JSON = new ObjectMapper();
     private static final DroolsRecommendationService SERVICE = new DroolsRecommendationService();
+    private static KnowledgeBaseResult catalog;
+
+    /** The knowledge base over the CSV catalogs, run once. */
+    private static synchronized KnowledgeBaseResult catalog() {
+        if (catalog == null) {
+            catalog = SERVICE.runCatalogs();
+        }
+        return catalog;
+    }
 
     public static void main(String[] args) throws IOException {
         int port = Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));
@@ -97,13 +111,14 @@ public class MovieRecommendationApi {
         validEnum(query.get("pace"), List.of("slow", "medium", "fast", "unknown"));
         validEnum(query.get("complexity"), List.of("low", "medium", "high", "unknown"));
 
-        List<Movie> filtered = SampleMovieCatalog.movies().stream()
+        KnowledgeBaseResult knowledgeBase = catalog();
+        List<Movie> filtered = knowledgeBase.movies().stream()
             .filter(movie -> matchesGenre(movie, query.get("genre")))
-            .filter(movie -> matchesValue(movie.getPace(), query.get("pace")))
-            .filter(movie -> matchesValue(movie.getComplexity(), query.get("complexity")))
+            .filter(movie -> matchesValue(knowledgeBase.feature(movie.id(), Attribute.PACE).orElse(null), query.get("pace")))
+            .filter(movie -> matchesValue(knowledgeBase.feature(movie.id(), Attribute.COMPLEXITY).orElse(null), query.get("complexity")))
             .toList();
         List<Map<String, Object>> items = page(filtered, offset, limit).stream()
-            .map(MovieRecommendationApi::movieJson)
+            .map(movie -> movieJson(knowledgeBase, movie))
             .toList();
 
         json(exchange, 200, Map.of(
@@ -115,7 +130,7 @@ public class MovieRecommendationApi {
     }
 
     private static void movie(HttpExchange exchange, Map<String, String> query) throws IOException {
-        json(exchange, 200, movieJson(requireMovie(required(query, "id"))));
+        json(exchange, 200, movieJson(catalog(), requireMovie(required(query, "id"))));
     }
 
     private static void similarRecommendations(HttpExchange exchange, Map<String, String> query) throws IOException {
@@ -127,18 +142,17 @@ public class MovieRecommendationApi {
             throw new ApiException(400, "min_score deve estar entre 0 e 11");
         }
 
-        Movie source = requireMovie(sourceId);
-        List<SimilarityRecommendation> recommendations = SampleMovieCatalog.movies().stream()
-            .filter(movie -> !movie.getId().equals(source.getId()))
-            .map(movie -> new SimilarityRecommendation(movie, similarityScore(source, movie)))
-            .filter(recommendation -> recommendation.score() >= minScore)
-            .sorted(Comparator.comparingInt(SimilarityRecommendation::score).reversed()
-                .thenComparing(recommendation -> recommendation.movie().getId()))
+        requireMovie(sourceId);
+        KnowledgeBaseResult knowledgeBase = catalog();
+        // SimilarityScore facts of the "Similarity score" rule, best score first.
+        List<SimilarityScore> recommendations = knowledgeBase.similarTo(sourceId).stream()
+            .filter(similarity -> similarity.score() >= minScore)
+            .sorted(Comparator.comparingInt(SimilarityScore::score).reversed().thenComparing(SimilarityScore::movieB))
             .toList();
         List<Map<String, Object>> items = page(recommendations, 0, limit).stream()
-            .map(recommendation -> Map.<String, Object>of(
-                "score", recommendation.score(),
-                "movie", movieJson(recommendation.movie())
+            .map(similarity -> Map.<String, Object>of(
+                "score", similarity.score(),
+                "movie", movieJson(knowledgeBase, requireMovie(similarity.movieB()))
             ))
             .toList();
 
@@ -150,9 +164,7 @@ public class MovieRecommendationApi {
         int limit = intParam(query, "limit", 10);
         int offset = intParam(query, "offset", 0);
         validPage(limit, offset);
-        UserPreferences preferences = SampleUserCatalog.find(userId)
-            .orElseThrow(() -> new ApiException(404, "Utilizador não encontrado"));
-        RecommendationResult result = SERVICE.evaluate(preferences, SampleMovieCatalog.movies());
+        RecommendationResult result = userRun(query);
         List<Recommendation> recommendations = result.recommendations();
         List<Map<String, Object>> items = page(recommendations, offset, limit).stream()
             .map(recommendation -> recommendationJson(recommendation, result))
@@ -188,10 +200,10 @@ public class MovieRecommendationApi {
         RecommendationResult result = userRun(query);
         Movie movie = result.findMovie(required(query, "movie"))
             .orElseThrow(() -> new ApiException(404, "Filme não encontrado"));
-        if (result.findRecommendation(movie.getId()).isPresent()) {
+        if (result.findRecommendation(movie.id()).isPresent()) {
             json(exchange, 200, Map.of(
                 "explanation_type", "why_not",
-                "movie", movieJson(movie),
+                "movie", movieJson(result.knowledgeBase(), movie),
                 "conclusion", "The movie was recommended, so there is no rejection path. Use /api/how for the inference path.",
                 "trace", result.traceFor(movie)
             ));
@@ -205,10 +217,8 @@ public class MovieRecommendationApi {
             .toList();
         json(exchange, 200, Map.of(
             "explanation_type", "why_not",
-            "movie", movieJson(movie),
-            "conclusion", exclusions.isEmpty()
-                ? "The movie was not recommended because no positive preference path produced a recommendation."
-                : "The movie was discarded by mandatory or rejection rules.",
+            "movie", movieJson(result.knowledgeBase(), movie),
+            "conclusion", "The movie was excluded by the rules in the exclusions list.",
             "exclusions", exclusions,
             "trace", trace.stream().map(MovieRecommendationApi::traceJson).toList()
         ));
@@ -225,7 +235,7 @@ public class MovieRecommendationApi {
 
     private static void how(HttpExchange exchange) throws IOException {
         RecommendationRequest request = read(exchange.getRequestBody(), RecommendationRequest.class);
-        RecommendationResult result = SERVICE.evaluate(toPreferences(request), SampleMovieCatalog.movies());
+        RecommendationResult result = requestRun(request);
         String movieQuery = requiredMovieQuery(request);
         Optional<Recommendation> recommendation = result.findRecommendation(movieQuery);
         json(exchange, 200, recommendation
@@ -241,13 +251,13 @@ public class MovieRecommendationApi {
     private static void whyNot(HttpExchange exchange) throws IOException {
         RecommendationRequest request = read(exchange.getRequestBody(), RecommendationRequest.class);
         Map<String, String> query = Map.of("movie", requiredMovieQuery(request));
-        RecommendationResult result = SERVICE.evaluate(toPreferences(request), SampleMovieCatalog.movies());
+        RecommendationResult result = requestRun(request);
         Movie movie = result.findMovie(query.get("movie"))
             .orElseThrow(() -> new ApiException(404, "Filme não encontrado"));
         List<TraceEvent> trace = result.traceFor(movie);
         json(exchange, 200, Map.of(
             "explanation_type", "why_not",
-            "movie", movieJson(movie),
+            "movie", movieJson(result.knowledgeBase(), movie),
             "exclusions", trace.stream().filter(event -> event.type().equals("EXCLUSION")).map(MovieRecommendationApi::traceJson).toList(),
             "trace", trace.stream().map(MovieRecommendationApi::traceJson).toList()
         ));
@@ -255,7 +265,7 @@ public class MovieRecommendationApi {
 
     private static void trace(HttpExchange exchange) throws IOException {
         RecommendationRequest request = read(exchange.getRequestBody(), RecommendationRequest.class);
-        RecommendationResult result = SERVICE.evaluate(toPreferences(request), SampleMovieCatalog.movies());
+        RecommendationResult result = requestRun(request);
         List<TraceEvent> trace = request.movie() == null || request.movie().isBlank()
             ? result.traceEvents()
             : result.traceFor(request.movie());
@@ -264,7 +274,7 @@ public class MovieRecommendationApi {
 
     private static void recommendations(HttpExchange exchange) throws IOException {
         RecommendationRequest request = read(exchange.getRequestBody(), RecommendationRequest.class);
-        RecommendationResult result = SERVICE.evaluate(toPreferences(request), SampleMovieCatalog.movies());
+        RecommendationResult result = requestRun(request);
         json(exchange, 200, Map.of(
             "movieFacts", result.movies().size(),
             "recommendations", result.recommendations().stream()
@@ -276,9 +286,17 @@ public class MovieRecommendationApi {
 
     private static RecommendationResult userRun(Map<String, String> query) {
         String userId = required(query, "user_id");
-        UserPreferences preferences = SampleUserCatalog.find(userId)
-            .orElseThrow(() -> new ApiException(404, "Utilizador não encontrado"));
-        return SERVICE.evaluate(preferences, SampleMovieCatalog.movies());
+        KnowledgeBaseResult knowledgeBase = catalog();
+        if (knowledgeBase.user(userId).isEmpty()) {
+            throw new ApiException(404, "Utilizador não encontrado");
+        }
+        return knowledgeBase.forUser(userId);
+    }
+
+    /** Runs the knowledge base for the profile sent in a POST request. */
+    private static RecommendationResult requestRun(RecommendationRequest request) {
+        UserProfile profile = toProfile(request);
+        return SERVICE.run(SampleMovieCatalog.movies(), List.of(profile)).forUser(profile.id());
     }
 
     private static Map<String, Object> recommendationJson(Recommendation recommendation, RecommendationResult result) {
@@ -287,7 +305,7 @@ public class MovieRecommendationApi {
         return Map.of(
             "score", recommendation.getScore(),
             "reasons", recommendation.getReasons().stream().map(MovieRecommendationApi::reasonJson).toList(),
-            "movie", movieJson(movie),
+            "movie", movieJson(result.knowledgeBase(), movie),
             "status", recommendation.getStatus(),
             "satisfied_requirements", List.of(),
             "unmet_preferences", recommendation.getUnmetPreferences().stream().map(MovieRecommendationApi::unmetJson).toList(),
@@ -300,7 +318,7 @@ public class MovieRecommendationApi {
             .orElseThrow(() -> new ApiException(404, "Filme não encontrado"));
         return Map.of(
             "explanation_type", "how",
-            "movie", movieJson(movie),
+            "movie", movieJson(result.knowledgeBase(), movie),
             "conclusion", "The movie was inferred as a recommendation.",
             "reasons", recommendation.getReasons().stream().map(MovieRecommendationApi::reasonJson).toList(),
             "unmet_preferences", recommendation.getUnmetPreferences().stream().map(MovieRecommendationApi::unmetJson).toList(),
@@ -309,36 +327,34 @@ public class MovieRecommendationApi {
         );
     }
 
-    private static Map<String, Object> movieJson(Movie movie) {
+    private static Map<String, Object> movieJson(KnowledgeBaseResult knowledgeBase, Movie movie) {
         Map<String, Object> map = new LinkedHashMap<>();
-        map.put("id", movie.getId());
-        map.put("title", movie.getTitle());
-        map.put("year", movie.getYear() > 0 ? movie.getYear() : null);
-        map.put("vote", null);
-        map.put("duration", movie.getDurationMinutes() > 0 ? movie.getDurationMinutes() : null);
-        map.put("rating_mpa", emptyToNull(movie.getRatingMpa()));
-        map.put("rating_imdb", movie.getRatingImdb() > 0 ? movie.getRatingImdb() : null);
+        map.put("id", movie.id());
+        map.put("title", movie.title());
+        map.put("year", movie.year());
+        map.put("vote", movie.votes());
+        map.put("duration", movie.minutes());
+        map.put("rating_mpa", emptyToNull(movie.ratingMpa()));
+        map.put("rating_imdb", movie.rating());
         map.put("budget", null);
         map.put("win", null);
         map.put("nomination", null);
         map.put("oscar", null);
-        map.put("pace", emptyToNull(movie.getPace()));
-        map.put("complexity", emptyToNull(movie.getComplexity()));
-        map.put("violence", emptyToNull(movie.getViolence()));
-        map.put("humor", emptyToNull(movie.getHumor()));
-        map.put("audience", emptyToNull(movie.getAudience()));
-        map.put("psychological_intensity", emptyToNull(movie.getPsychologicalIntensity()));
-        map.put("director", List.copyOf(movie.getDirectors()));
-        map.put("writer", List.copyOf(movie.getWriters()));
-        map.put("star", List.copyOf(movie.getStars()));
-        map.put("genre", List.copyOf(movie.getGenres()));
-        map.put("country_origin", List.copyOf(movie.getCountries()));
+        for (Attribute feature : List.of(Attribute.PACE, Attribute.COMPLEXITY, Attribute.VIOLENCE, Attribute.HUMOR,
+            Attribute.AUDIENCE, Attribute.PSYCHOLOGICAL_INTENSITY)) {
+            map.put(feature.key(), knowledgeBase.feature(movie.id(), feature).orElse(null));
+        }
+        map.put("director", movie.directors());
+        map.put("writer", movie.writers());
+        map.put("star", movie.stars());
+        map.put("genre", movie.genres());
+        map.put("country_origin", movie.countries());
         map.put("filming_location", List.of());
-        map.put("production_company", List.of());
-        map.put("language", List.copyOf(movie.getLanguages()));
-        map.put("emotional_tone", List.copyOf(movie.getEmotionalTones()));
-        map.put("themes", List.copyOf(movie.getThemes()));
-        map.put("subgenre", List.copyOf(movie.getSubgenres()));
+        map.put("production_company", movie.companies());
+        map.put("language", movie.languages());
+        map.put("emotional_tone", knowledgeBase.features(movie.id(), Attribute.EMOTIONAL_TONE));
+        map.put("themes", knowledgeBase.features(movie.id(), Attribute.THEMES));
+        map.put("subgenre", knowledgeBase.features(movie.id(), Attribute.SUBGENRE));
         return map;
     }
 
@@ -365,34 +381,13 @@ public class MovieRecommendationApi {
         );
     }
 
-    private static int similarityScore(Movie left, Movie right) {
-        return overlapScore(left.getGenres(), right.getGenres(), 4)
-            + overlapScore(left.getDirectors(), right.getDirectors(), 3)
-            + overlapScore(left.getWriters(), right.getWriters(), 2)
-            + overlapScore(left.getCountries(), right.getCountries(), 1)
-            + overlapScore(left.getLanguages(), right.getLanguages(), 1);
-    }
-
-    private static int overlapScore(Iterable<String> left, Iterable<String> right, int weight) {
-        for (String leftValue : left) {
-            for (String rightValue : right) {
-                if (leftValue.equals(rightValue)) {
-                    return weight;
-                }
-            }
-        }
-        return 0;
-    }
-
     private static Movie requireMovie(String id) {
-        return SampleMovieCatalog.movies().stream()
-            .filter(movie -> movie.getId().equals(id))
-            .findFirst()
+        return catalog().movie(id)
             .orElseThrow(() -> new ApiException(404, "Filme não encontrado"));
     }
 
     private static boolean matchesGenre(Movie movie, String genre) {
-        return genre == null || movie.getGenres().contains(genre);
+        return genre == null || movie.genres().contains(genre);
     }
 
     private static boolean matchesValue(String actual, String expected) {
@@ -461,48 +456,50 @@ public class MovieRecommendationApi {
         return value == null || value.isBlank() ? null : value;
     }
 
-    private static UserPreferences toPreferences(RecommendationRequest request) {
-        UserPreferences preferences = UserPreferences.forUser(valueOrDefault(request.userId(), "api-user"))
-            .withAge(valueOrDefault(request.age(), 18))
-            .withSessionMinimumAge(valueOrDefault(request.sessionMinimumAge(), -1))
-            .withMaximumDurationMinutes(valueOrDefault(request.maximumDurationMinutes(), -1))
-            .withYearFrom(valueOrDefault(request.yearFrom(), Integer.MIN_VALUE))
-            .withYearTo(valueOrDefault(request.yearTo(), Integer.MAX_VALUE))
-            .withMinimumRating(
-                valueOrDefault(request.minimumRating(), -1.0),
-                valueOrDefault(request.ratingTolerance(), 0.0),
-                valueOrDefault(request.ratingRequired(), false)
-            )
-            .allowRewatch(valueOrDefault(request.allowRewatch(), false));
+    /** Builds the same user facts as a CSV row (see SampleUserCatalog). */
+    private static UserProfile toProfile(RecommendationRequest request) {
+        UserProfile.Builder profile = UserProfile.builder(valueOrDefault(request.userId(), "api-user"), request.age());
 
-        addAll(request.watchedMovieIds(), preferences::addWatchedMovie);
-        addAll(request.wishlistMovieIds(), preferences::addWishlistMovie);
-        addAll(request.likedGenres(), preferences::addLikedGenre);
-        addAll(request.dislikedGenres(), preferences::addDislikedGenre);
-        addAll(request.likedLanguages(), preferences::addLikedLanguage);
-        addAll(request.dislikedLanguages(), preferences::addDislikedLanguage);
-        addAll(request.requiredLanguages(), preferences::addRequiredLanguage);
-        addAll(request.preferredDirectors(), preferences::addPreferredDirector);
-        addAll(request.dislikedDirectors(), preferences::addDislikedDirector);
-        addAll(request.preferredWriters(), preferences::addPreferredWriter);
-        addAll(request.preferredStars(), preferences::addPreferredStar);
-        addAll(request.dislikedStars(), preferences::addDislikedStar);
-        addAll(request.preferredCountries(), preferences::addPreferredCountry);
-        addAll(request.preferredSubgenres(), preferences::addPreferredSubgenre);
-        addAll(request.preferredPace(), preferences::addPreferredPace);
-        addAll(request.preferredComplexity(), preferences::addPreferredComplexity);
-        addAll(request.preferredViolence(), preferences::addPreferredViolence);
-        addAll(request.preferredHumor(), preferences::addPreferredHumor);
-        addAll(request.preferredPsychologicalIntensity(), preferences::addPreferredPsychologicalIntensity);
-        addAll(request.preferredEmotionalTones(), preferences::addPreferredEmotionalTone);
-        addAll(request.preferredThemes(), preferences::addPreferredTheme);
-        addAll(request.preferredAudience(), preferences::addPreferredAudience);
-        addAll(request.preferredEras(), preferences::addPreferredEra);
-        addAll(request.preferredPopularity(), preferences::addPreferredPopularity);
-        addAll(request.mandatoryGenres(), preferences::addMandatoryGenre);
-        addAll(request.mandatoryDirectors(), preferences::addMandatoryDirector);
-        addAll(request.mandatoryStars(), preferences::addMandatoryStar);
-        return preferences;
+        addAll(request.watchedMovieIds(), movieId -> profile.watched(movieId, 0));
+        addAll(request.wishlistMovieIds(), profile::wishlist);
+        addAll(request.likedGenres(), genre -> profile.likes(Attribute.GENRE, genre));
+        addAll(request.dislikedGenres(), genre -> profile.dislikes(Attribute.GENRE, genre));
+        addAll(request.likedLanguages(), language -> profile.likes(Attribute.LANGUAGE, language));
+        addAll(request.dislikedLanguages(), language -> profile.dislikes(Attribute.LANGUAGE, language));
+        addAll(request.preferredDirectors(), value -> profile.prefers(Attribute.DIRECTOR, value));
+        addAll(request.preferredWriters(), value -> profile.prefers(Attribute.WRITER, value));
+        addAll(request.preferredStars(), value -> profile.prefers(Attribute.STAR, value));
+        addAll(request.preferredCountries(), value -> profile.prefers(Attribute.COUNTRY_ORIGIN, value));
+        addAll(request.preferredSubgenres(), value -> profile.prefers(Attribute.SUBGENRE, value));
+        addAll(request.preferredPace(), value -> profile.prefers(Attribute.PACE, value));
+        addAll(request.preferredComplexity(), value -> profile.prefers(Attribute.COMPLEXITY, value));
+        addAll(request.preferredViolence(), value -> profile.prefers(Attribute.VIOLENCE, value));
+        addAll(request.preferredHumor(), value -> profile.prefers(Attribute.HUMOR, value));
+        addAll(request.preferredPsychologicalIntensity(), value -> profile.prefers(Attribute.PSYCHOLOGICAL_INTENSITY, value));
+        addAll(request.preferredEmotionalTones(), value -> profile.prefers(Attribute.EMOTIONAL_TONE, value));
+        addAll(request.preferredThemes(), value -> profile.prefers(Attribute.THEMES, value));
+        addAll(request.preferredAudience(), value -> profile.prefers(Attribute.AUDIENCE, value));
+        addAll(request.preferredEras(), value -> profile.prefers(Attribute.ERA, value));
+        addAll(request.preferredPopularity(), value -> profile.prefers(Attribute.POPULARITY, value));
+
+        addAll(request.requiredLanguages(), value -> profile.limit(Limit.REQUIRED_LANGUAGES, value));
+        addAll(request.dislikedDirectors(), value -> profile.limit(Limit.DISLIKED_DIRECTORS, value));
+        addAll(request.dislikedStars(), value -> profile.limit(Limit.DISLIKED_STARS, value));
+        addLimit(profile, Limit.SESSION_MIN_AGE, request.sessionMinimumAge());
+        addLimit(profile, Limit.MAX_DURATION_MINUTES, request.maximumDurationMinutes());
+        addLimit(profile, Limit.YEAR_FROM, request.yearFrom());
+        addLimit(profile, Limit.YEAR_TO, request.yearTo());
+        addLimit(profile, Limit.MIN_RATING, request.minimumRating());
+        addLimit(profile, Limit.RATING_TOLERANCE, request.ratingTolerance());
+        addLimit(profile, Limit.RATING_REQUIRED, request.ratingRequired());
+        addLimit(profile, Limit.ALLOW_REWATCH, request.allowRewatch());
+        return profile.build();
+    }
+
+    private static void addLimit(UserProfile.Builder profile, Limit limit, Object value) {
+        if (value != null) {
+            profile.limit(limit, value.toString());
+        }
     }
 
     private static String requiredMovieQuery(RecommendationRequest request) {
@@ -524,18 +521,6 @@ public class MovieRecommendationApi {
 
     private static String valueOrDefault(String value, String fallback) {
         return value == null || value.isBlank() ? fallback : value;
-    }
-
-    private static int valueOrDefault(Integer value, int fallback) {
-        return value == null ? fallback : value;
-    }
-
-    private static double valueOrDefault(Double value, double fallback) {
-        return value == null ? fallback : value;
-    }
-
-    private static boolean valueOrDefault(Boolean value, boolean fallback) {
-        return value == null ? fallback : value;
     }
 
     private static void json(HttpExchange exchange, int status, Object body) throws IOException {
@@ -565,7 +550,7 @@ public class MovieRecommendationApi {
             "info", Map.of("title", "Playgorithm Drools Recommendation API", "version", "1.0.0"),
             "paths", Map.ofEntries(
                 Map.entry("/api/health", Map.of("get", Map.of("summary", "Check API health"))),
-                Map.entry("/api/filmes", Map.of("get", Map.of("summary", "List movie facts with Prolog-compatible pagination and filters"))),
+                Map.entry("/api/filmes", Map.of("get", Map.of("summary", "List movie facts with pagination and filters"))),
                 Map.entry("/api/filme", Map.of("get", Map.of("summary", "Read one movie by id"))),
                 Map.entry("/api/recomendacoes", Map.of("get", Map.of("summary", "List similar movies for a source movie"))),
                 Map.entry("/api/recomendacoes_utilizador", Map.of("get", Map.of("summary", "List recommendations for a CSV user profile"))),
@@ -595,9 +580,6 @@ public class MovieRecommendationApi {
             </body>
             </html>
             """;
-    }
-
-    private record SimilarityRecommendation(Movie movie, int score) {
     }
 
     private record RecommendationRequest(
@@ -635,10 +617,7 @@ public class MovieRecommendationApi {
         List<String> preferredThemes,
         List<String> preferredAudience,
         List<String> preferredEras,
-        List<String> preferredPopularity,
-        List<String> mandatoryGenres,
-        List<String> mandatoryDirectors,
-        List<String> mandatoryStars
+        List<String> preferredPopularity
     ) {
     }
 

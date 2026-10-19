@@ -1,0 +1,42 @@
+package meia.playgorithm;
+
+unit RecommendationUnit;
+
+// Queries over the facts inferred by movies.drl and users.drl. They are not
+// rules: they only read working memory after the rules ran.
+
+query FindMovieFeatures
+    $fact : /movieFeatures
+end
+
+query FindMovieClasses
+    $fact : /movieClasses
+end
+
+query FindMovieGenres
+    $fact : /movieGenres
+end
+
+query FindMovieRelations
+    $fact : /movieRelations
+end
+
+query FindSimilarityScores
+    $fact : /similarityScores
+end
+
+query FindExclusionReasons
+    $fact : /exclusionReasons
+end
+
+query FindPreferenceReasons
+    $fact : /preferenceReasons
+end
+
+query FindMatchesPreferences
+    $fact : /matchesPreferences
+end
+
+query FindExcludedMovies
+    $fact : /excludedMovies
+end

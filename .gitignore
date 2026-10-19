@@ -25,3 +25,6 @@ replay_pid*
 
 # Local IDE metadata
 .idea/
+
+# Maven build output
+target/

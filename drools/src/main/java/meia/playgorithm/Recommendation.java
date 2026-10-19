@@ -1,5 +1,7 @@
 package meia.playgorithm;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -13,10 +15,6 @@ public class Recommendation {
     private final List<String> reasons;
     private final List<String> unmetPreferences;
     private final Map<String, Double> scoreBreakdown;
-
-    public Recommendation(String movieTitle, String reason) {
-        this(null, movieTitle, 0, "main", List.of(reason), List.of(), Map.of());
-    }
 
     public Recommendation(
         String movieId,
@@ -33,7 +31,7 @@ public class Recommendation {
         this.status = status;
         this.reasons = List.copyOf(reasons);
         this.unmetPreferences = List.copyOf(unmetPreferences);
-        this.scoreBreakdown = Map.copyOf(scoreBreakdown);
+        this.scoreBreakdown = Collections.unmodifiableMap(new LinkedHashMap<>(scoreBreakdown));
         this.reason = String.join("; ", this.reasons);
     }
 

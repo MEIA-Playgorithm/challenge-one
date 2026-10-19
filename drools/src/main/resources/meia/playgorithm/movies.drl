@@ -1,0 +1,280 @@
+package meia.playgorithm;
+
+unit RecommendationUnit;
+
+import function meia.playgorithm.RuleFunctions.sharesAny;
+import function meia.playgorithm.RuleFunctions.similarity;
+import function meia.playgorithm.RuleFunctions.sortedDistinct;
+import meia.playgorithm.facts.Attribute;
+import meia.playgorithm.facts.HintKind;
+import meia.playgorithm.facts.Movie;
+import meia.playgorithm.facts.MovieCategory;
+import meia.playgorithm.facts.MovieClass;
+import meia.playgorithm.facts.MovieFeature;
+import meia.playgorithm.facts.MovieGenres;
+import meia.playgorithm.facts.MovieRelation;
+import meia.playgorithm.facts.Relation;
+import meia.playgorithm.facts.SimilarityScore;
+
+// What is inferred about each movie from its CSV data. The genre hints
+// (content levels, tags and known subgenres) are reference facts loaded from
+// knowledge/genre-hints.csv, so one rule covers every attribute.
+
+// ---------------------------------------------------------------------------
+// Content profile from the genre hints
+// ---------------------------------------------------------------------------
+
+// The level hint with the lowest priority among those sharing a genre wins.
+rule "Content level from genre hints"
+when
+    $movie : /movies
+    $hint : /genreHints[ kind == HintKind.LEVEL, sharesAny(genres, $movie.genres) ]
+    not /genreHints[ kind == HintKind.LEVEL, attribute == $hint.attribute, priority < $hint.priority, sharesAny(genres, $movie.genres) ]
+then
+    movieFeatures.add(new MovieFeature($movie.id(), $hint.attribute(), $hint.value(), drools.getRule().getName()));
+end
+
+rule "Content tag from genre hints"
+when
+    $movie : /movies
+    $hint : /genreHints[ kind == HintKind.TAG, sharesAny(genres, $movie.genres) ]
+then
+    movieFeatures.add(new MovieFeature($movie.id(), $hint.attribute(), $hint.value(), drools.getRule().getName()));
+end
+
+rule "Content unknown without genre hints"
+when
+    $movie : /movies
+    $content : /contentAttributes
+    not /genreHints[ attribute == $content.attribute, sharesAny(genres, $movie.genres) ]
+then
+    movieFeatures.add(new MovieFeature($movie.id(), $content.attribute(), "unknown", drools.getRule().getName()));
+end
+
+rule "Subgenre"
+when
+    $movie : /movies
+    $hint : /genreHints[ kind == HintKind.SUBGENRE, value memberOf $movie.genres ]
+then
+    movieFeatures.add(new MovieFeature($movie.id(), Attribute.SUBGENRE, $hint.value(), drools.getRule().getName()));
+end
+
+// ---------------------------------------------------------------------------
+// Audience from the number of votes (mainstream_threshold 500000)
+// ---------------------------------------------------------------------------
+
+rule "Audience mainstream"
+when
+    $movie : /movies[ votes != null, votes >= 500000 ]
+then
+    movieFeatures.add(new MovieFeature($movie.id(), Attribute.AUDIENCE, "mainstream", drools.getRule().getName()));
+end
+
+rule "Audience niche"
+when
+    $movie : /movies[ votes != null, votes >= 0, votes < 500000 ]
+then
+    movieFeatures.add(new MovieFeature($movie.id(), Attribute.AUDIENCE, "niche", drools.getRule().getName()));
+end
+
+rule "Audience unknown"
+when
+    $movie : /movies[ votes == null || votes < 0 ]
+then
+    movieFeatures.add(new MovieFeature($movie.id(), Attribute.AUDIENCE, "unknown", drools.getRule().getName()));
+end
+
+rule "Mainstream movie"
+when
+    $audience : /movieFeatures[ feature == Attribute.AUDIENCE, value == "mainstream" ]
+then
+    movieClasses.add(new MovieClass($audience.movieId(), MovieCategory.MAINSTREAM, drools.getRule().getName()));
+end
+
+rule "Niche movie"
+when
+    $audience : /movieFeatures[ feature == Attribute.AUDIENCE, value == "niche" ]
+then
+    movieClasses.add(new MovieClass($audience.movieId(), MovieCategory.NICHE, drools.getRule().getName()));
+end
+
+// ---------------------------------------------------------------------------
+// Era and decade from the release year
+// ---------------------------------------------------------------------------
+
+rule "Era recent"
+when
+    $movie : /movies[ year != null, year >= 2020 ]
+then
+    movieFeatures.add(new MovieFeature($movie.id(), Attribute.ERA, "recent", drools.getRule().getName()));
+end
+
+rule "Era classic"
+when
+    $movie : /movies[ year != null, year < 2000 ]
+then
+    movieFeatures.add(new MovieFeature($movie.id(), Attribute.ERA, "classic", drools.getRule().getName()));
+end
+
+rule "Era modern"
+when
+    $movie : /movies[ year != null, year >= 2000, year < 2020 ]
+then
+    movieFeatures.add(new MovieFeature($movie.id(), Attribute.ERA, "modern", drools.getRule().getName()));
+end
+
+rule "Movie of the 90s"
+when
+    $movie : /movies[ year != null, year >= 1990, year < 2000 ]
+then
+    movieClasses.add(new MovieClass($movie.id(), MovieCategory.MOVIE_90S, drools.getRule().getName()));
+end
+
+rule "Movie of the 2000s"
+when
+    $movie : /movies[ year != null, year >= 2000, year < 2010 ]
+then
+    movieClasses.add(new MovieClass($movie.id(), MovieCategory.MOVIE_2000S, drools.getRule().getName()));
+end
+
+rule "Movie of the 2010s"
+when
+    $movie : /movies[ year != null, year >= 2010, year < 2020 ]
+then
+    movieClasses.add(new MovieClass($movie.id(), MovieCategory.MOVIE_2010S, drools.getRule().getName()));
+end
+
+rule "Movie of the 2020s"
+when
+    $movie : /movies[ year != null, year >= 2020, year < 2030 ]
+then
+    movieClasses.add(new MovieClass($movie.id(), MovieCategory.MOVIE_2020S, drools.getRule().getName()));
+end
+
+// ---------------------------------------------------------------------------
+// Popularity from the number of votes
+// ---------------------------------------------------------------------------
+
+rule "Popularity very popular"
+when
+    $movie : /movies[ votes != null, votes >= 1000000 ]
+then
+    movieFeatures.add(new MovieFeature($movie.id(), Attribute.POPULARITY, "very_popular", drools.getRule().getName()));
+end
+
+rule "Popularity popular"
+when
+    $movie : /movies[ votes != null, votes >= 500000, votes < 1000000 ]
+then
+    movieFeatures.add(new MovieFeature($movie.id(), Attribute.POPULARITY, "popular", drools.getRule().getName()));
+end
+
+rule "Popularity less popular"
+when
+    $movie : /movies[ votes != null, votes < 500000 ]
+then
+    movieFeatures.add(new MovieFeature($movie.id(), Attribute.POPULARITY, "less_popular", drools.getRule().getName()));
+end
+
+// ---------------------------------------------------------------------------
+// Genre lists
+// ---------------------------------------------------------------------------
+
+rule "Genre list"
+when
+    $movie : /movies[ !genres.isEmpty() ]
+then
+    movieGenres.add(new MovieGenres($movie.id(), sortedDistinct($movie.genres()), drools.getRule().getName()));
+end
+
+rule "Multi genre"
+when
+    $movie : /movies[ sortedDistinct(genres).size() > 1 ]
+then
+    movieClasses.add(new MovieClass($movie.id(), MovieCategory.MULTI_GENRE, drools.getRule().getName()));
+end
+
+// ---------------------------------------------------------------------------
+// Relations between pairs of movies
+// ---------------------------------------------------------------------------
+
+rule "Same genre"
+when
+    $a : /movies
+    $b : /movies[ id != $a.id, sharesAny(genres, $a.genres) ]
+then
+    movieRelations.add(new MovieRelation(Relation.SAME_GENRE, $a.id(), $b.id(), drools.getRule().getName()));
+end
+
+rule "Same director"
+when
+    $a : /movies
+    $b : /movies[ id != $a.id, sharesAny(directors, $a.directors) ]
+then
+    movieRelations.add(new MovieRelation(Relation.SAME_DIRECTOR, $a.id(), $b.id(), drools.getRule().getName()));
+end
+
+rule "Same writer"
+when
+    $a : /movies
+    $b : /movies[ id != $a.id, sharesAny(writers, $a.writers) ]
+then
+    movieRelations.add(new MovieRelation(Relation.SAME_WRITER, $a.id(), $b.id(), drools.getRule().getName()));
+end
+
+rule "Same star"
+when
+    $a : /movies
+    $b : /movies[ id != $a.id, sharesAny(stars, $a.stars) ]
+then
+    movieRelations.add(new MovieRelation(Relation.SAME_STAR, $a.id(), $b.id(), drools.getRule().getName()));
+end
+
+rule "Same production company"
+when
+    $a : /movies
+    $b : /movies[ id != $a.id, sharesAny(companies, $a.companies) ]
+then
+    movieRelations.add(new MovieRelation(Relation.SAME_PRODUCTION_COMPANY, $a.id(), $b.id(), drools.getRule().getName()));
+end
+
+rule "Same language"
+when
+    $a : /movies
+    $b : /movies[ id != $a.id, sharesAny(languages, $a.languages) ]
+then
+    movieRelations.add(new MovieRelation(Relation.SAME_LANGUAGE, $a.id(), $b.id(), drools.getRule().getName()));
+end
+
+rule "Same country of origin"
+when
+    $a : /movies
+    $b : /movies[ id != $a.id, sharesAny(countries, $a.countries) ]
+then
+    movieRelations.add(new MovieRelation(Relation.SAME_COUNTRY_ORIGIN, $a.id(), $b.id(), drools.getRule().getName()));
+end
+
+// Two movies are of the same era when they were released in the same year.
+rule "Same era"
+when
+    $a : /movies
+    $b : /movies[ id != $a.id, year == $a.year ]
+then
+    movieRelations.add(new MovieRelation(Relation.SAME_ERA, $a.id(), $b.id(), drools.getRule().getName()));
+end
+
+rule "Similar movie"
+when
+    $genre : /movieRelations[ relation == Relation.SAME_GENRE ]
+    /movieRelations[ relation == Relation.SAME_LANGUAGE, movieA == $genre.movieA, movieB == $genre.movieB ]
+then
+    movieRelations.add(new MovieRelation(Relation.SIMILAR_MOVIE, $genre.movieA(), $genre.movieB(), drools.getRule().getName()));
+end
+
+rule "Similarity score"
+when
+    $a : /movies
+    $b : /movies[ id != $a.id ]
+then
+    similarityScores.add(new SimilarityScore($a.id(), $b.id(), similarity($a, $b), drools.getRule().getName()));
+end
