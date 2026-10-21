@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -39,6 +40,11 @@ public class ApiErrors {
     @ExceptionHandler(HandlerMethodValidationException.class)
     ResponseEntity<ErrorDto> invalidValue(HandlerMethodValidationException e) {
         return error(HttpStatus.BAD_REQUEST, e.getAllErrors().get(0).getDefaultMessage());
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    ResponseEntity<ErrorDto> invalidBody() {
+        return error(HttpStatus.BAD_REQUEST, "Corpo do pedido inválido");
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)

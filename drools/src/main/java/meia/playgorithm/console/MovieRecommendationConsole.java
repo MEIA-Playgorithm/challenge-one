@@ -5,6 +5,9 @@ import meia.playgorithm.catalog.UserCatalog;
 import meia.playgorithm.engine.DroolsRecommendationService;
 import meia.playgorithm.engine.KnowledgeBaseResult;
 import meia.playgorithm.engine.RecommendationResult;
+import meia.playgorithm.engine.dialogue.DialogueQuestion;
+import meia.playgorithm.engine.dialogue.DialogueResult;
+import meia.playgorithm.engine.dialogue.DialogueService;
 import meia.playgorithm.model.Attribute;
 import meia.playgorithm.model.Movie;
 import meia.playgorithm.model.Recommendation;
@@ -17,7 +20,9 @@ import java.util.Scanner;
 
 /**
  * Interactive Drools console. The movie and user CSV catalogs are loaded and
- * the recommendation knowledge base runs for every user straight away.
+ * the recommendation knowledge base runs for every user straight away. The
+ * experience dialogue is optional and only starts when it is requested for a
+ * user.
  */
 public class MovieRecommendationConsole {
 
@@ -38,6 +43,7 @@ public class MovieRecommendationConsole {
     }
 
     private static void commandLoop(Scanner scanner, Map<String, RecommendationResult> results) {
+        DialogueResult dialogue = null;
         while (true) {
             System.out.print("> ");
             if (!scanner.hasNextLine()) {
@@ -66,7 +72,15 @@ public class MovieRecommendationConsole {
                 case "how" -> withUser(results, argument, true, MovieRecommendationConsole::explainHow);
                 case "why-not" -> withUser(results, argument, true, MovieRecommendationConsole::explainWhyNot);
                 case "why" -> System.out.println(
-                    "'why' is not available. Use how <user> <movie> for the inference path.");
+                    "'why' is answered during the dialogue questions (answer porque). Use how <user> <movie> for the inference path.");
+                case "dialogue-start" -> {
+                    if (results.containsKey(argument)) {
+                        dialogue = runDialogue(scanner, argument);
+                    } else {
+                        unknownUser(argument, results);
+                    }
+                }
+                case "dialogue", "dialogue-how", "dialogue-why-not" -> dialogueCommand(dialogue, name, argument);
                 default -> System.out.println("Unknown command. Type help to see the available commands.");
             }
         }
@@ -100,6 +114,41 @@ public class MovieRecommendationConsole {
         System.out.println("The user '" + userId + "' is not in the knowledge base. Users: " + results.keySet());
     }
 
+    private static DialogueResult runDialogue(Scanner scanner, String userId) {
+        System.out.println();
+        System.out.println("Experience dialogue for " + userId + ". Answer porque to see which Drools rule needs the answer.");
+        DialogueResult dialogue = new DialogueService().run(userId, question -> askDialogueQuestion(scanner, question));
+        printDialogue(dialogue);
+        return dialogue;
+    }
+
+    private static String askDialogueQuestion(Scanner scanner, DialogueQuestion question) {
+        while (true) {
+            if (question.isChoice()) {
+                System.out.println(question.getText());
+                System.out.println("Opções: " + question.getOptions() + ". Escreve uma opção ou porque.");
+            } else {
+                System.out.println(question.getText() + " (sim/nao/porque)");
+            }
+            if (!scanner.hasNextLine()) {
+                throw new IllegalStateException("Input ended during the dialogue.");
+            }
+            String value = scanner.nextLine().trim().toLowerCase();
+            if (value.endsWith(".")) {
+                value = value.substring(0, value.length() - 1).trim();
+            }
+            if (value.equals("porque")) {
+                question.why().forEach(System.out::println);
+            } else if (question.accepts(value)) {
+                return value;
+            } else if (question.isChoice()) {
+                System.out.println("Opção inválida. Escolhe uma das opções apresentadas.");
+            } else {
+                System.out.println("Resposta inválida. Use sim, nao ou porque.");
+            }
+        }
+    }
+
     private static void printHelp() {
         System.out.println();
         System.out.println("Recommendation commands (already inferred for every user)");
@@ -109,6 +158,11 @@ public class MovieRecommendationConsole {
         System.out.println("- why-not <user> <movie>      explain why a movie was not recommended");
         System.out.println("- trace <user> [movie]        show the fired rule trace");
         System.out.println("- facts                       list the movie facts");
+        System.out.println("Experience dialogue (optional)");
+        System.out.println("- dialogue-start <user>       start the dialogue for a user; answer porque during the questions");
+        System.out.println("- dialogue                    list the dialogue working memory");
+        System.out.println("- dialogue-how <N|fact>       explain how a dialogue fact was inserted, e.g. sugerir_genero Comedy");
+        System.out.println("- dialogue-why-not <fact>     explain why a dialogue fact was not inserted, e.g. sugerir_genero Adventure");
         System.out.println("- exit                        close the console");
         System.out.println();
     }
@@ -176,6 +230,28 @@ public class MovieRecommendationConsole {
             },
             () -> System.out.println("Unknown movie. Use facts to see the available movies.")
         );
+    }
+
+    private static void dialogueCommand(DialogueResult dialogue, String name, String argument) {
+        if (dialogue == null) {
+            System.out.println("No dialogue has run yet. Use dialogue-start <user> first.");
+            return;
+        }
+        try {
+            switch (name) {
+                case "dialogue" -> printDialogue(dialogue);
+                case "dialogue-how" -> dialogue.how(argument).forEach(System.out::println);
+                default -> dialogue.whyNot(argument).forEach(System.out::println);
+            }
+        } catch (IllegalArgumentException exception) {
+            System.out.println(exception.getMessage());
+        }
+    }
+
+    private static void printDialogue(DialogueResult dialogue) {
+        System.out.println();
+        System.out.println("Dialogue working memory");
+        dialogue.factLines().forEach(System.out::println);
     }
 
     private static void printFacts(KnowledgeBaseResult knowledgeBase) {

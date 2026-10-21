@@ -24,11 +24,12 @@ public class RuleParityTest {
     void shouldKeepTheExpectedRulesInEachFile() throws Exception {
         assertEquals(31, rules("movies.drl").size());
         assertEquals(18, rules("users.drl").size());
+        assertEquals(26, rules("dialogue/dialogue.drl").size());
     }
 
     @Test
     void shouldGiveEveryRuleAUniqueName() throws Exception {
-        List<RuleDescr> rules = rules("movies.drl", "users.drl");
+        List<RuleDescr> rules = rules("movies.drl", "users.drl", "dialogue/dialogue.drl");
         HashSet<String> names = new HashSet<>();
         for (RuleDescr rule : rules) {
             assertTrue(names.add(rule.getName()), "duplicate rule " + rule.getName());

@@ -162,10 +162,11 @@ Errors always have the shape `{"error": "message"}`.
 | GET | `/api/how` | Explains how a recommendation was reached, with `user_id` and `movie` |
 | GET | `/api/why-not` | Explains why a movie was not recommended, with `user_id` and `movie` |
 | GET | `/api/trace` | Returns the rule trace for `user_id`, optionally filtered by `movie` |
+| POST | `/api/dialogue` | Runs the experience dialogue up to the next unanswered question (see below) |
 | GET | `/docs` | Swagger UI |
 | GET | `/openapi.json` | OpenAPI specification, generated from the controllers |
 
-The last three explanation endpoints exist only in the Drools engine.
+The explanation endpoints and the dialogue exist only in the Drools engine.
 
 Examples (port 8082 with Docker, 8080 when run manually):
 
@@ -177,6 +178,27 @@ curl 'http://localhost:8082/api/recomendacoes_utilizador?user_id=ana&limit=10&of
 curl 'http://localhost:8082/api/how?user_id=ana&movie=Batman%20Begins'
 curl 'http://localhost:8082/api/why-not?user_id=ana&movie=Psycho'
 ```
+
+### The experience dialogue
+
+`POST /api/dialogue` keeps no session. Send the user and every answer given so far; the engine runs the
+dialogue rules again with them and stops at the first question that has no answer.
+
+```bash
+curl -X POST http://localhost:8082/api/dialogue -H 'Content-Type: application/json' \
+  -d '{"user_id": "ana", "answers": {"experiencia": "comedia"}}'
+```
+
+| Field | What it has |
+| --- | --- |
+| `status` | `question` while a question is waiting for an answer, `done` at the end |
+| `question` | `key`, `text`, `options`, the `rule` that needs the answer and `why`: that rule, which of its conditions already hold and what it inserts. `null` when `status` is `done` |
+| `answers` | The answers the dialogue used |
+| `conclusions` | Each conclusion (`type`, `value`), the `rule` that inserted it and `how`: the chain of objects that satisfied that rule |
+| `working_memory` | Every object in working memory, numbered in insertion order |
+
+To answer, send the same request with the new answer added to `answers`. An answer that is not one of the
+`options` gives `400`; an unknown user gives `404`.
 
 ---
 
@@ -193,6 +215,10 @@ user straight away, then opens a small query shell over the inferred facts.
 | `why-not ana Psycho` | The exclusion rules that left a movie out |
 | `trace ana [movie]` | The rules that fired for a user, optionally for one movie |
 | `facts` | The movie facts and the profile the movie rules inferred |
+| `dialogue-start ana` | Starts the experience dialogue for a user. Answer `porque` to a question to see why it is asked |
+| `dialogue` | Lists the dialogue working memory |
+| `dialogue-how sugerir_genero Comedy` | How a dialogue conclusion was inserted (also `dialogue-how 4`, by number) |
+| `dialogue-why-not sugerir_genero Adventure` | Why a dialogue conclusion was not inserted |
 | `exit` | Leaves the console |
 
 ---
@@ -205,16 +231,17 @@ Java packages under `src/main/java/meia/playgorithm`:
 | --- | --- |
 | `model/` | Facts. Input: `Movie` (the raw CSV row), `User`, `Likes`, `Dislikes`, `Prefers`, `Wishlist`, `Watched`, `UserLimit`, grouped per user in `UserProfile`. Reference knowledge: `GenreHint`, `PreferenceWeight`. Inferred: `MovieFeature`, `MovieClass`, `MovieRelation`, `SimilarityScore`, `PreferenceReason`, `ExclusionReason`, `MatchesPreferences`, `ExcludedMovie`. Results: `Recommendation` and `TraceEvent` |
 | `engine/` | `RecommendationUnit` (the rule unit and its working memory), `DroolsRecommendationService` (runs the inference), `RuleFunctions` (helper functions the rules call), `KnowledgeTables` (loads the reference knowledge), `KnowledgeBaseResult` (every fact after the run), `RecommendationQueries` (reads the recommendations, scores and unmet preferences from the inferred facts) and `RecommendationResult` (one user's view) |
-| `src/main/resources/meia/playgorithm/engine/` | The knowledge base: `movies.drl` (the profile of each movie and the relations between movies), `users.drl` (exclusion and preference reasons) and `queries.drl`. `knowledge/genre-hints.csv` and `knowledge/preference-weights.csv` hold the reference knowledge, so it can change without editing rules |
+| `src/main/resources/meia/playgorithm/engine/` | The knowledge base: `movies.drl` (the profile of each movie and the relations between movies), `users.drl` (exclusion and preference reasons) and `queries.drl`. `knowledge/genre-hints.csv` and `knowledge/preference-weights.csv` hold the reference knowledge, so it can change without editing rules. `dialogue/dialogue.drl` holds the experience dialogue |
 | `catalog/` | `MovieCatalog` and `UserCatalog` (Spring beans) keep the CSV data in memory (`reload()` reads it again). `CsvSource` reads a URL or a file and `CsvParser` splits a line |
-| `api/controller/` | Thin controllers (`MovieController`, `UserRecommendationController`, `ExplanationController`, `ReloadController`, `HealthController`). They declare their routes with annotations, validate the parameters and call a service |
+| `engine/dialogue/` | The experience dialogue: `DialogueService` fires `dialogue.drl` until a rule needs an answer, `DialogueQuestion` explains why it is asked (`porque`), and `DialogueResult` numbers working memory and explains how and why not. `DialogueRule` reads the rule conditions from the DRL, so each rule is written only once |
+| `api/controller/` | Thin controllers (`MovieController`, `UserRecommendationController`, `ExplanationController`, `DialogueController`, `ReloadController`, `HealthController`). They declare their routes with annotations, validate the parameters and call a service |
 | `api/dto/` | The response records, one per response shape, with snake_case JSON |
 | `api/` | `ApiErrors` turns every error into `{"error": "..."}`, `Validation` holds the parameter limits and `WebConfig` opens CORS |
-| `service/` | `KnowledgeBaseService` runs the engine once over every movie and user and runs it again after a reload. `MovieService` (listing, filters, similar movies) and `RecommendationService` (recommendations and the how, why-not and trace explanations) read that result |
+| `service/` | `KnowledgeBaseService` runs the engine once over every movie and user and runs it again after a reload. `MovieService` (listing, filters, similar movies) and `RecommendationService` (recommendations and the how, why-not and trace explanations) read that result. `ExperienceDialogueService` runs the dialogue for the API |
 | `console/` | `MovieRecommendationConsole`, the interactive interface |
 | `run.sh`, `run.bat`, `run-console.sh`, `run-console.bat` | Build and start the API or the console without Docker |
 | `Application` | Entry point. It starts the API, and `Application console` starts the console |
-| `src/test/java/.../engine/` | `MovieRecommendationTest` compares the recommendations and exclusions of every user with `expected-recommendations.csv` and `expected-exclusions.csv`, generated from the Prolog engine. `RuleFunctionsTest` and `RuleParityTest` check the helper functions and the rule files |
+| `src/test/java/.../engine/` | `MovieRecommendationTest` compares the recommendations and exclusions of every user with `expected-recommendations.csv` and `expected-exclusions.csv`, generated from the Prolog engine. `RuleFunctionsTest` and `RuleParityTest` check the helper functions and the rule files. `dialogue/DialogueTest` checks the questions and the explanations of the dialogue |
 
 ---
 
@@ -229,7 +256,7 @@ Java packages under `src/main/java/meia/playgorithm`:
 | Knowledge acquisition from an expert interview | The rules encode the interview: mandatory limits discard movies, flexible preferences change the score, rejected genres, directors and actors exclude, and recommendations list the satisfied and unmet preferences |
 | Drools working memory and rule execution | `RecommendationUnit` holds one `DataStore` per kind of fact: input, reference knowledge and inferred facts. The rules combine them to create new facts |
 | Drools monitoring and queries | `queries.drl` reads each kind of inferred fact. Each inferred fact keeps the name of the rule that created it, which the trace shows |
-| Explanation types: how, why and why not | `how` and `GET /api/how` explain how a recommendation was produced. `why-not` and `GET /api/why-not` explain why it was not. `trace` and `GET /api/trace` show the rules that fired. `facts` shows the known facts |
+| Explanation types: how, why and why not | Why: during the dialogue, `porque` (and `why` in `POST /api/dialogue`) shows the rule that needs the answer. `how` and `GET /api/how` explain how a recommendation was produced. `why-not` and `GET /api/why-not` explain why it was not. `trace` and `GET /api/trace` show the rules that fired. `facts` shows the known facts |
 | Truth maintenance | The implementation stores explicit trace facts. A future version could use `insertLogical` for conclusions that should disappear when their supporting facts stop being true |
 | Fuzzy reasoning | The scoring is weighted and deterministic. Fuzzy logic would suit vague ideas such as "short movie", "recent movie" or "close to the minimum rating" |
 | Bayesian reasoning | Not implemented, because the project has no reliable prior or conditional probabilities |
