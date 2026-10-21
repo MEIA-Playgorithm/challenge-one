@@ -1,0 +1,435 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg height="1501pt" viewBox="0.00 0.00 1736.88 1500.76" width="1737pt" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g class="graph" id="graph0" transform="scale(1 1) rotate(0) translate(36 1464.76)">
+<title>G</title>
+<polygon fill="white" points="-36,36 -36,-1464.76 1700.88,-1464.76 1700.88,36 -36,36" stroke="transparent"></polygon>
+<!-- C&#45;&gt;B0_F2613 -->
+<g class="edge" id="edge1">
+<title>C-&gt;B0_F2613</title>
+<path d="M888.72,-724.69C999.05,-735.99 1234.52,-760.11 1380.41,-775.06" fill="none" stroke="#64748b"></path>
+<polygon fill="#64748b" points="1380.34,-777.86 1388.59,-775.89 1380.91,-772.29 1380.34,-777.86" stroke="#64748b"></polygon>
+<text fill="#334155" font-family="DejaVu Sans" font-size="10.00" text-anchor="middle" x="1078.85" y="-753.31">R35-dislikes_genre-base</text>
+</g>
+<!-- C&#45;&gt;B1_F2614 -->
+<g class="edge" id="edge2">
+<title>C-&gt;B1_F2614</title>
+<path d="M886.21,-736.91C1007.38,-775.32 1286.03,-863.64 1412.58,-903.75" fill="none" stroke="#64748b"></path>
+<polygon fill="#64748b" points="1411.85,-906.46 1420.33,-906.21 1413.55,-901.12 1411.85,-906.46" stroke="#64748b"></polygon>
+<text fill="#334155" font-family="DejaVu Sans" font-size="10.00" text-anchor="middle" x="1084.77" y="-824.56">R36-dislikes_language-base</text>
+</g>
+<!-- C&#45;&gt;B2_F2615 -->
+<g class="edge" id="edge3">
+<title>C-&gt;B2_F2615</title>
+<path d="M881.57,-747.91C1001.26,-813.73 1288.28,-971.57 1394.21,-1029.82" fill="none" stroke="#64748b"></path>
+<polygon fill="#64748b" points="1393.16,-1032.44 1401.52,-1033.84 1395.86,-1027.53 1393.16,-1032.44" stroke="#64748b"></polygon>
+<text fill="#334155" font-family="DejaVu Sans" font-size="10.00" text-anchor="middle" x="1090.12" y="-894.75">R38-likes_genre-base</text>
+</g>
+<!-- C&#45;&gt;B2_F2616 -->
+<g class="edge" id="edge4">
+<title>C-&gt;B2_F2616</title>
+<path d="M875.02,-757.29C984.23,-847.49 1252.43,-1069.03 1340.08,-1141.43" fill="none" stroke="#64748b"></path>
+<polygon fill="#64748b" points="1338.37,-1143.64 1346.32,-1146.58 1341.93,-1139.32 1338.37,-1143.64" stroke="#64748b"></polygon>
+<text fill="#334155" font-family="DejaVu Sans" font-size="10.00" text-anchor="middle" x="1062.65" y="-959.05">R38-likes_genre-base</text>
+</g>
+<!-- C&#45;&gt;B3_F2617 -->
+<g class="edge" id="edge5">
+<title>C-&gt;B3_F2617</title>
+<path d="M867.51,-764.95C961.41,-875.46 1195.42,-1150.89 1266.05,-1234.02" fill="none" stroke="#64748b"></path>
+<polygon fill="#64748b" points="1263.92,-1235.83 1271.24,-1240.12 1268.19,-1232.21 1263.92,-1235.83" stroke="#64748b"></polygon>
+<text fill="#334155" font-family="DejaVu Sans" font-size="10.00" text-anchor="middle" x="1014.02" y="-1012.77">R39-likes_language-base</text>
+</g>
+<!-- C&#45;&gt;B4_F2623 -->
+<g class="edge" id="edge6">
+<title>C-&gt;B4_F2623</title>
+<path d="M859.14,-771.19C917.96,-870.74 1049.7,-1093.12 1162.36,-1279.35 1167.14,-1287.26 1172.4,-1295.86 1177.18,-1303.63" fill="none" stroke="#64748b"></path>
+<polygon fill="#64748b" points="1174.82,-1305.15 1181.4,-1310.5 1179.59,-1302.22 1174.82,-1305.15" stroke="#64748b"></polygon>
+<text fill="#334155" font-family="DejaVu Sans" font-size="10.00" text-anchor="middle" x="976.96" y="-1044.26">R54-prefers-base</text>
+</g>
+<!-- C&#45;&gt;B4_F2624 -->
+<g class="edge" id="edge7">
+<title>C-&gt;B4_F2624</title>
+<path d="M835.67,-779.18C853.32,-898.27 906.37,-1166.33 1048.4,-1349.29" fill="none" stroke="#64748b"></path>
+<polygon fill="#64748b" points="1046.34,-1351.21 1053.49,-1355.77 1050.74,-1347.75 1046.34,-1351.21" stroke="#64748b"></polygon>
+<text fill="#334155" font-family="DejaVu Sans" font-size="10.00" text-anchor="middle" x="865.98" y="-1082.58">R48-prefers-base</text>
+</g>
+<!-- C&#45;&gt;B4_O -->
+<g class="edge" id="edge8">
+<title>C-&gt;B4_O</title>
+<path d="M830.64,-779.43C836.82,-923 852.08,-1278.03 856.49,-1380.6" fill="none" stroke="#64748b"></path>
+<polygon fill="#64748b" points="853.69,-1380.77 856.84,-1388.64 859.29,-1380.53 853.69,-1380.77" stroke="#64748b"></polygon>
+<text fill="#334155" font-family="DejaVu Sans" font-size="10.00" text-anchor="middle" x="801.73" y="-1098.41">R42-prefers-base</text>
+</g>
+<!-- C&#45;&gt;B5_F2611 -->
+<g class="edge" id="edge9">
+<title>C-&gt;B5_F2611</title>
+<path d="M817.05,-778.44C790.98,-920.98 726.12,-1275.56 707.97,-1374.78" fill="none" stroke="#64748b"></path>
+<polygon fill="#64748b" points="705.19,-1374.42 706.51,-1382.8 710.7,-1375.43 705.19,-1374.42" stroke="#64748b"></polygon>
+<text fill="#334155" font-family="DejaVu Sans" font-size="10.00" text-anchor="middle" x="724.04" y="-1095.87">R37-user-base</text>
+</g>
+<!-- C&#45;&gt;B6_F2612 -->
+<g class="edge" id="edge10">
+<title>C-&gt;B6_F2612</title>
+<path d="M810.02,-776.76C774.49,-887.49 688.9,-1133.87 576.43,-1320.8 573.53,-1325.62 570.06,-1330.48 566.5,-1335.05" fill="none" stroke="#64748b"></path>
+<polygon fill="#64748b" points="564.14,-1333.52 561.27,-1341.5 568.49,-1337.05 564.14,-1333.52" stroke="#64748b"></polygon>
+<text fill="#334155" font-family="DejaVu Sans" font-size="10.00" text-anchor="middle" x="655.93" y="-1069.53">R37-user_age-base</text>
+</g>
+<!-- C&#45;&gt;B7_F2639 -->
+<g class="edge" id="edge11">
+<title>C-&gt;B7_F2639</title>
+<path d="M803.71,-774.29C758.08,-874.76 651.97,-1089.28 517.42,-1236.64 503.32,-1252.09 484.9,-1266.15 468.7,-1277.05" fill="none" stroke="#64748b"></path>
+<polygon fill="#64748b" points="467.06,-1274.78 461.92,-1281.52 470.14,-1279.46 467.06,-1274.78" stroke="#64748b"></polygon>
+<text fill="#334155" font-family="DejaVu Sans" font-size="10.00" text-anchor="middle" x="610.35" y="-1047.52">R34-user_limit-base</text>
+</g>
+<!-- C&#45;&gt;B7_F2640 -->
+<g class="edge" id="edge12">
+<title>C-&gt;B7_F2640</title>
+<path d="M784.76,-761.27C682.72,-862.24 429.59,-1112.67 350.05,-1191.37" fill="none" stroke="#64748b"></path>
+<polygon fill="#64748b" points="347.91,-1189.55 344.19,-1197.17 351.85,-1193.53 347.91,-1189.55" stroke="#64748b"></polygon>
+<text fill="#334155" font-family="DejaVu Sans" font-size="10.00" text-anchor="middle" x="509.45" y="-987.69">R62-user_limit-base</text>
+</g>
+<!-- C&#45;&gt;B7_O -->
+<g class="edge" id="edge13">
+<title>C-&gt;B7_O</title>
+<path d="M777.6,-752.6C663.02,-830.15 385.28,-1018.14 285.16,-1085.9" fill="none" stroke="#64748b"></path>
+<polygon fill="#64748b" points="283.32,-1083.77 278.27,-1090.57 286.46,-1088.4 283.32,-1083.77" stroke="#64748b"></polygon>
+<text fill="#334155" font-family="DejaVu Sans" font-size="10.00" text-anchor="middle" x="476.39" y="-925.97">R34-user_limit-base</text>
+</g>
+<!-- C&#45;&gt;B8_F2620 -->
+<g class="edge" id="edge14">
+<title>C-&gt;B8_F2620</title>
+<path d="M771.81,-742.17C648,-794.38 353.42,-918.58 235.3,-968.39" fill="none" stroke="#64748b"></path>
+<polygon fill="#64748b" points="234.07,-965.87 227.78,-971.56 236.24,-971.03 234.07,-965.87" stroke="#64748b"></polygon>
+<text fill="#334155" font-family="DejaVu Sans" font-size="10.00" text-anchor="middle" x="429.1" y="-859.95">R41-user_movie_rating-base</text>
+</g>
+<!-- C&#45;&gt;B8_F2622 -->
+<g class="edge" id="edge15">
+<title>C-&gt;B8_F2622</title>
+<path d="M768.14,-730.62C650.11,-754.57 386.49,-808.06 243.39,-837.09" fill="none" stroke="#64748b"></path>
+<polygon fill="#64748b" points="242.69,-834.38 235.41,-838.71 243.8,-839.87 242.69,-834.38" stroke="#64748b"></polygon>
+<text fill="#334155" font-family="DejaVu Sans" font-size="10.00" text-anchor="middle" x="431.37" y="-787.65">R41-user_movie_rating-base</text>
+</g>
+<!-- C&#45;&gt;B9_F2619 -->
+<g class="edge" id="edge16">
+<title>C-&gt;B9_F2619</title>
+<path d="M767.21,-718.45C651.87,-718.41 399.55,-718.32 250.09,-718.26" fill="none" stroke="#64748b"></path>
+<polygon fill="#64748b" points="249.72,-715.46 241.72,-718.26 249.72,-721.06 249.72,-715.46" stroke="#64748b"></polygon>
+<text fill="#334155" font-family="DejaVu Sans" font-size="10.00" text-anchor="middle" x="459" y="-721.35">R34-watched-base</text>
+</g>
+<!-- C&#45;&gt;B9_F2621 -->
+<g class="edge" id="edge17">
+<title>C-&gt;B9_F2621</title>
+<path d="M768.14,-706.27C650.03,-682.22 386.13,-628.49 243.1,-599.36" fill="none" stroke="#64748b"></path>
+<polygon fill="#64748b" points="243.52,-596.59 235.12,-597.74 242.4,-602.08 243.52,-596.59" stroke="#64748b"></polygon>
+<text fill="#334155" font-family="DejaVu Sans" font-size="10.00" text-anchor="middle" x="456.16" y="-655.01">R34-watched-base</text>
+</g>
+<!-- C&#45;&gt;B10_F2618 -->
+<g class="edge" id="edge18">
+<title>C-&gt;B10_F2618</title>
+<path d="M771.98,-694.84C648.11,-642.61 352.68,-518.05 234.21,-468.09" fill="none" stroke="#64748b"></path>
+<polygon fill="#64748b" points="235.13,-465.44 226.67,-464.91 232.95,-470.6 235.13,-465.44" stroke="#64748b"></polygon>
+<text fill="#334155" font-family="DejaVu Sans" font-size="10.00" text-anchor="middle" x="455.24" y="-582.84">R40-wishlist-base</text>
+</g>
+<!-- C&#45;&gt;B11_F36094 -->
+<g class="edge" id="edge19">
+<title>C-&gt;B11_F36094</title>
+<path d="M777.22,-685.02C658.75,-607.02 366.68,-414.71 266.49,-348.75" fill="none" stroke="#64748b" stroke-dasharray="5,2"></path>
+<polygon fill="#64748b" points="267.83,-346.28 259.61,-344.22 264.76,-350.96 267.83,-346.28" stroke="#64748b"></polygon>
+<text fill="#334155" font-family="DejaVu Sans" font-size="10.00" text-anchor="middle" x="437.46" y="-515.35">R65-excluded_movie-derivados</text>
+</g>
+<!-- C&#45;&gt;B11_F36095 -->
+<g class="edge" id="edge20">
+<title>C-&gt;B11_F36095</title>
+<path d="M784.4,-676.04C706.18,-600.27 536.39,-437.24 388.31,-304.91 365.3,-284.35 338.56,-261.74 318.84,-245.29" fill="none" stroke="#64748b" stroke-dasharray="5,2"></path>
+<polygon fill="#64748b" points="320.37,-242.93 312.43,-239.97 316.79,-247.23 320.37,-242.93" stroke="#64748b"></polygon>
+<text fill="#334155" font-family="DejaVu Sans" font-size="10.00" text-anchor="middle" x="474.05" y="-457.4">R65-excluded_movie-derivados</text>
+</g>
+<!-- C&#45;&gt;B11_O -->
+<g class="edge" id="edge21">
+<title>C-&gt;B11_O</title>
+<path d="M796.23,-666.58C735.29,-569.32 594.87,-355.43 446.58,-200.59 433.96,-187.42 418.54,-174.49 404.83,-163.89" fill="none" stroke="#64748b" stroke-dasharray="5,2"></path>
+<polygon fill="#64748b" points="406.32,-161.51 398.26,-158.88 402.93,-165.96 406.32,-161.51" stroke="#64748b"></polygon>
+<text fill="#334155" font-family="DejaVu Sans" font-size="10.00" text-anchor="middle" x="536.14" y="-403.13">R65-excluded_movie-derivados</text>
+</g>
+<!-- C&#45;&gt;B12_F28522 -->
+<g class="edge" id="edge22">
+<title>C-&gt;B12_F28522</title>
+<path d="M801.08,-663.62C746.88,-555.17 618.32,-307.26 483.97,-115.54 481.41,-111.89 478.56,-108.16 475.66,-104.56" fill="none" stroke="#64748b" stroke-dasharray="5,2"></path>
+<polygon fill="#64748b" points="477.69,-102.63 470.43,-98.26 473.38,-106.21 477.69,-102.63" stroke="#64748b"></polygon>
+<text fill="#334155" font-family="DejaVu Sans" font-size="10.00" text-anchor="middle" x="566.45" y="-377.69">R34-exclusion_reason-derivados</text>
+</g>
+<!-- C&#45;&gt;B12_F28523 -->
+<g class="edge" id="edge23">
+<title>C-&gt;B12_F28523</title>
+<path d="M828.07,-657.62C824.94,-531.56 800.43,-239.08 642.32,-60.03" fill="none" stroke="#64748b" stroke-dasharray="5,2"></path>
+<polygon fill="#64748b" points="644.31,-58.05 636.88,-53.97 640.14,-61.79 644.31,-58.05" stroke="#64748b"></polygon>
+<text fill="#334155" font-family="DejaVu Sans" font-size="10.00" text-anchor="middle" x="703.89" y="-344.67">R34-exclusion_reason-derivados</text>
+</g>
+<!-- C&#45;&gt;B12_O -->
+<g class="edge" id="edge24">
+<title>C-&gt;B12_O</title>
+<path d="M833.37,-657.71C846.09,-512.92 877.83,-151.92 886.94,-48.25" fill="none" stroke="#64748b" stroke-dasharray="5,2"></path>
+<polygon fill="#64748b" points="889.75,-48.34 887.66,-40.13 884.17,-47.85 889.75,-48.34" stroke="#64748b"></polygon>
+<text fill="#334155" font-family="DejaVu Sans" font-size="10.00" text-anchor="middle" x="781.51" y="-329.55">R35-exclusion_reason-derivados</text>
+<text fill="#334155" font-family="DejaVu Sans" font-size="10.00" text-anchor="middle" x="781.51" y="-318.55">(+7 regras)</text>
+</g>
+<!-- C&#45;&gt;B13_F34937 -->
+<g class="edge" id="edge25">
+<title>C-&gt;B13_F34937</title>
+<path d="M835.96,-657.72C855.62,-532.26 918.36,-243.36 1093.38,-89.08 1093.86,-88.66 1094.35,-88.24 1094.85,-87.82" fill="none" stroke="#64748b" stroke-dasharray="5,2"></path>
+<polygon fill="#64748b" points="1096.84,-89.84 1101.66,-82.87 1093.55,-85.31 1096.84,-89.84" stroke="#64748b"></polygon>
+<text fill="#334155" font-family="DejaVu Sans" font-size="10.00" text-anchor="middle" x="1009.73" y="-353.22">R61-matches_preferences-derivados</text>
+</g>
+<!-- C&#45;&gt;B13_F34938 -->
+<g class="edge" id="edge26">
+<title>C-&gt;B13_F34938</title>
+<path d="M857.31,-665.05C915.8,-560.96 1054.71,-326.44 1207.95,-157.9 1215.82,-149.25 1225.29,-140.79 1234.26,-133.45" fill="none" stroke="#64748b" stroke-dasharray="5,2"></path>
+<polygon fill="#64748b" points="1236.17,-135.51 1240.67,-128.33 1232.68,-131.14 1236.17,-135.51" stroke="#64748b"></polygon>
+<text fill="#334155" font-family="DejaVu Sans" font-size="10.00" text-anchor="middle" x="941.57" y="-387.47">R61-matches_preferences-derivados</text>
+</g>
+<!-- C&#45;&gt;B13_O -->
+<g class="edge" id="edge27">
+<title>C-&gt;B13_O</title>
+<path d="M856.79,-664.79C909.82,-570.23 1031.4,-372.6 1181.74,-252.37 1207.41,-231.84 1239.95,-215.78 1268.69,-204.15" fill="none" stroke="#64748b" stroke-dasharray="5,2"></path>
+<polygon fill="#64748b" points="1269.89,-206.69 1276.3,-201.14 1267.83,-201.48 1269.89,-206.69" stroke="#64748b"></polygon>
+<text fill="#334155" font-family="DejaVu Sans" font-size="10.00" text-anchor="middle" x="941.91" y="-407.5">R61-matches_preferences-derivados</text>
+</g>
+<!-- C&#45;&gt;B14_F28905 -->
+<g class="edge" id="edge28">
+<title>C-&gt;B14_F28905</title>
+<path d="M869.92,-674.01C938.87,-602.51 1082.73,-460.29 1223.68,-364.24 1264.63,-336.34 1315.35,-311.59 1352.55,-295.03" fill="none" stroke="#64748b" stroke-dasharray="5,2"></path>
+<polygon fill="#64748b" points="1354.09,-297.41 1360.27,-291.62 1351.82,-292.29 1354.09,-297.41" stroke="#64748b"></polygon>
+<text fill="#334155" font-family="DejaVu Sans" font-size="10.00" text-anchor="middle" x="1014.03" y="-463.92">R38-preference_reason-derivados</text>
+</g>
+<!-- C&#45;&gt;B14_F28906 -->
+<g class="edge" id="edge29">
+<title>C-&gt;B14_F28906</title>
+<path d="M881.77,-689.5C1003.32,-623.98 1297.11,-465.63 1405.14,-407.4" fill="none" stroke="#64748b" stroke-dasharray="5,2"></path>
+<polygon fill="#64748b" points="1406.57,-409.81 1412.29,-403.55 1403.92,-404.88 1406.57,-409.81" stroke="#64748b"></polygon>
+<text fill="#334155" font-family="DejaVu Sans" font-size="10.00" text-anchor="middle" x="1065.6" y="-548.68">R38-preference_reason-derivados</text>
+</g>
+<!-- C&#45;&gt;B14_O -->
+<g class="edge" id="edge30">
+<title>C-&gt;B14_O</title>
+<path d="M886.21,-699.98C1005.42,-662.11 1277.02,-575.83 1406.32,-534.75" fill="none" stroke="#64748b" stroke-dasharray="5,2"></path>
+<polygon fill="#64748b" points="1407.48,-537.32 1414.26,-532.23 1405.78,-531.99 1407.48,-537.32" stroke="#64748b"></polygon>
+<text fill="#334155" font-family="DejaVu Sans" font-size="10.00" text-anchor="middle" x="1067.02" y="-630.18">R38-preference_reason-derivados</text>
+<text fill="#334155" font-family="DejaVu Sans" font-size="10.00" text-anchor="middle" x="1067.02" y="-619.18">(+16 regras)</text>
+</g>
+<!-- C&#45;&gt;B15_Q0 -->
+<g class="edge" id="edge31">
+<title>C-&gt;B15_Q0</title>
+<path d="M888.72,-712.21C990.44,-701.71 1198.56,-680.24 1344.75,-665.16" fill="none" stroke="#64748b" stroke-dasharray="5,2"></path>
+<polygon fill="#64748b" points="1345.3,-667.92 1352.97,-664.31 1344.73,-662.35 1345.3,-667.92" stroke="#64748b"></polygon>
+<text fill="#334155" font-family="DejaVu Sans" font-size="10.00" text-anchor="middle" x="1039.08" y="-691.23">user_recommendation/4-consulta</text>
+</g>
+<!-- C -->
+<g class="node" id="node1">
+<title>C</title>
+<ellipse cx="828.02" cy="-718.47" fill="#fff3cd" rx="60.62" ry="60.62" stroke="#946200" stroke-width="2"></ellipse>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="828.02" y="-721.87">Utilizadora</text>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="828.02" y="-708.87">ana</text>
+</g>
+<!-- B0_F2613 -->
+<g class="node" id="node2">
+<title>B0_F2613</title>
+<polygon fill="#e3f2fd" points="1621.75,-805.84 1388.75,-805.84 1388.75,-769.84 1621.75,-769.84 1621.75,-805.84" stroke="#1565c0"></polygon>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="1505.25" y="-784.74">F2613: dislikes_genre(ana, 'Horror')</text>
+</g>
+<!-- B1_F2614 -->
+<g class="node" id="node3">
+<title>B1_F2614</title>
+<polygon fill="#e3f2fd" points="1612.72,-942.24 1341.72,-942.24 1341.72,-906.24 1612.72,-906.24 1612.72,-942.24" stroke="#1565c0"></polygon>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="1477.22" y="-921.14">F2614: dislikes_language(ana, 'Japanese')</text>
+</g>
+<!-- B2_F2615 -->
+<g class="node" id="node4">
+<title>B2_F2615</title>
+<polygon fill="#e3f2fd" points="1542.37,-1069.91 1326.37,-1069.91 1326.37,-1033.91 1542.37,-1033.91 1542.37,-1069.91" stroke="#1565c0"></polygon>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="1434.37" y="-1048.81">F2615: likes_genre(ana, 'Action')</text>
+</g>
+<!-- B2_F2616 -->
+<g class="node" id="node5">
+<title>B2_F2616</title>
+<polygon fill="#e3f2fd" points="1488.3,-1182.73 1248.3,-1182.73 1248.3,-1146.73 1488.3,-1146.73 1488.3,-1182.73" stroke="#1565c0"></polygon>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="1368.3" y="-1161.63">F2616: likes_genre(ana, 'Adventure')</text>
+</g>
+<!-- B3_F2617 -->
+<g class="node" id="node6">
+<title>B3_F2617</title>
+<polygon fill="#e3f2fd" points="1407.56,-1276.15 1165.56,-1276.15 1165.56,-1240.15 1407.56,-1240.15 1407.56,-1276.15" stroke="#1565c0"></polygon>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="1286.56" y="-1255.05">F2617: likes_language(ana, 'English')</text>
+</g>
+<!-- B4_F2623 -->
+<g class="node" id="node7">
+<title>B4_F2623</title>
+<polygon fill="#e3f2fd" points="1334.19,-1346.77 1051.19,-1346.77 1051.19,-1310.77 1334.19,-1310.77 1334.19,-1346.77" stroke="#1565c0"></polygon>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="1192.69" y="-1325.67">F2623: prefers(ana, audience, mainstream)</text>
+</g>
+<!-- B4_F2624 -->
+<g class="node" id="node8">
+<title>B4_F2624</title>
+<polygon fill="#e3f2fd" points="1221.06,-1391.86 950.06,-1391.86 950.06,-1355.86 1221.06,-1355.86 1221.06,-1391.86" stroke="#1565c0"></polygon>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="1085.56" y="-1370.76">F2624: prefers(ana, complexity, medium)</text>
+</g>
+<!-- B4_O -->
+<g class="node" id="node9">
+<title>B4_O</title>
+<polygon fill="#e3f2fd" points="941.7,-1428.76 773.7,-1428.76 773.7,-1388.76 941.7,-1388.76 941.7,-1428.76" stroke="#1565c0"></polygon>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="857.7" y="-1412.16">Outros factos de prefers</text>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="857.7" y="-1399.16">… (14 factos)</text>
+</g>
+<!-- B5_F2611 -->
+<g class="node" id="node10">
+<title>B5_F2611</title>
+<polygon fill="#e3f2fd" points="765.69,-1418.95 640.69,-1418.95 640.69,-1382.95 765.69,-1382.95 765.69,-1418.95" stroke="#1565c0"></polygon>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="703.19" y="-1397.85">F2611: user(ana)</text>
+</g>
+<!-- B6_F2612 -->
+<g class="node" id="node11">
+<title>B6_F2612</title>
+<polygon fill="#e3f2fd" points="632.53,-1377.64 456.53,-1377.64 456.53,-1341.64 632.53,-1341.64 632.53,-1377.64" stroke="#1565c0"></polygon>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="544.53" y="-1356.54">F2612: user_age(ana, 25)</text>
+</g>
+<!-- B7_F2639 -->
+<g class="node" id="node12">
+<title>B7_F2639</title>
+<polygon fill="#e3f2fd" points="573.23,-1317.6 289.23,-1317.6 289.23,-1281.6 573.23,-1281.6 573.23,-1317.6" stroke="#1565c0"></polygon>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="431.23" y="-1296.5">F2639: user_limit(ana, allow_rewatch, false)</text>
+</g>
+<!-- B7_F2640 -->
+<g class="node" id="node13">
+<title>B7_F2640</title>
+<polygon fill="#e3f2fd" points="514.22,-1233.44 137.22,-1233.44 137.22,-1197.44 514.22,-1197.44 514.22,-1233.44" stroke="#1565c0"></polygon>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="325.72" y="-1212.34">F2640: user_limit(ana, disliked_directors, 'Alfred Hitchcock')</text>
+</g>
+<!-- B7_O -->
+<g class="node" id="node14">
+<title>B7_O</title>
+<polygon fill="#e3f2fd" points="339.92,-1130.77 156.92,-1130.77 156.92,-1090.77 339.92,-1090.77 339.92,-1130.77" stroke="#1565c0"></polygon>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="248.42" y="-1114.17">Outros factos de user_limit</text>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="248.42" y="-1101.17">… (9 factos)</text>
+</g>
+<!-- B8_F2620 -->
+<g class="node" id="node15">
+<title>B8_F2620</title>
+<polygon fill="#e3f2fd" points="331.54,-1007.58 38.54,-1007.58 38.54,-971.58 331.54,-971.58 331.54,-1007.58" stroke="#1565c0"></polygon>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="185.04" y="-986.48">F2620: user_movie_rating(ana, tt0087469, 4)</text>
+</g>
+<!-- B8_F2622 -->
+<g class="node" id="node16">
+<title>B8_F2622</title>
+<polygon fill="#e3f2fd" points="293,-874.75 0,-874.75 0,-838.75 293,-838.75 293,-874.75" stroke="#1565c0"></polygon>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="146.5" y="-853.65">F2622: user_movie_rating(ana, tt7798634, 1)</text>
+</g>
+<!-- B9_F2619 -->
+<g class="node" id="node17">
+<title>B9_F2619</title>
+<polygon fill="#e3f2fd" points="241.41,-736.22 23.41,-736.22 23.41,-700.22 241.41,-700.22 241.41,-736.22" stroke="#1565c0"></polygon>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="132.41" y="-715.12">F2619: watched(ana, tt0087469)</text>
+</g>
+<!-- B9_F2621 -->
+<g class="node" id="node18">
+<title>B9_F2621</title>
+<polygon fill="#e3f2fd" points="255.5,-597.69 37.5,-597.69 37.5,-561.69 255.5,-561.69 255.5,-597.69" stroke="#1565c0"></polygon>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="146.5" y="-576.59">F2621: watched(ana, tt7798634)</text>
+</g>
+<!-- B10_F2618 -->
+<g class="node" id="node19">
+<title>B10_F2618</title>
+<polygon fill="#e3f2fd" points="288.79,-464.83 78.79,-464.83 78.79,-428.83 288.79,-428.83 288.79,-464.83" stroke="#1565c0"></polygon>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="183.79" y="-443.73">F2618: wishlist(ana, tt0372784)</text>
+</g>
+<!-- B11_F36094 -->
+<g class="node" id="node20">
+<title>B11_F36094</title>
+<polygon fill="#e8f5e9" points="385.11,-344.11 79.11,-344.11 79.11,-308.11 385.11,-308.11 385.11,-344.11" stroke="#2e7d32"></polygon>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="232.11" y="-323.01">F36094 · R65: excluded_movie(ana, tt0087469)</text>
+</g>
+<!-- B11_F36095 -->
+<g class="node" id="node21">
+<title>B11_F36095</title>
+<polygon fill="#e8f5e9" points="443.38,-239.79 137.38,-239.79 137.38,-203.79 443.38,-203.79 443.38,-239.79" stroke="#2e7d32"></polygon>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="290.38" y="-218.69">F36095 · R65: excluded_movie(ana, tt7798634)</text>
+</g>
+<!-- B11_O -->
+<g class="node" id="node22">
+<title>B11_O</title>
+<polygon fill="#e8f5e9" points="480.77,-158.74 258.77,-158.74 258.77,-118.74 480.77,-118.74 480.77,-158.74" stroke="#2e7d32"></polygon>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="369.77" y="-142.14">Outros factos de excluded_movie</text>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="369.77" y="-129.14">… (97 factos)</text>
+</g>
+<!-- B12_F28522 -->
+<g class="node" id="node23">
+<title>B12_F28522</title>
+<polygon fill="#e8f5e9" points="638.76,-97.95 268.76,-97.95 268.76,-61.95 638.76,-61.95 638.76,-97.95" stroke="#2e7d32"></polygon>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="453.76" y="-76.85">F28522 · R34: exclusion_reason(ana, tt0087469, watched)</text>
+</g>
+<!-- B12_F28523 -->
+<g class="node" id="node24">
+<title>B12_F28523</title>
+<polygon fill="#e8f5e9" points="767.68,-53.77 397.68,-53.77 397.68,-17.77 767.68,-17.77 767.68,-53.77" stroke="#2e7d32"></polygon>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="582.68" y="-32.67">F28523 · R34: exclusion_reason(ana, tt7798634, watched)</text>
+</g>
+<!-- B12_O -->
+<g class="node" id="node25">
+<title>B12_O</title>
+<polygon fill="#e8f5e9" points="1002.93,-40 775.93,-40 775.93,0 1002.93,0 1002.93,-40" stroke="#2e7d32"></polygon>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="889.43" y="-23.4">Outros factos de exclusion_reason</text>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="889.43" y="-10.4">… (194 factos)</text>
+</g>
+<!-- B13_F34937 -->
+<g class="node" id="node26">
+<title>B13_F34937</title>
+<polygon fill="#e8f5e9" points="1349.16,-82.77 1011.16,-82.77 1011.16,-46.77 1349.16,-46.77 1349.16,-82.77" stroke="#2e7d32"></polygon>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="1180.16" y="-61.67">F34937 · R61: matches_preferences(ana, tt0372784)</text>
+</g>
+<!-- B13_F34938 -->
+<g class="node" id="node27">
+<title>B13_F34938</title>
+<polygon fill="#e8f5e9" points="1434.58,-128.28 1096.58,-128.28 1096.58,-92.28 1434.58,-92.28 1434.58,-128.28" stroke="#2e7d32"></polygon>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="1265.58" y="-107.18">F34938 · R61: matches_preferences(ana, tt0087469)</text>
+</g>
+<!-- B13_O -->
+<g class="node" id="node28">
+<title>B13_O</title>
+<polygon fill="#e8f5e9" points="1465.15,-201.1 1211.15,-201.1 1211.15,-161.1 1465.15,-161.1 1465.15,-201.1" stroke="#2e7d32"></polygon>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="1338.15" y="-184.5">Outros factos de matches_preferences</text>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="1338.15" y="-171.5">… (96 factos)</text>
+</g>
+<!-- B14_F28905 -->
+<g class="node" id="node29">
+<title>B14_F28905</title>
+<polygon fill="#e8f5e9" points="1622.94,-291.57 1184.94,-291.57 1184.94,-255.57 1622.94,-255.57 1622.94,-291.57" stroke="#2e7d32"></polygon>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="1403.94" y="-270.47">F28905 · R38: preference_reason(ana, tt0372784, genre('Action'), 40)</text>
+</g>
+<!-- B14_F28906 -->
+<g class="node" id="node30">
+<title>B14_F28906</title>
+<polygon fill="#e8f5e9" points="1664.88,-403.44 1226.88,-403.44 1226.88,-367.44 1664.88,-367.44 1664.88,-403.44" stroke="#2e7d32"></polygon>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="1445.88" y="-382.34">F28906 · R38: preference_reason(ana, tt0087469, genre('Action'), 40)</text>
+</g>
+<!-- B14_O -->
+<g class="node" id="node31">
+<title>B14_O</title>
+<polygon fill="#e8f5e9" points="1595.8,-532.2 1358.8,-532.2 1358.8,-492.2 1595.8,-492.2 1595.8,-532.2" stroke="#2e7d32"></polygon>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="1477.3" y="-515.6">Outros factos de preference_reason</text>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="1477.3" y="-502.6">… (477 factos)</text>
+</g>
+<!-- B15_Q0 -->
+<g class="node" id="node32">
+<title>B15_Q0</title>
+<polygon fill="#f3e5f5" points="1657.25,-727.1 1353.25,-727.1 1353.25,-570.1 1657.25,-570.1 1657.25,-727.1" stroke="#7b1fa2"></polygon>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="1505.25" y="-710.5">ana → tt0372784</text>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="1505.25" y="-697.5">Score: 93.6</text>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="1505.25" y="-684.5">[rating(8.2), wishlist, audience(mainstream),</text>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="1505.25" y="-671.5">complexity(medium), country_origin('United</text>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="1505.25" y="-658.5">States'), director('Christopher Nolan'),</text>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="1505.25" y="-645.5">emotional_tone(exciting), era(modern),</text>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="1505.25" y="-632.5">genre('Action'), language('English'),</text>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="1505.25" y="-619.5">pace(fast), popularity(very_popular),</text>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="1505.25" y="-606.5">star('Christian Bale'), subgenre('Action Epic'),</text>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="1505.25" y="-593.5">themes(justice), violence(medium), writer('Bob</text>
+<text font-family="DejaVu Sans" font-size="12.00" text-anchor="middle" x="1505.25" y="-580.5">Kane')]</text>
+</g>
+</g>
+</svg>
