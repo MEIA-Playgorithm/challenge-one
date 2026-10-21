@@ -18,11 +18,9 @@
         <maven.compiler.release>17</maven.compiler.release>
 
         <drools-version>10.2.0</drools-version>
-        <slf4j-version>2.0.17</slf4j-version>
-
+        <spring-boot-version>3.5.16</spring-boot-version>
+        <springdoc-version>2.9.1</springdoc-version>
         <junit-version>5.13.4</junit-version>
-
-        <logback-version>1.5.25</logback-version>
     </properties>
 
     <dependencyManagement>
@@ -33,6 +31,14 @@
                 <artifactId>drools-bom</artifactId>
                 <type>pom</type>
                 <version>${drools-version}</version>
+                <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <type>pom</type>
+                <version>${spring-boot-version}</version>
                 <scope>import</scope>
             </dependency>
 
@@ -47,19 +53,26 @@
             <artifactId>drools-ruleunits-engine</artifactId>
         </dependency>
 
+        <!-- Web API: Spring MVC, validação dos parâmetros e OpenAPI gerado a partir do código -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${springdoc-version}</version>
+        </dependency>
+
         <!-- JUnit 5 -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <version>${junit-version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- Logging -->
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>${logback-version}</version>
             <scope>test</scope>
         </dependency>
 

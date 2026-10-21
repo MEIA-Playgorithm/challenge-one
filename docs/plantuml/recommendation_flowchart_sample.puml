@@ -1,0 +1,79 @@
+@startuml recommendation_flowchart_sample
+title Movie recommendation expert system - sample
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam ArrowColor #475569
+skinparam activity {
+  BackgroundColor #EFF6FF
+  BorderColor #2563EB
+  FontColor #0F172A
+  DiamondBackgroundColor #FEF3C7
+  DiamondBorderColor #D97706
+  StartColor #2563EB
+  EndColor #2563EB
+}
+
+start
+
+partition "Input" {
+  :Load movie catalog;
+  :Load user profile;
+  :Separate mandatory restrictions
+from desirable preferences;
+}
+
+partition "Prolog Inference" {
+  :Represent facts;
+  note right
+    movie/8, genre/2, actor/2,
+    director/2, watched/2,
+    prefers/3, rejects/3
+  end note
+  :Infer logical relationships;
+  note right
+    compatible genre,
+    similar movie,
+    watched movie,
+    violated restriction
+  end note
+}
+
+partition "Drools Rules" {
+  :Apply exclusion rules;
+  :Apply scoring rules;
+  :Apply tolerances and weights;
+  note right
+    genre > rating >
+    similarity > director/actors
+  end note
+}
+
+partition "Movie Evaluation" {
+  while (Are there movies to evaluate?) is (yes)
+    :Select next movie;
+    if (Does it violate a mandatory criterion?) then (yes)
+      :Exclude movie;
+      :Store reason;
+    else (no)
+      :Calculate compatibility;
+      :Calculate confidence;
+      :Store candidate and evidence;
+    endif
+  endwhile (no)
+}
+
+partition "Result" {
+  if (Are there candidates?) then (yes)
+    :Rank by score and confidence;
+    :Select Top N;
+    :Generate explanation;
+    :Present recommendations;
+  else (no)
+    :Present exclusion reasons;
+  endif
+}
+
+stop
+@enduml

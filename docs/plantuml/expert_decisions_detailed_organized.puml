@@ -1,0 +1,257 @@
+@startuml expert_decisions_detailed_organized
+title Expert decisions - movie recommendation
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam ArrowColor #475569
+skinparam activity {
+  BackgroundColor #EFF6FF
+  BorderColor #2563EB
+  FontColor #0F172A
+  DiamondBackgroundColor #FEF3C7
+  DiamondBorderColor #D97706
+  StartColor #2563EB
+  EndColor #2563EB
+}
+skinparam note {
+  BackgroundColor #F8FAFC
+  BorderColor #CBD5E1
+  FontColor #334155
+}
+
+start
+
+partition "1. Request and context" {
+  :Receive user request;
+  :Identify who will watch the movie;
+  :Collect main preferences:
+genre, rating,
+director and actors;
+  :Separate mandatory restrictions
+from desirable preferences;
+  note right
+    The expert separates criteria that exclude
+    movies from criteria that only increase
+    or decrease the score.
+    The user can mark criteria as mandatory;
+    in that case there is no tolerance margin.
+  end note
+}
+
+partition "2. Audience suitability" {
+  if (Is the audience 18+?) then (yes)
+    :Continue evaluation;
+  else (no)
+    if (Are age rating and content
+suitable?) then (yes)
+      :Continue evaluation;
+    else (no)
+      :Exclude movie;
+      :Store reason: unsuitable
+for age/audience;
+      stop
+    endif
+  endif
+}
+
+partition "3. Mandatory exclusions" {
+  if (Has the movie already been watched?) then (yes)
+    if (Does the request allow rewatching?) then (yes)
+      :Continue evaluation;
+    else (no)
+      :Exclude movie;
+      :Store reason: already watched;
+      stop
+    endif
+  else (no)
+    :Continue evaluation;
+  endif
+
+  if (Was the genre explicitly rejected?) then (yes)
+    :Exclude movie;
+    :Store reason: rejected genre;
+    stop
+  else (no)
+    :Continue evaluation;
+  endif
+
+  if (Is language mandatory?) then (yes)
+    if (Does language match?) then (yes)
+      :Continue evaluation;
+    else (no)
+      :Exclude movie;
+      :Store reason: language mismatch;
+      stop
+    endif
+  else (no)
+    :Continue evaluation;
+  endif
+
+  if (Is maximum duration defined?) then (yes)
+    if (Does the movie respect the duration limit?) then (yes)
+      :Continue evaluation;
+    else (no)
+      :Exclude movie;
+      :Store reason: duration above limit;
+      stop
+    endif
+  else (no)
+    :Continue evaluation;
+  endif
+
+  if (Is period or year mandatory?) then (yes)
+    if (Is the year within the requested period?) then (yes)
+      :Movie is eligible;
+    else (no)
+      :Exclude movie;
+      :Store reason: outside requested period;
+      stop
+    endif
+  else (no)
+    :Movie is eligible;
+  endif
+
+  if (Is genre mandatory?) then (yes)
+    if (Does genre match?) then (yes)
+      :Continue evaluation;
+    else (no)
+      :Exclude movie;
+      :Store reason: mandatory genre
+does not match;
+      stop
+    endif
+  else (no)
+    :Continue evaluation;
+  endif
+
+  if (Is minimum rating mandatory?) then (yes)
+    if (Does the rating reach the minimum?) then (yes)
+      :Continue evaluation;
+    else (no)
+      :Exclude movie;
+      :Store reason: mandatory rating
+below minimum;
+      stop
+    endif
+  else (no)
+    :Continue evaluation;
+  endif
+
+  if (Is director mandatory?) then (yes)
+    if (Does director match?) then (yes)
+      :Continue evaluation;
+    else (no)
+      :Exclude movie;
+      :Store reason: mandatory director
+does not match;
+      stop
+    endif
+  else (no)
+    :Continue evaluation;
+  endif
+
+  if (Are actors mandatory?) then (yes)
+    if (Does at least one actor match?) then (yes)
+      :Continue evaluation;
+    else (no)
+      :Exclude movie;
+      :Store reason: mandatory actors
+do not match;
+      stop
+    endif
+  else (no)
+    :Continue evaluation;
+  endif
+}
+
+partition "4. Preferences and scoring" {
+  :Initialize movie score;
+
+  if (Does desirable genre match?) then (yes)
+    :Add strong weight to score;
+  else (no)
+    :Do not add genre weight;
+  endif
+
+  if (Was desirable minimum rating provided?) then (yes)
+    if (Does the rating reach the minimum?) then (yes)
+      :Add rating weight;
+    else (no)
+      if (Is there a tolerance margin?) then (yes)
+        :Mark as alternative / plan B;
+        :Apply light penalty;
+      else (no)
+        :Do not add rating weight;
+      endif
+    endif
+  else (no)
+    :Ignore rating criterion;
+  endif
+
+  note right
+    Rating should be interpreted in the
+    context of the genre, avoiding rigid
+    thresholds that are identical for all genres.
+  end note
+
+  if (Does desirable director match?) then (yes)
+    :Add secondary weight;
+  else (no)
+    :Do not change score;
+  endif
+
+  if (Do desirable actors match?) then (yes)
+    :Add secondary weight;
+  else (no)
+    :Do not change score;
+  endif
+
+  if (Is it similar to liked movies?) then (yes)
+    :Add similarity weight;
+  else (no)
+    :Do not change score;
+  endif
+
+  if (Is it available on an accessible platform?) then (yes)
+    :Increase practical usefulness;
+  else (no)
+    :Reduce priority or flag
+unavailability;
+  endif
+
+  :Calculate final score;
+}
+
+partition "5. Ranking and selection" {
+  :Store eligible candidate;
+  :Rank candidates by relevance;
+
+  if (Are there enough recommendations?) then (yes)
+    :Select best movies;
+  else (no)
+    :Select closest alternatives;
+  endif
+}
+
+partition "6. Explanation" {
+  :Generate recommendation explanation;
+  :Show matched preferences;
+  :Show limitations or criteria
+not fully satisfied;
+  :Present recommendations to the user;
+}
+
+stop
+
+legend bottom
+  Decision rules captured in the interview:
+  1. Mandatory criteria exclude before any scoring.
+  2. Genre, rating, director and actors can be desirable or mandatory.
+  3. If a criterion is mandatory, there is no tolerance: failure means exclusion.
+  4. Desirable preferences rank eligible movies.
+  5. Rating should be contextualized by genre when it is desirable.
+  6. The recommendation should always be explained.
+endlegend
+
+@enduml
