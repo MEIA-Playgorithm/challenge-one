@@ -1,52 +1,66 @@
 package meia.playgorithm.engine;
 
 import meia.playgorithm.model.Movie;
-import meia.playgorithm.model.Recommendation;
-import meia.playgorithm.model.RecommendationResult;
-import meia.playgorithm.model.TraceEvent;
-import meia.playgorithm.model.UserPreferences;
-
+import meia.playgorithm.model.UserProfile;
 import org.drools.ruleunits.api.RuleUnitInstance;
 import org.drools.ruleunits.api.RuleUnitProvider;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
+/**
+ * Runs the recommendation knowledge base: inserts the reference knowledge, the movie and user facts,
+ * fires every rule of movies.drl and users.drl until nothing new is inferred
+ * and returns the inferred facts.
+ */
 @Service
 public class DroolsRecommendationService {
 
-    public RecommendationResult evaluate(UserPreferences preferences, List<Movie> movies) {
-        MovieRecommendationUnit unit = new MovieRecommendationUnit();
-        unit.getPreferences().add(preferences);
+    public KnowledgeBaseResult run(List<Movie> movies, List<UserProfile> users) {
+        RecommendationUnit unit = new RecommendationUnit();
+        KnowledgeTables tables = KnowledgeTables.load();
+        tables.genreHints().forEach(unit.getGenreHints()::add);
+        tables.contentAttributes().forEach(unit.getContentAttributes()::add);
+        tables.preferenceWeights().forEach(unit.getPreferenceWeights()::add);
         movies.forEach(unit.getMovies()::add);
-
-        RuleUnitInstance<MovieRecommendationUnit> instance = RuleUnitProvider.get()
-            .createRuleUnitInstance(unit);
-        instance.fire();
-
-        List<Recommendation> recommendations = new ArrayList<>();
-        var recommendationResults = instance.executeQuery("FindRecommendations");
-        for (var row : recommendationResults) {
-            recommendations.add((Recommendation) row.get("$recommendation"));
+        for (UserProfile user : users) {
+            unit.getUsers().add(user.user());
+            user.likes().forEach(unit.getLikes()::add);
+            user.dislikes().forEach(unit.getDislikes()::add);
+            user.prefers().forEach(unit.getPrefers()::add);
+            user.wishlist().forEach(unit.getWishlist()::add);
+            user.watched().forEach(unit.getWatched()::add);
+            user.limits().forEach(unit.getUserLimits()::add);
         }
 
-        List<TraceEvent> traceEvents = new ArrayList<>();
-        var traceResults = instance.executeQuery("FindTraceEvents");
-        for (var row : traceResults) {
-            traceEvents.add((TraceEvent) row.get("$traceEvent"));
+        RuleUnitInstance<RecommendationUnit> instance = RuleUnitProvider.get().createRuleUnitInstance(unit);
+        try {
+            instance.fire();
+            return new KnowledgeBaseResult(
+                movies,
+                users,
+                query(instance, "FindMovieFeatures"),
+                query(instance, "FindMovieClasses"),
+                query(instance, "FindMovieGenres"),
+                query(instance, "FindMovieRelations"),
+                query(instance, "FindSimilarityScores"),
+                query(instance, "FindExclusionReasons"),
+                query(instance, "FindPreferenceReasons"),
+                query(instance, "FindMatchesPreferences"),
+                query(instance, "FindExcludedMovies")
+            );
+        } finally {
+            instance.close();
         }
-
-        instance.close();
-        recommendations.sort(Comparator
-            .comparingInt(DroolsRecommendationService::statusPriority)
-            .thenComparing(Recommendation::getScore, Comparator.reverseOrder()));
-
-        return new RecommendationResult(List.copyOf(movies), recommendations, traceEvents);
     }
 
-    private static int statusPriority(Recommendation recommendation) {
-        return recommendation.getStatus().equals("main") ? 0 : 1;
+    @SuppressWarnings("unchecked")
+    private static <T> List<T> query(RuleUnitInstance<RecommendationUnit> instance, String name) {
+        List<T> facts = new ArrayList<>();
+        for (var row : instance.executeQuery(name)) {
+            facts.add((T) row.get("$fact"));
+        }
+        return facts;
     }
 }

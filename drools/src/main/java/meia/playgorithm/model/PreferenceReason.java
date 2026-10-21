@@ -1,16 +1,9 @@
 package meia.playgorithm.model;
 
-public record PreferenceReason(String type, String value, int weight) {
-
-    public boolean isSecondary() {
-        return !type.equals("genre")
-            && !type.equals("director")
-            && !type.equals("star");
-    }
+/** A preference a movie satisfies for a user, e.g. genre(Action) with weight 40. */
+public record PreferenceReason(String userId, String movieId, Reason reason, String value, int weight, String rule) {
 
     public String label() {
-        return value == null || value.isBlank()
-            ? type
-            : type + "(" + value + ")";
+        return value.isEmpty() ? reason.key() : reason.key() + "(" + value + ")";
     }
 }

@@ -1,135 +1,115 @@
 package meia.playgorithm.console;
 
 import meia.playgorithm.catalog.MovieCatalog;
+import meia.playgorithm.catalog.UserCatalog;
 import meia.playgorithm.engine.DroolsRecommendationService;
+import meia.playgorithm.engine.KnowledgeBaseResult;
+import meia.playgorithm.engine.RecommendationResult;
+import meia.playgorithm.model.Attribute;
 import meia.playgorithm.model.Movie;
 import meia.playgorithm.model.Recommendation;
-import meia.playgorithm.model.RecommendationResult;
 import meia.playgorithm.model.TraceEvent;
-import meia.playgorithm.model.UserPreferences;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
-import java.util.function.Consumer;
 
+/**
+ * Interactive Drools console. The movie and user CSV catalogs are loaded and
+ * the recommendation knowledge base runs for every user straight away.
+ */
 public class MovieRecommendationConsole {
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
         System.out.println("Playgorithm Drools knowledge-base console");
-        System.out.println("Answer the initial questions. Leave optional fields empty to skip them.");
-        System.out.println();
 
-        UserPreferences preferences = readPreferences(scanner);
-        List<Movie> movies = new MovieCatalog().movies();
-        RecommendationResult result = new DroolsRecommendationService()
-            .evaluate(preferences, movies);
+        KnowledgeBaseResult knowledgeBase = new DroolsRecommendationService().run(new MovieCatalog().movies(), new UserCatalog().users());
+        Map<String, RecommendationResult> results = new LinkedHashMap<>();
+        knowledgeBase.userIds().forEach(userId -> results.put(userId, knowledgeBase.forUser(userId)));
 
-        System.out.println();
-        System.out.println("Loaded " + movies.size() + " movie facts from the Prolog CSV catalog.");
-        printRecommendations(result.recommendations());
+        System.out.println("Loaded " + knowledgeBase.movies().size() + " movie facts and " + results.size()
+            + " user profiles from the CSV catalogs.");
+        System.out.println("The recommendation rules already ran for every user: " + results.keySet());
         printHelp();
-        commandLoop(scanner, result);
+        commandLoop(scanner, results);
     }
 
-    private static UserPreferences readPreferences(Scanner scanner) {
-        UserPreferences preferences = UserPreferences.forUser(readText(scanner, "User id", "demo"))
-            .withAge(readInt(scanner, "Candidate age", 18));
-
-        int maxDuration = readOptionalInt(scanner, "Maximum duration in minutes");
-        if (maxDuration > 0) {
-            preferences.withMaximumDurationMinutes(maxDuration);
-        }
-
-        int yearFrom = readOptionalInt(scanner, "Minimum release year");
-        if (yearFrom > 0) {
-            preferences.withYearFrom(yearFrom);
-        }
-
-        int yearTo = readOptionalInt(scanner, "Maximum release year");
-        if (yearTo > 0) {
-            preferences.withYearTo(yearTo);
-        }
-
-        double minimumRating = readOptionalDouble(scanner, "Minimum IMDb rating");
-        if (minimumRating >= 0) {
-            boolean required = readYesNo(scanner, "Is the rating mandatory?");
-            double tolerance = required ? 0 : readOptionalDouble(scanner, "Allowed rating tolerance");
-            preferences.withMinimumRating(minimumRating, Math.max(tolerance, 0), required);
-        }
-
-        readList(scanner, "Liked genres", preferences::addLikedGenre);
-        readList(scanner, "Mandatory genres", preferences::addMandatoryGenre);
-        readList(scanner, "Disliked genres", preferences::addDislikedGenre);
-        readList(scanner, "Liked languages", preferences::addLikedLanguage);
-        readList(scanner, "Required languages", preferences::addRequiredLanguage);
-        readList(scanner, "Disliked languages", preferences::addDislikedLanguage);
-        readList(scanner, "Preferred directors", preferences::addPreferredDirector);
-        readList(scanner, "Mandatory directors", preferences::addMandatoryDirector);
-        readList(scanner, "Disliked directors", preferences::addDislikedDirector);
-        readList(scanner, "Preferred writers", preferences::addPreferredWriter);
-        readList(scanner, "Preferred actors", preferences::addPreferredStar);
-        readList(scanner, "Mandatory actors", preferences::addMandatoryStar);
-        readList(scanner, "Disliked actors", preferences::addDislikedStar);
-        readList(scanner, "Preferred countries", preferences::addPreferredCountry);
-        readList(scanner, "Preferred subgenres", preferences::addPreferredSubgenre);
-        readList(scanner, "Preferred pace (slow, medium, fast)", preferences::addPreferredPace);
-        readList(scanner, "Preferred complexity (low, medium, high)", preferences::addPreferredComplexity);
-        readList(scanner, "Preferred violence (low, medium, high)", preferences::addPreferredViolence);
-        readList(scanner, "Preferred humor (low, medium, high)", preferences::addPreferredHumor);
-        readList(scanner, "Preferred psychological intensity (low, medium, high)", preferences::addPreferredPsychologicalIntensity);
-        readList(scanner, "Preferred emotional tones", preferences::addPreferredEmotionalTone);
-        readList(scanner, "Preferred themes", preferences::addPreferredTheme);
-        readList(scanner, "Preferred audience (mainstream, niche)", preferences::addPreferredAudience);
-        readList(scanner, "Preferred eras (classic, modern, recent)", preferences::addPreferredEra);
-        readList(scanner, "Preferred popularity (very_popular, popular, less_popular)", preferences::addPreferredPopularity);
-        return preferences;
-    }
-
-    private static void commandLoop(Scanner scanner, RecommendationResult result) {
+    private static void commandLoop(Scanner scanner, Map<String, RecommendationResult> results) {
         while (true) {
             System.out.print("> ");
             if (!scanner.hasNextLine()) {
                 return;
             }
 
-            String command = scanner.nextLine().trim();
+            // Piped input on Windows may start with a byte-order mark.
+            String command = scanner.nextLine().replace("﻿", "").trim();
             if (command.isEmpty()) {
                 continue;
             }
-            if (command.equalsIgnoreCase("exit") || command.equalsIgnoreCase("quit")) {
-                return;
-            }
-            if (command.equalsIgnoreCase("help")) {
-                printHelp();
-            } else if (command.equalsIgnoreCase("recommend") || command.equalsIgnoreCase("recommendations")) {
-                printRecommendations(result.recommendations());
-            } else if (command.equalsIgnoreCase("facts") || command.equalsIgnoreCase("movies")) {
-                printFacts(result.movies());
-            } else if (command.equalsIgnoreCase("trace")) {
-                printTrace(result.traceEvents());
-            } else if (command.startsWith("why-not ")) {
-                explainWhyNot(result, command.substring("why-not ".length()).trim());
-            } else if (command.startsWith("how ")) {
-                explainHow(result, command.substring("how ".length()).trim());
-            } else if (command.startsWith("why ")) {
-                System.out.println("'why' is reserved for goal/question explanations. Use how <movie> for the inference path.");
-            } else {
-                System.out.println("Unknown command. Type help to see the available commands.");
+            String name = command.split("\\s+", 2)[0];
+            String argument = command.substring(name.length()).trim();
+
+            switch (name) {
+                case "exit", "quit" -> {
+                    return;
+                }
+                case "help" -> printHelp();
+                case "users" -> System.out.println("Users: " + results.keySet());
+                case "facts", "movies" -> printFacts(knowledgeBase(results));
+                case "recommend" -> withUser(results, argument, false, (result, ignored) ->
+                    printRecommendations(result.recommendations()));
+                case "trace" -> withUser(results, argument, false, (result, movie) ->
+                    printTrace(movie.isEmpty() ? result.traceEvents() : result.traceFor(movie)));
+                case "how" -> withUser(results, argument, true, MovieRecommendationConsole::explainHow);
+                case "why-not" -> withUser(results, argument, true, MovieRecommendationConsole::explainWhyNot);
+                case "why" -> System.out.println(
+                    "'why' is not available. Use how <user> <movie> for the inference path.");
+                default -> System.out.println("Unknown command. Type help to see the available commands.");
             }
         }
     }
 
+    private static KnowledgeBaseResult knowledgeBase(Map<String, RecommendationResult> results) {
+        return results.values().iterator().next().knowledgeBase();
+    }
+
+    private interface UserCommand {
+        void run(RecommendationResult result, String movie);
+    }
+
+    /** Runs a command whose argument is "<user>" or "<user> <movie>". */
+    private static void withUser(Map<String, RecommendationResult> results, String argument, boolean movieRequired, UserCommand command) {
+        String[] parts = argument.split("\\s+", 2);
+        String userId = parts[0];
+        String movie = parts.length > 1 ? parts[1].trim() : "";
+        if (userId.isEmpty()) {
+            System.out.println("Indicate the user, e.g. ana. Users: " + results.keySet());
+        } else if (!results.containsKey(userId)) {
+            unknownUser(userId, results);
+        } else if (movieRequired && movie.isEmpty()) {
+            System.out.println("Indicate the movie too, e.g. " + userId + " Batman Begins");
+        } else {
+            command.run(results.get(userId), movie);
+        }
+    }
+
+    private static void unknownUser(String userId, Map<String, RecommendationResult> results) {
+        System.out.println("The user '" + userId + "' is not in the knowledge base. Users: " + results.keySet());
+    }
+
     private static void printHelp() {
         System.out.println();
-        System.out.println("Knowledge-base commands");
-        System.out.println("- recommend             show the inferred recommendations");
-        System.out.println("- how <movie title/id>  explain how a movie was recommended");
-        System.out.println("- why-not <title/id>    explain why a movie was not recommended");
-        System.out.println("- trace                 show the fired rule trace");
-        System.out.println("- facts                 list the sample movie facts");
-        System.out.println("- exit                  close the console");
+        System.out.println("Recommendation commands (already inferred for every user)");
+        System.out.println("- users                       list the users of the knowledge base");
+        System.out.println("- recommend <user>            show the inferred recommendations");
+        System.out.println("- how <user> <movie>          explain how a movie was recommended");
+        System.out.println("- why-not <user> <movie>      explain why a movie was not recommended");
+        System.out.println("- trace <user> [movie]        show the fired rule trace");
+        System.out.println("- facts                       list the movie facts");
+        System.out.println("- exit                        close the console");
         System.out.println();
     }
 
@@ -174,7 +154,7 @@ public class MovieRecommendationConsole {
                 printTrace(result.traceFor(recommendation.getMovieId()));
             },
             () -> {
-                System.out.println("That movie was not recommended. Use why-not " + query + " for the rejection path.");
+                System.out.println("That movie was not recommended. Use why-not <user> " + query + " for the rejection path.");
             }
         );
     }
@@ -182,53 +162,41 @@ public class MovieRecommendationConsole {
     private static void explainWhyNot(RecommendationResult result, String query) {
         result.findMovie(query).ifPresentOrElse(
             movie -> {
-                if (result.findRecommendation(movie.getId()).isPresent()) {
-                    System.out.println(movie.getTitle() + " was recommended. Use how " + movie.getTitle() + " to inspect it.");
+                if (result.findRecommendation(movie.id()).isPresent()) {
+                    System.out.println(movie.title() + " was recommended. Use how <user> " + movie.title() + " to inspect it.");
                     return;
                 }
 
-                List<TraceEvent> trace = result.traceFor(movie);
-                List<TraceEvent> exclusions = trace.stream()
-                    .filter(event -> event.type().equals("EXCLUSION"))
-                    .toList();
-                List<TraceEvent> preferences = trace.stream()
-                    .filter(event -> event.type().equals("PREFERENCE"))
-                    .toList();
-
+                // A movie is only left out when an exclusion rule fired ("Excluded movie").
                 System.out.println();
-                System.out.println("Why-not explanation for " + movie.getTitle());
-                if (!exclusions.isEmpty()) {
-                    System.out.println("The movie was discarded because mandatory or rejection rules fired:");
-                    exclusions.forEach(event -> System.out.println("- " + event.rule() + ": " + event.details()));
-                    return;
-                }
-                if (preferences.isEmpty()) {
-                    System.out.println("No exclusion fired, but no positive preference rule matched either.");
-                    System.out.println("The recommendation rule requires at least one preference reason.");
-                    return;
-                }
-                System.out.println("Positive preference rules fired, but the final recommendation was not created.");
-                printTrace(trace);
+                System.out.println("Why-not explanation for " + movie.title());
+                System.out.println("The movie was excluded because these rules fired:");
+                result.exclusions(movie).forEach(reason ->
+                    System.out.println("- " + reason.rule() + ": " + reason.label()));
             },
-            () -> System.out.println("Unknown movie. Use facts to see the available sample movies.")
+            () -> System.out.println("Unknown movie. Use facts to see the available movies.")
         );
     }
 
-    private static void printFacts(List<Movie> movies) {
+    private static void printFacts(KnowledgeBaseResult knowledgeBase) {
         System.out.println();
-        System.out.println("Sample movie facts");
-        for (Movie movie : movies) {
+        System.out.println("Movie facts (CSV data and the profile inferred by movies.drl)");
+        for (Movie movie : knowledgeBase.movies()) {
             System.out.printf(
-                "- %s (%s, %d) | genres=%s | languages=%s | directors=%s | stars=%s | rating=%.1f | mpa=%s%n",
-                movie.getTitle(),
-                movie.getId(),
-                movie.getYear(),
-                movie.getGenres(),
-                movie.getLanguages(),
-                movie.getDirectors(),
-                movie.getStars(),
-                movie.getRatingImdb(),
-                movie.getRatingMpa()
+                "- %s (%s, %s) | genres=%s | languages=%s | directors=%s | stars=%s | rating=%s | mpa=%s"
+                    + " | pace=%s | complexity=%s | audience=%s%n",
+                movie.title(),
+                movie.id(),
+                movie.year(),
+                movie.genres(),
+                movie.languages(),
+                movie.directors(),
+                movie.stars(),
+                movie.ratingText(),
+                movie.ratingMpa(),
+                knowledgeBase.feature(movie.id(), Attribute.PACE).orElse("?"),
+                knowledgeBase.feature(movie.id(), Attribute.COMPLEXITY).orElse("?"),
+                knowledgeBase.feature(movie.id(), Attribute.AUDIENCE).orElse("?")
             );
         }
     }
@@ -249,88 +217,6 @@ public class MovieRecommendationConsole {
                 event.movieTitle(),
                 event.details()
             );
-        }
-    }
-
-    private static String readText(Scanner scanner, String label, String fallback) {
-        System.out.print(label + " [" + fallback + "]: ");
-        String value = scanner.nextLine().trim();
-        return value.isEmpty() ? fallback : value;
-    }
-
-    private static int readInt(Scanner scanner, String label, int fallback) {
-        while (true) {
-            System.out.print(label + " [" + fallback + "]: ");
-            String value = scanner.nextLine().trim();
-            if (value.isEmpty()) {
-                return fallback;
-            }
-            try {
-                return Integer.parseInt(value);
-            } catch (NumberFormatException ignored) {
-                System.out.println("Please enter a valid integer.");
-            }
-        }
-    }
-
-    private static int readOptionalInt(Scanner scanner, String label) {
-        while (true) {
-            System.out.print(label + ": ");
-            String value = scanner.nextLine().trim();
-            if (value.isEmpty()) {
-                return -1;
-            }
-            try {
-                return Integer.parseInt(value);
-            } catch (NumberFormatException ignored) {
-                System.out.println("Please enter a valid integer.");
-            }
-        }
-    }
-
-    private static double readOptionalDouble(Scanner scanner, String label) {
-        while (true) {
-            System.out.print(label + ": ");
-            String value = scanner.nextLine().trim().replace(',', '.');
-            if (value.isEmpty()) {
-                return -1;
-            }
-            try {
-                return Double.parseDouble(value);
-            } catch (NumberFormatException ignored) {
-                System.out.println("Please enter a valid number.");
-            }
-        }
-    }
-
-    private static boolean readYesNo(Scanner scanner, String label) {
-        while (true) {
-            System.out.print(label + " [y/N]: ");
-            String value = scanner.nextLine().trim();
-            if (value.isEmpty()) {
-                return false;
-            }
-            if (value.equalsIgnoreCase("y") || value.equalsIgnoreCase("yes")) {
-                return true;
-            }
-            if (value.equalsIgnoreCase("n") || value.equalsIgnoreCase("no")) {
-                return false;
-            }
-            System.out.println("Please answer y or n.");
-        }
-    }
-
-    private static void readList(Scanner scanner, String label, Consumer<String> consumer) {
-        System.out.print(label + " (comma separated): ");
-        String value = scanner.nextLine().trim();
-        if (value.isEmpty()) {
-            return;
-        }
-        for (String item : value.split(",")) {
-            String normalized = item.trim();
-            if (!normalized.isEmpty()) {
-                consumer.accept(normalized);
-            }
         }
     }
 }

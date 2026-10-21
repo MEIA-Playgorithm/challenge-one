@@ -50,7 +50,7 @@ results can be compared.
 
 - **Prolog** states the rules as production rules over facts (`swi-prolog/rules_movies.pl` and
   `swi-prolog/rules_users.pl`), and explains its conclusions with `como` and `whynot` in the console.
-- **Drools** states them as forward-chaining rules over the facts in a rule unit (`rules.drl`), and exposes the
+- **Drools** states them as forward-chaining rules over the facts in a rule unit (`movies.drl` and `users.drl`), and exposes the
   explanations (`how`, `why-not`, `trace`) as endpoints.
 
 ## Sample flowchart

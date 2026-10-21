@@ -182,40 +182,18 @@ curl 'http://localhost:8082/api/why-not?user_id=ana&movie=Psycho'
 
 ## The console
 
-The console asks for a candidate profile, runs the knowledge base, then opens a small query shell over the
-inferred facts and the trace events. It loads the same `movies.csv` as the API.
-
-Answers that give a recommendation quickly:
-
-```text
-Candidate age: 25
-Minimum IMDb rating: 8
-Is the rating mandatory?: n
-Allowed rating tolerance: 0.5
-Liked genres: Action
-Mandatory genres:
-Liked languages: English
-Preferred directors: Christopher Nolan
-Preferred actors:
-Preferred themes: justice
-```
-
-Mandatory fields (genres, directors, actors, required languages and a mandatory rating) discard the movies
-that do not match. Flexible preferences add to the score and appear in the explanation.
-
-After the recommendation run, use these commands:
+The console loads `movies.csv` and `users.csv` (the same files as the API), runs the knowledge base for every
+user straight away, then opens a small query shell over the inferred facts.
 
 | Command | What it does |
 | --- | --- |
-| `recommend` | Shows the recommendations again |
-| `how Batman Begins` | The inference path that produced a recommendation |
-| `why-not Inception` | The rules that stopped a movie from being recommended |
-| `trace` | The rules that fired, in order |
-| `facts` | The inferred facts |
+| `users` | Lists the users of the knowledge base |
+| `recommend ana` | Shows the recommendations of a user |
+| `how ana Batman Begins` | The rules that produced a recommendation |
+| `why-not ana Psycho` | The exclusion rules that left a movie out |
+| `trace ana [movie]` | The rules that fired for a user, optionally for one movie |
+| `facts` | The movie facts and the profile the movie rules inferred |
 | `exit` | Leaves the console |
-
-A strict "Why?" explanation says why the system asks the user for a fact. The console asks for every fact up
-front, so the useful explanations here are `how`, `why-not`, `trace` and `facts`.
 
 ---
 
@@ -225,17 +203,18 @@ Java packages under `src/main/java/meia/playgorithm`:
 
 | Package or file | Role |
 | --- | --- |
-| `model/` | Facts and results: `Movie`, `UserPreferences`, `Recommendation` (score, status, reasons, unmet preferences, score breakdown), `RecommendationResult`, `TraceEvent` and `PreferenceReason` |
-| `engine/` | `MovieRecommendationUnit` (the rule unit and its working memory) and `DroolsRecommendationService` (runs the inference). The knowledge base is `src/main/resources/meia/playgorithm/engine/rules.drl`: exclusions, scoring reasons, recommendation creation and queries |
-| `catalog/` | `MovieCatalog` and `UserCatalog` (Spring beans) keep the CSV data in memory (`reload()` reads it again). `CsvSource` reads a URL or a file |
+| `model/` | Facts. Input: `Movie` (the raw CSV row), `User`, `Likes`, `Dislikes`, `Prefers`, `Wishlist`, `Watched`, `UserLimit`, grouped per user in `UserProfile`. Reference knowledge: `GenreHint`, `PreferenceWeight`. Inferred: `MovieFeature`, `MovieClass`, `MovieRelation`, `SimilarityScore`, `PreferenceReason`, `ExclusionReason`, `MatchesPreferences`, `ExcludedMovie`. Results: `Recommendation` and `TraceEvent` |
+| `engine/` | `RecommendationUnit` (the rule unit and its working memory), `DroolsRecommendationService` (runs the inference), `RuleFunctions` (helper functions the rules call), `KnowledgeTables` (loads the reference knowledge), `KnowledgeBaseResult` (every fact after the run), `RecommendationQueries` (reads the recommendations, scores and unmet preferences from the inferred facts) and `RecommendationResult` (one user's view) |
+| `src/main/resources/meia/playgorithm/engine/` | The knowledge base: `movies.drl` (the profile of each movie and the relations between movies), `users.drl` (exclusion and preference reasons) and `queries.drl`. `knowledge/genre-hints.csv` and `knowledge/preference-weights.csv` hold the reference knowledge, so it can change without editing rules |
+| `catalog/` | `MovieCatalog` and `UserCatalog` (Spring beans) keep the CSV data in memory (`reload()` reads it again). `CsvSource` reads a URL or a file and `CsvParser` splits a line |
 | `api/controller/` | Thin controllers (`MovieController`, `UserRecommendationController`, `ExplanationController`, `ReloadController`, `HealthController`). They declare their routes with annotations, validate the parameters and call a service |
 | `api/dto/` | The response records, one per response shape, with snake_case JSON |
 | `api/` | `ApiErrors` turns every error into `{"error": "..."}`, `Validation` holds the parameter limits and `WebConfig` opens CORS |
-| `service/` | `MovieService` (listing, filters, similar movies), `RecommendationService` (recommendations and the how, why-not and trace explanations) and `KnowledgeBaseService` (reload). They receive the catalogs and the engine by constructor injection |
+| `service/` | `KnowledgeBaseService` runs the engine once over every movie and user and runs it again after a reload. `MovieService` (listing, filters, similar movies) and `RecommendationService` (recommendations and the how, why-not and trace explanations) read that result |
 | `console/` | `MovieRecommendationConsole`, the interactive interface |
 | `run.sh`, `run.bat`, `run-console.sh`, `run-console.bat` | Build and start the API or the console without Docker |
 | `Application` | Entry point. It starts the API, and `Application console` starts the console |
-| `src/test/java/.../MovieRecommendationTest.java` | Tests for exclusions, alternatives, scoring, compatibility and trace events |
+| `src/test/java/.../engine/` | `MovieRecommendationTest` compares the recommendations and exclusions of every user with `expected-recommendations.csv` and `expected-exclusions.csv`, generated from the Prolog engine. `RuleFunctionsTest` and `RuleParityTest` check the helper functions and the rule files |
 
 ---
 
@@ -243,13 +222,13 @@ Java packages under `src/main/java/meia/playgorithm`:
 
 | Course topic | Where it is in the implementation |
 | --- | --- |
-| Expert-system architecture: knowledge base, working memory, inference engine, explanation module and interface | `rules.drl` is the knowledge base. `MovieRecommendationUnit` is the working memory. `DroolsRecommendationService` is the inference engine. The console and the API are the interfaces. `Recommendation`, `TraceEvent` and the how, why-not and trace explanations are the explanation module |
-| Forward chaining | Drools fires rules from the inserted facts. The user preferences and the movies go into `MovieRecommendationUnit`, then `instance.fire()` derives exclusions, preference reasons, recommendations and trace events |
-| Conflict resolution and rule priority | `rules.drl` uses `salience`: exclusion rules run first, preference rules next and the recommendation rule last. Mandatory constraints therefore come before scoring |
-| Knowledge separated from control | The recommendation knowledge is declarative in `rules.drl`. The Java classes only hold facts and run the engine |
+| Expert-system architecture: knowledge base, working memory, inference engine, explanation module and interface | `movies.drl` and `users.drl` are the knowledge base. `RecommendationUnit` is the working memory. `DroolsRecommendationService` is the inference engine. The console and the API are the interfaces. `Recommendation`, `TraceEvent` and the how, why-not and trace explanations are the explanation module |
+| Forward chaining | Drools fires rules from the inserted facts. The movies, the user facts and the reference knowledge go into `RecommendationUnit`, then `instance.fire()` derives the movie profile, the relations between movies, and the exclusion and preference reasons. The recommendations are read from those reasons afterwards, so an exclusion always wins |
+| Conflict resolution and rule priority | No rule needs `salience`: every rule only adds facts, and the recommendation is read once the rules have stopped, so the order in which they fire does not change the result |
+| Knowledge separated from control | The recommendation knowledge is declarative in `movies.drl` and `users.drl`, and the weights and genre hints are data. The Java classes only hold facts and run the engine |
 | Knowledge acquisition from an expert interview | The rules encode the interview: mandatory limits discard movies, flexible preferences change the score, rejected genres, directors and actors exclude, and recommendations list the satisfied and unmet preferences |
-| Drools working memory and rule execution | `MovieRecommendationUnit` holds a `DataStore` of movies, preferences, recommendations and trace events. The rules combine them to create new facts |
-| Drools monitoring and queries | `rules.drl` defines the `FindRecommendations` and `FindTraceEvents` queries. `TraceEvent` records each rule that fires |
+| Drools working memory and rule execution | `RecommendationUnit` holds one `DataStore` per kind of fact: input, reference knowledge and inferred facts. The rules combine them to create new facts |
+| Drools monitoring and queries | `queries.drl` reads each kind of inferred fact. Each inferred fact keeps the name of the rule that created it, which the trace shows |
 | Explanation types: how, why and why not | `how` and `GET /api/how` explain how a recommendation was produced. `why-not` and `GET /api/why-not` explain why it was not. `trace` and `GET /api/trace` show the rules that fired. `facts` shows the known facts |
 | Truth maintenance | The implementation stores explicit trace facts. A future version could use `insertLogical` for conclusions that should disappear when their supporting facts stop being true |
 | Fuzzy reasoning | The scoring is weighted and deterministic. Fuzzy logic would suit vague ideas such as "short movie", "recent movie" or "close to the minimum rating" |
