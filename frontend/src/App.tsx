@@ -1,9 +1,12 @@
-import { Grid } from "@mui/material";
+import { Grid, Paper } from "@mui/material";
+import { useApp } from "./context/AppContext";
 import UserPanel from "./components/user/UserPanel";
 import UserParameters from "./components/parameters/UserParameters";
 import Recommendations from "./components/recommendations/Recommendations";
 
 const App = () => {
+    const { recommendationsOnSide } = useApp();
+
     return (
         <Grid
             container
@@ -23,14 +26,18 @@ const App = () => {
                 }
             }}
         >
-            <Grid size={{ xs: 12, md: 9 }}>
+            <Grid size={{ xs: 12, md: recommendationsOnSide ? 9 : 12 }}>
                 <UserPanel />
                 <UserParameters />
             </Grid>
 
-            <Grid size={{ xs: 12, md: 3 }}>
-                <Recommendations />
-            </Grid>
+            {recommendationsOnSide && (
+                <Grid size={{ xs: 12, md: 3 }}>
+                    <Paper sx={{ p: 2, overflow: "auto" }}>
+                        <Recommendations />
+                    </Paper>
+                </Grid>
+            )}
         </Grid>
     );
 };
