@@ -1,0 +1,200 @@
+package meia.playgorithm.engine;
+
+unit RecommendationUnit;
+
+import java.util.List;
+import function meia.playgorithm.engine.RuleFunctions.ageAllowed;
+import function meia.playgorithm.engine.RuleFunctions.atLeast;
+import function meia.playgorithm.engine.RuleFunctions.atMost;
+import function meia.playgorithm.engine.RuleFunctions.effectiveTolerance;
+import function meia.playgorithm.engine.RuleFunctions.listText;
+import function meia.playgorithm.engine.RuleFunctions.sessionAge;
+import function meia.playgorithm.engine.RuleFunctions.sharesAny;
+import meia.playgorithm.model.Attribute;
+import meia.playgorithm.model.ExcludedMovie;
+import meia.playgorithm.model.Exclusion;
+import meia.playgorithm.model.ExclusionReason;
+import meia.playgorithm.model.Limit;
+import meia.playgorithm.model.MatchesPreferences;
+import meia.playgorithm.model.PreferenceReason;
+import meia.playgorithm.model.Reason;
+
+// Exclusion reasons and preference reasons of every user for every movie.
+// The weight of each kind of reason is reference knowledge loaded from
+// knowledge/preference-weights.csv. Recommendations are not a rule: they are
+// read afterwards from these facts (RecommendationQueries), so an exclusion
+// always wins over any preference.
+
+// ---------------------------------------------------------------------------
+// Exclusions: watched movies, dislikes and audience age
+// ---------------------------------------------------------------------------
+
+rule "Watched movie"
+when
+    $watched : /watched
+    not /userLimits[ userId == $watched.userId, limit == Limit.ALLOW_REWATCH, value == "true" ]
+then
+    exclusionReasons.add(new ExclusionReason($watched.userId(), $watched.movieId(), Exclusion.WATCHED, "", drools.getRule().getName()));
+end
+
+rule "Disliked genre"
+when
+    $dislike : /dislikes[ attribute == Attribute.GENRE ]
+    $movie : /movies[ genres contains $dislike.value ]
+then
+    exclusionReasons.add(new ExclusionReason($dislike.userId(), $movie.id(), Exclusion.DISLIKED_GENRE, $dislike.value(), drools.getRule().getName()));
+end
+
+rule "Disliked language"
+when
+    $dislike : /dislikes[ attribute == Attribute.LANGUAGE ]
+    $movie : /movies[ languages contains $dislike.value ]
+then
+    exclusionReasons.add(new ExclusionReason($dislike.userId(), $movie.id(), Exclusion.DISLIKED_LANGUAGE, $dislike.value(), drools.getRule().getName()));
+end
+
+rule "Audience age"
+when
+    $user : /users
+    $sessionMinAges : List() from accumulate(
+        /userLimits[ userId == $user.id, limit == Limit.SESSION_MIN_AGE, $age : value ],
+        collectList($age) )
+    $age : Integer() from sessionAge($sessionMinAges, $user.age())
+    $movie : /movies[ !ageAllowed($age, ratingMpa) ]
+then
+    exclusionReasons.add(new ExclusionReason($user.id(), $movie.id(), Exclusion.AUDIENCE_AGE, String.valueOf($age), drools.getRule().getName()));
+end
+
+// ---------------------------------------------------------------------------
+// Preference reasons, weighted by preference-weights.csv
+// ---------------------------------------------------------------------------
+
+rule "Liked genre or language"
+when
+    $like : /likes
+    $weight : /preferenceWeights[ reason == Reason.of($like.attribute) ]
+    $movie : /movies[ valuesOf($like.attribute) contains $like.value ]
+then
+    preferenceReasons.add(new PreferenceReason($like.userId(), $movie.id(), $weight.reason(), $like.value(), $weight.weight(), drools.getRule().getName()));
+end
+
+rule "Wishlist"
+when
+    $wish : /wishlist
+    $weight : /preferenceWeights[ reason == Reason.WISHLIST ]
+    /movies[ id == $wish.movieId ]
+then
+    preferenceReasons.add(new PreferenceReason($wish.userId(), $wish.movieId(), Reason.WISHLIST, "", $weight.weight(), drools.getRule().getName()));
+end
+
+rule "Similar to a liked watched movie"
+when
+    $watched : /watched[ rating >= 4 ]
+    $weight : /preferenceWeights[ reason == Reason.LIKED_SIMILARITY ]
+    $similarity : /similarityScores[ movieA == $watched.movieId, score >= 7 ]
+then
+    preferenceReasons.add(new PreferenceReason($watched.userId(), $similarity.movieB(), Reason.LIKED_SIMILARITY, $watched.movieId(), $weight.weight(), drools.getRule().getName()));
+end
+
+// Director, writer, star and country of origin come with the movie data.
+rule "Preferred movie data"
+when
+    $prefers : /prefers
+    $weight : /preferenceWeights[ reason == Reason.of($prefers.attribute) ]
+    $movie : /movies[ valuesOf($prefers.attribute) contains $prefers.value ]
+then
+    preferenceReasons.add(new PreferenceReason($prefers.userId(), $movie.id(), $weight.reason(), $prefers.value(), $weight.weight(), drools.getRule().getName()));
+end
+
+// Subgenre, pace, ..., era and popularity are inferred by movies.drl.
+rule "Preferred inferred movie feature"
+when
+    $prefers : /prefers
+    $weight : /preferenceWeights[ reason == Reason.of($prefers.attribute) ]
+    $feature : /movieFeatures[ feature == $prefers.attribute, value == $prefers.value ]
+then
+    preferenceReasons.add(new PreferenceReason($prefers.userId(), $feature.movieId(), $weight.reason(), $prefers.value(), $weight.weight(), drools.getRule().getName()));
+end
+
+rule "Matches preferences"
+when
+    $reason : /preferenceReasons
+    not /matchesPreferences[ userId == $reason.userId, movieId == $reason.movieId ]
+then
+    matchesPreferences.add(new MatchesPreferences($reason.userId(), $reason.movieId(), drools.getRule().getName()));
+end
+
+// ---------------------------------------------------------------------------
+// Explicit limits
+// ---------------------------------------------------------------------------
+
+rule "Disliked director"
+when
+    $limit : /userLimits[ limit == Limit.DISLIKED_DIRECTORS ]
+    $movie : /movies[ directors contains $limit.value ]
+then
+    exclusionReasons.add(new ExclusionReason($limit.userId(), $movie.id(), Exclusion.DISLIKED_DIRECTOR, $limit.value(), drools.getRule().getName()));
+end
+
+rule "Disliked star"
+when
+    $limit : /userLimits[ limit == Limit.DISLIKED_STARS ]
+    $movie : /movies[ stars contains $limit.value ]
+then
+    exclusionReasons.add(new ExclusionReason($limit.userId(), $movie.id(), Exclusion.DISLIKED_STAR, $limit.value(), drools.getRule().getName()));
+end
+
+rule "Duration limit"
+when
+    $limit : /userLimits[ limit == Limit.MAX_DURATION_MINUTES ]
+    $movie : /movies[ !atMost(minutes(), $limit.number()) ]
+then
+    exclusionReasons.add(new ExclusionReason($limit.userId(), $movie.id(), Exclusion.DURATION_LIMIT, $limit.numberText(), drools.getRule().getName()));
+end
+
+rule "Excluded movie"
+when
+    $reason : /exclusionReasons
+    not /excludedMovies[ userId == $reason.userId, movieId == $reason.movieId ]
+then
+    excludedMovies.add(new ExcludedMovie($reason.userId(), $reason.movieId(), drools.getRule().getName()));
+end
+
+rule "Year from"
+when
+    $limit : /userLimits[ limit == Limit.YEAR_FROM ]
+    $movie : /movies[ !atLeast(year, $limit.number()) ]
+then
+    exclusionReasons.add(new ExclusionReason($limit.userId(), $movie.id(), Exclusion.YEAR_FROM, $limit.numberText(), drools.getRule().getName()));
+end
+
+rule "Year to"
+when
+    $limit : /userLimits[ limit == Limit.YEAR_TO ]
+    $movie : /movies[ !atMost(year, $limit.number()) ]
+then
+    exclusionReasons.add(new ExclusionReason($limit.userId(), $movie.id(), Exclusion.YEAR_TO, $limit.numberText(), drools.getRule().getName()));
+end
+
+rule "Required languages"
+when
+    $user : /users
+    $languages : List( size > 0 ) from accumulate(
+        /userLimits[ userId == $user.id, limit == Limit.REQUIRED_LANGUAGES, $language : value ],
+        collectList($language) )
+    $movie : /movies[ !sharesAny(languages, $languages) ]
+then
+    exclusionReasons.add(new ExclusionReason($user.id(), $movie.id(), Exclusion.REQUIRED_LANGUAGES, listText($languages), drools.getRule().getName()));
+end
+
+rule "Rating limit"
+when
+    $minimum : /userLimits[ limit == Limit.MIN_RATING ]
+    $settings : List() from accumulate(
+        $setting : /userLimits[ userId == $minimum.userId, limit == Limit.RATING_TOLERANCE || limit == Limit.RATING_REQUIRED ],
+        collectList($setting) )
+    $movie : /movies[ !atLeast(rating(), $minimum.number() - Double.parseDouble(effectiveTolerance($settings))) ]
+then
+    exclusionReasons.add(new ExclusionReason($minimum.userId(), $movie.id(), Exclusion.RATING_LIMIT,
+        $minimum.numberText() + "," + effectiveTolerance($settings), drools.getRule().getName()));
+end

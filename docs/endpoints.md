@@ -18,6 +18,7 @@ X = the service implements the endpoint. The last column says whether the fronte
 | GET | `/api/how` | — | X | — | — | — |
 | GET | `/api/why-not` | — | X | — | — | — |
 | GET | `/api/trace` | — | X | — | — | — |
+| POST | `/api/dialogue` | — | X | — | — | — |
 | GET | `/docs` | — | X | X | — | — |
 | GET | `/swagger-ui/index.html` | — | X | — | — | — |
 | GET | `/redoc` | — | — | X | — | — |
@@ -49,9 +50,10 @@ means it returns the same content, not only a similar route.
 | `GET /api/how` | How a recommendation was reached | No | — | The explanation | — |
 | `GET /api/why-not` | Why a movie was not recommended | No | — | The explanation | — |
 | `GET /api/trace` | The rule events that fired | No | — | The events | — |
+| `POST /api/dialogue` | The next dialogue question with its why, or the conclusions | No | — | The dialogue | — |
 | `GET /docs`, `/swagger-ui/index.html`, `/openapi.json` | The engine's own documentation | No | `GET /docs` and `/openapi.json` of the knowledge base document only the knowledge base | The documentation of the engines | — |
 
-Of the 14 Drools endpoints and the 8 Prolog endpoints, the knowledge base **partly covers 2**
+Of the 15 Drools endpoints and the 8 Prolog endpoints, the knowledge base **partly covers 2**
 (`/api/filmes` and `/api/filme`), and only in the 19 CSV fields. The others depend on the engines'
 calculation or on their state. In those 19 fields, Prolog returns the CSV values; Drools changes the
 duration and the rating, and leaves 7 fields empty (`vote`, `budget`, `win`, `nomination`, `oscar`,
@@ -90,6 +92,7 @@ The **Frontend** column says whether the frontend calls the endpoint.
 | GET | `/api/how` | How a recommendation was reached | `user_id`, `movie` | — |
 | GET | `/api/why-not` | Why a movie was not recommended | `user_id`, `movie` | — |
 | GET | `/api/trace` | The rule events that fired | `user_id`, `movie` (optional) | — |
+| POST | `/api/dialogue` | Experience dialogue up to the next unanswered question | JSON body: `user_id`, `answers` | — |
 | GET | `/docs` | Swagger UI (redirects) | — | — |
 | GET | `/swagger-ui/index.html` | Swagger UI | — | — |
 | GET | `/openapi.json` | OpenAPI specification | — | — |
@@ -121,11 +124,11 @@ The **Frontend** column says whether the frontend calls the endpoint.
 | Service | Endpoints | Only in this service | The frontend uses |
 | --- | :-: | --- | :-: |
 | Prolog | 9 | `/api/dialogo` | 3 |
-| Drools | 14 | `/api/how`, `/api/why-not`, `/api/trace`, `/docs`, `/swagger-ui/index.html`, `/openapi.json` | 2 |
+| Drools | 15 | `/api/how`, `/api/why-not`, `/api/trace`, `/api/dialogue`, `/docs`, `/swagger-ui/index.html`, `/openapi.json` | 2 |
 | Knowledge base | 10 | all | 5 |
 | Frontend | 2 | `/health`, `/config.json` | 1 |
 
-Both engines have the same 8 data endpoints. Drools adds the 3 explanations and the documentation. The
-frontend uses 11 of the 35 endpoints (counting each service separately): `/api/recomendacoes_utilizador` and
+Both engines have the same 8 data endpoints. Prolog adds the dialogue; Drools adds the 3 explanations, its own dialogue
+and the documentation. The frontend uses 11 of the 36 endpoints (counting each service separately): `/api/recomendacoes_utilizador` and
 `/api/reload/users` (in both engines), `/api/dialogo` (Prolog only), 5 from the knowledge base (`/users.csv`, `/movies.csv`, and `POST`,
 `PUT` and `DELETE` on `/users`) and its own `/config.json`.

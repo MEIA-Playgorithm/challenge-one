@@ -76,6 +76,7 @@ Each service has its own README. The documents in `docs/` explain the design and
 | [Implementation vs interview](docs/implementation-vs-interview.md) | What the expert interview asked for and what is still missing |
 | [Expert decisions flowchart](docs/expert-decisions-flowchart.md) | The expert's decision process |
 | [Recommendation flowchart](docs/movie-recommendation-flowchart.md) | The proposed recommendation flow |
+| [Team alignment](docs/team-alignment.md) | What is missing, what to review and what the team must decide |
 | [Branch management](docs/branch-management.md) | How to work with branches |
 | [Conventional Commits](docs/conventional-commits.md) | The commit message format |
 

@@ -1,0 +1,307 @@
+package meia.playgorithm.engine.dialogue;
+
+unit DialogueUnit;
+
+import java.util.List;
+
+// The experience dialogue: it finds out what the user feels like watching.
+//
+// Conclusion rules insert a DialogueConclusion. A rule that needs an answer
+// from the user has an "Ask" rule: when the earlier conditions of that rule
+// hold and the answer is missing, it inserts a DialogueQuestion, which
+// DialogueService asks before firing the rules again. Questions stay in
+// working memory, so they are never asked twice.
+//
+// The explanations read the conditions and the inserted conclusion of each
+// rule straight from this file, so a rule only has to be written once.
+
+// ---------------------------------------------------------------------------
+// Experience choice
+// ---------------------------------------------------------------------------
+
+rule "Ask experiencia"
+when
+    $user : /users
+    not /answers[ key == "experiencia" ]
+    not /questions[ key == "experiencia" ]
+then
+    questions.add(DialogueQuestion.choice($user.getId(), "experiencia",
+        "%s, que experiência te apetece ter com o filme de hoje?",
+        List.of("emocao", "comedia", "acao", "misterio", "terror", "ficcao_cientifica", "fantasia"),
+        "dialogo_experiencia"));
+end
+
+rule "dialogo_experiencia"
+when
+    $user : /users
+    $experiencia : /answers[ key == "experiencia" ]
+    not /conclusions[ type == "experiencia_sessao" ]
+then
+    conclusions.add(new DialogueConclusion($user.getId(), "experiencia_sessao", $experiencia.getValue(), drools.getRule().getName()));
+end
+
+// ---------------------------------------------------------------------------
+// Emotional branch: each question depends on the previous affirmative answer
+// ---------------------------------------------------------------------------
+
+rule "Ask procura_historia_emocional"
+when
+    $user : /users
+    /conclusions[ type == "experiencia_sessao", value == "emocao" ]
+    not /answers[ key == "procura_historia_emocional" ]
+    not /questions[ key == "procura_historia_emocional" ]
+then
+    questions.add(DialogueQuestion.yesNo($user.getId(), "procura_historia_emocional",
+        "%s, apetece-te uma história que te emocione?", "dialogo_1"));
+end
+
+rule "dialogo_1"
+when
+    $user : /users
+    /conclusions[ type == "experiencia_sessao", value == "emocao" ]
+    /answers[ key == "procura_historia_emocional", affirmative ]
+    not /conclusions[ type == "perfil_sessao", value == "emocional" ]
+then
+    conclusions.add(new DialogueConclusion($user.getId(), "perfil_sessao", "emocional", drools.getRule().getName()));
+end
+
+rule "Ask prefere_temas_realistas"
+when
+    $premise : /conclusions[ type == "perfil_sessao", value == "emocional" ]
+    not /answers[ key == "prefere_temas_realistas" ]
+    not /questions[ key == "prefere_temas_realistas" ]
+then
+    questions.add(DialogueQuestion.yesNo($premise.getUserId(), "prefere_temas_realistas",
+        "%s, preferes uma história sobre situações da vida real?", "dialogo_2"));
+end
+
+rule "dialogo_2"
+when
+    $premise : /conclusions[ type == "perfil_sessao", value == "emocional" ]
+    /answers[ key == "prefere_temas_realistas", affirmative ]
+    not /conclusions[ type == "sugerir_genero", value == "Drama" ]
+then
+    conclusions.add(new DialogueConclusion($premise.getUserId(), "sugerir_genero", "Drama", drools.getRule().getName()));
+end
+
+rule "Ask aceita_final_triste"
+when
+    $premise : /conclusions[ type == "sugerir_genero", value == "Drama" ]
+    not /answers[ key == "aceita_final_triste" ]
+    not /questions[ key == "aceita_final_triste" ]
+then
+    questions.add(DialogueQuestion.yesNo($premise.getUserId(), "aceita_final_triste",
+        "%s, estás disposto a ver um filme com um final triste?", "dialogo_3"));
+end
+
+rule "dialogo_3"
+when
+    $premise : /conclusions[ type == "sugerir_genero", value == "Drama" ]
+    /answers[ key == "aceita_final_triste", affirmative ]
+    not /conclusions[ type == "sugerir_tom", value == "triste" ]
+then
+    conclusions.add(new DialogueConclusion($premise.getUserId(), "sugerir_tom", "triste", drools.getRule().getName()));
+end
+
+// ---------------------------------------------------------------------------
+// Comedy branch
+// ---------------------------------------------------------------------------
+
+rule "dialogo_comedia_1"
+when
+    $premise : /conclusions[ type == "experiencia_sessao", value == "comedia" ]
+    not /conclusions[ type == "sugerir_genero", value == "Comedy" ]
+then
+    conclusions.add(new DialogueConclusion($premise.getUserId(), "sugerir_genero", "Comedy", drools.getRule().getName()));
+end
+
+rule "Ask prefere_romance_com_humor"
+when
+    $premise : /conclusions[ type == "experiencia_sessao", value == "comedia" ]
+    not /answers[ key == "prefere_romance_com_humor" ]
+    not /questions[ key == "prefere_romance_com_humor" ]
+then
+    questions.add(DialogueQuestion.yesNo($premise.getUserId(), "prefere_romance_com_humor",
+        "%s, preferes humor ligado a uma história romântica?", "dialogo_comedia_2"));
+end
+
+rule "dialogo_comedia_2"
+when
+    $premise : /conclusions[ type == "experiencia_sessao", value == "comedia" ]
+    /answers[ key == "prefere_romance_com_humor", affirmative ]
+    not /conclusions[ type == "sugerir_genero", value == "Romantic Comedy" ]
+then
+    conclusions.add(new DialogueConclusion($premise.getUserId(), "sugerir_genero", "Romantic Comedy", drools.getRule().getName()));
+end
+
+// ---------------------------------------------------------------------------
+// Action branch
+// ---------------------------------------------------------------------------
+
+rule "dialogo_acao_1"
+when
+    $premise : /conclusions[ type == "experiencia_sessao", value == "acao" ]
+    not /conclusions[ type == "sugerir_genero", value == "Action" ]
+then
+    conclusions.add(new DialogueConclusion($premise.getUserId(), "sugerir_genero", "Action", drools.getRule().getName()));
+end
+
+rule "Ask procura_aventura"
+when
+    $premise : /conclusions[ type == "experiencia_sessao", value == "acao" ]
+    not /answers[ key == "procura_aventura" ]
+    not /questions[ key == "procura_aventura" ]
+then
+    questions.add(DialogueQuestion.yesNo($premise.getUserId(), "procura_aventura",
+        "%s, gostavas de acompanhar uma aventura?", "dialogo_acao_2"));
+end
+
+rule "dialogo_acao_2"
+when
+    $premise : /conclusions[ type == "experiencia_sessao", value == "acao" ]
+    /answers[ key == "procura_aventura", affirmative ]
+    not /conclusions[ type == "sugerir_genero", value == "Adventure" ]
+then
+    conclusions.add(new DialogueConclusion($premise.getUserId(), "sugerir_genero", "Adventure", drools.getRule().getName()));
+end
+
+// ---------------------------------------------------------------------------
+// Mystery branch
+// ---------------------------------------------------------------------------
+
+rule "dialogo_misterio_1"
+when
+    $premise : /conclusions[ type == "experiencia_sessao", value == "misterio" ]
+    not /conclusions[ type == "sugerir_genero", value == "Mystery" ]
+then
+    conclusions.add(new DialogueConclusion($premise.getUserId(), "sugerir_genero", "Mystery", drools.getRule().getName()));
+end
+
+rule "Ask procura_suspense"
+when
+    $premise : /conclusions[ type == "experiencia_sessao", value == "misterio" ]
+    not /answers[ key == "procura_suspense" ]
+    not /questions[ key == "procura_suspense" ]
+then
+    questions.add(DialogueQuestion.yesNo($premise.getUserId(), "procura_suspense",
+        "%s, queres uma história com suspense e tensão?", "dialogo_misterio_2"));
+end
+
+rule "dialogo_misterio_2"
+when
+    $premise : /conclusions[ type == "experiencia_sessao", value == "misterio" ]
+    /answers[ key == "procura_suspense", affirmative ]
+    not /conclusions[ type == "sugerir_genero", value == "Thriller" ]
+then
+    conclusions.add(new DialogueConclusion($premise.getUserId(), "sugerir_genero", "Thriller", drools.getRule().getName()));
+end
+
+// ---------------------------------------------------------------------------
+// Horror branch
+// ---------------------------------------------------------------------------
+
+rule "dialogo_terror_1"
+when
+    $premise : /conclusions[ type == "experiencia_sessao", value == "terror" ]
+    not /conclusions[ type == "sugerir_genero", value == "Horror" ]
+then
+    conclusions.add(new DialogueConclusion($premise.getUserId(), "sugerir_genero", "Horror", drools.getRule().getName()));
+end
+
+rule "Ask prefere_sobrenatural"
+when
+    $premise : /conclusions[ type == "experiencia_sessao", value == "terror" ]
+    not /answers[ key == "prefere_sobrenatural" ]
+    not /questions[ key == "prefere_sobrenatural" ]
+then
+    questions.add(DialogueQuestion.yesNo($premise.getUserId(), "prefere_sobrenatural",
+        "%s, preferes elementos sobrenaturais?", "dialogo_terror_2"));
+end
+
+rule "dialogo_terror_2"
+when
+    $premise : /conclusions[ type == "experiencia_sessao", value == "terror" ]
+    /answers[ key == "prefere_sobrenatural", affirmative ]
+    not /conclusions[ type == "preferencia_sessao", value == "sobrenatural" ]
+then
+    conclusions.add(new DialogueConclusion($premise.getUserId(), "preferencia_sessao", "sobrenatural", drools.getRule().getName()));
+end
+
+// ---------------------------------------------------------------------------
+// Science-fiction branch
+// ---------------------------------------------------------------------------
+
+rule "dialogo_ficcao_cientifica_1"
+when
+    $premise : /conclusions[ type == "experiencia_sessao", value == "ficcao_cientifica" ]
+    not /conclusions[ type == "sugerir_genero", value == "SciFi" ]
+then
+    conclusions.add(new DialogueConclusion($premise.getUserId(), "sugerir_genero", "SciFi", drools.getRule().getName()));
+end
+
+rule "Ask prefere_sociedade_tecnologica"
+when
+    $premise : /conclusions[ type == "experiencia_sessao", value == "ficcao_cientifica" ]
+    not /answers[ key == "prefere_sociedade_tecnologica" ]
+    not /questions[ key == "prefere_sociedade_tecnologica" ]
+then
+    questions.add(DialogueQuestion.yesNo($premise.getUserId(), "prefere_sociedade_tecnologica",
+        "%s, interessam-te sociedades dominadas pela tecnologia?", "dialogo_ficcao_cientifica_2"));
+end
+
+rule "dialogo_ficcao_cientifica_2"
+when
+    $premise : /conclusions[ type == "experiencia_sessao", value == "ficcao_cientifica" ]
+    /answers[ key == "prefere_sociedade_tecnologica", affirmative ]
+    not /conclusions[ type == "sugerir_genero", value == "Cyberpunk" ]
+then
+    conclusions.add(new DialogueConclusion($premise.getUserId(), "sugerir_genero", "Cyberpunk", drools.getRule().getName()));
+end
+
+// ---------------------------------------------------------------------------
+// Fantasy branch
+// ---------------------------------------------------------------------------
+
+rule "dialogo_fantasia_1"
+when
+    $premise : /conclusions[ type == "experiencia_sessao", value == "fantasia" ]
+    not /conclusions[ type == "sugerir_genero", value == "Fantasy" ]
+then
+    conclusions.add(new DialogueConclusion($premise.getUserId(), "sugerir_genero", "Fantasy", drools.getRule().getName()));
+end
+
+rule "Ask procura_jornada"
+when
+    $premise : /conclusions[ type == "experiencia_sessao", value == "fantasia" ]
+    not /answers[ key == "procura_jornada" ]
+    not /questions[ key == "procura_jornada" ]
+then
+    questions.add(DialogueQuestion.yesNo($premise.getUserId(), "procura_jornada",
+        "%s, gostavas de acompanhar uma missão ou uma jornada?", "dialogo_fantasia_2"));
+end
+
+rule "dialogo_fantasia_2"
+when
+    $premise : /conclusions[ type == "experiencia_sessao", value == "fantasia" ]
+    /answers[ key == "procura_jornada", affirmative ]
+    not /conclusions[ type == "sugerir_genero", value == "Quest" ]
+then
+    conclusions.add(new DialogueConclusion($premise.getUserId(), "sugerir_genero", "Quest", drools.getRule().getName()));
+end
+
+// ---------------------------------------------------------------------------
+// Queries used by DialogueService
+// ---------------------------------------------------------------------------
+
+query FindPendingQuestions
+    $question : /questions
+    not /answers[ key == $question.key ]
+end
+
+query FindDialogueAnswers
+    $answer : /answers
+end
+
+query FindDialogueConclusions
+    $conclusion : /conclusions
+end

@@ -8,14 +8,11 @@ import meia.playgorithm.api.dto.RecommendationDto;
 import meia.playgorithm.api.dto.UnmetDto;
 import meia.playgorithm.api.dto.UserRecommendationsDto;
 import meia.playgorithm.api.dto.WhyNotDto;
-import meia.playgorithm.catalog.MovieCatalog;
-import meia.playgorithm.catalog.UserCatalog;
-import meia.playgorithm.engine.DroolsRecommendationService;
+import meia.playgorithm.engine.KnowledgeBaseResult;
+import meia.playgorithm.engine.RecommendationResult;
 import meia.playgorithm.model.Movie;
 import meia.playgorithm.model.Recommendation;
-import meia.playgorithm.model.RecommendationResult;
 import meia.playgorithm.model.TraceEvent;
-import meia.playgorithm.model.UserPreferences;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -24,21 +21,17 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public class RecommendationService {
 
-    private final MovieCatalog movies;
-    private final UserCatalog users;
-    private final DroolsRecommendationService engine;
+    private final KnowledgeBaseService knowledgeBase;
 
-    public RecommendationService(MovieCatalog movies, UserCatalog users, DroolsRecommendationService engine) {
-        this.movies = movies;
-        this.users = users;
-        this.engine = engine;
+    public RecommendationService(KnowledgeBaseService knowledgeBase) {
+        this.knowledgeBase = knowledgeBase;
     }
 
     public UserRecommendationsDto forUser(String userId, int limit, int offset) {
         RecommendationResult result = run(userId);
         List<Recommendation> all = result.recommendations();
         List<RecommendationDto> items = Pages.slice(all, offset, limit).stream()
-            .map(recommendation -> RecommendationDto.of(recommendation, movieOf(recommendation, result)))
+            .map(recommendation -> RecommendationDto.of(recommendation, movieDto(recommendation, result)))
             .toList();
         return new UserRecommendationsDto(userId, all.size(), offset, limit, items);
     }
@@ -51,7 +44,7 @@ public class RecommendationService {
                 "No recommendation conclusion was produced for this movie. Use /api/why-not to inspect the rejection path.",
                 null, null, null, result.traceFor(movieQuery));
         }
-        return new HowDto("how", MovieDto.of(movieOf(recommendation, result)),
+        return new HowDto("how", movieDto(recommendation, result),
             "The movie was inferred as a recommendation.",
             recommendation.getReasons().stream().map(ReasonDto::of).toList(),
             recommendation.getUnmetPreferences().stream().map(UnmetDto::of).toList(),
@@ -64,16 +57,16 @@ public class RecommendationService {
         Movie movie = result.findMovie(movieQuery)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Filme não encontrado"));
         List<TraceEvent> trace = result.traceFor(movie);
-        if (result.findRecommendation(movie.getId()).isPresent()) {
-            return new WhyNotDto("why_not", MovieDto.of(movie),
+        MovieDto movieDto = MovieDto.of(movie, result.knowledgeBase());
+        if (result.findRecommendation(movie.id()).isPresent()) {
+            return new WhyNotDto("why_not", movieDto,
                 "The movie was recommended, so there is no rejection path. Use /api/how for the inference path.",
                 null, trace);
         }
+        // Um filme só fica de fora quando uma regra de exclusão disparou ("Excluded movie").
         List<TraceEvent> exclusions = trace.stream().filter(event -> event.type().equals("EXCLUSION")).toList();
-        return new WhyNotDto("why_not", MovieDto.of(movie),
-            exclusions.isEmpty()
-                ? "The movie was not recommended because no positive preference path produced a recommendation."
-                : "The movie was discarded by mandatory or rejection rules.",
+        return new WhyNotDto("why_not", movieDto,
+            "The movie was excluded by the rules in the exclusions list.",
             exclusions, trace);
     }
 
@@ -84,13 +77,16 @@ public class RecommendationService {
     }
 
     private RecommendationResult run(String userId) {
-        UserPreferences preferences = users.find(userId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilizador não encontrado"));
-        return engine.evaluate(preferences, movies.movies());
+        KnowledgeBaseResult current = knowledgeBase.current();
+        if (current.user(userId).isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilizador não encontrado");
+        }
+        return current.forUser(userId);
     }
 
-    private static Movie movieOf(Recommendation recommendation, RecommendationResult result) {
-        return result.findMovie(recommendation.getMovieId())
+    private static MovieDto movieDto(Recommendation recommendation, RecommendationResult result) {
+        Movie movie = result.findMovie(recommendation.getMovieId())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Filme não encontrado"));
+        return MovieDto.of(movie, result.knowledgeBase());
     }
 }
