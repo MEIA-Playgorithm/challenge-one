@@ -72,8 +72,8 @@ pergunta_facto(Facto, Contexto) :-
       assertz(resposta_utilizador(Facto, Resposta)),
       ( Resposta == sim -> regista_facto_utilizador(Facto) ; fail ) ).
 
-% Sem consola (API HTTP): resposta_externa(+Pergunta, +Opcoes, +Contexto, -Resposta)
-% substitui read/1. Só existe durante um pedido (ver api/dialogue_controller.pl).
+% Without a console (HTTP API): resposta_externa(+Question, +Options, +Context, -Answer)
+% replaces read/1. Only exists during a request (see api/dialogue_controller.pl).
 :- dynamic resposta_externa/4.
 
 le_escolha(Chave, Opcoes, Contexto, Resposta) :-

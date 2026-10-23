@@ -37,7 +37,7 @@ const SaveBar = ({ dirty, blocked, saving, error, remaining, autosave, onAutosav
         error ??
         blocked ??
         (saving
-            ? "Saving..."
+            ? "A guardar..."
             : remaining !== null
               ? `A guardar em ${Math.ceil(remaining / 1000)}s`
               : dirty

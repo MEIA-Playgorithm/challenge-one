@@ -42,7 +42,7 @@ const GenresSection = ({ form, patch }: Props) => {
                     <TextField
                         {...params}
                         label="Subgéneros preferidos"
-                        placeholder={form.preferred_subgenres.length ? "" : "Any"}
+                        placeholder={form.preferred_subgenres.length ? "" : "Qualquer"}
                         helperText="Correspondências mais finas além dos géneros"
                     />
                 )}

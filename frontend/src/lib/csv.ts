@@ -1,5 +1,5 @@
-// Os campos de uma linha de CSV, como o Python os escreve na knowledge base: uma vírgula
-// entre aspas não separa campos e "" dentro de aspas é uma aspa.
+// Fields of a CSV row as Python writes them in the knowledge base: a quoted comma doesn't
+// split fields and "" inside quotes is a quote.
 export function csvFields(row: string) {
     const cells = [""];
     let quoted = false;

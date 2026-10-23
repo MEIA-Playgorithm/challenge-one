@@ -7,7 +7,7 @@ import PeopleAndOrigins from "./PeopleAndOrigins";
 import Dialogue from "../dialogue/Dialogue";
 import type { DialogueAnswers } from "../../types/Dialogue";
 
-// Sempre o mesmo objeto: um {} novo a cada render faria o diálogo voltar a pedir sem parar.
+// Stable object: a fresh {} each render would make the dialogue refetch forever.
 const NO_ANSWERS: DialogueAnswers = {};
 
 const UserParameters = () => {
@@ -15,7 +15,7 @@ const UserParameters = () => {
     const [selectedTab, setSelectedTab] = useState<string>("preferences");
     // Fica aqui para não se perder ao mudar de separador ou de utilizador.
     const [autosave, setAutosave] = useState(false);
-    // As respostas do diálogo de cada utilizador, pelo mesmo motivo.
+    // Each user's dialogue answers, for the same reason.
     const [dialogueAnswers, setDialogueAnswers] = useState<Record<string, DialogueAnswers>>({});
 
     const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {

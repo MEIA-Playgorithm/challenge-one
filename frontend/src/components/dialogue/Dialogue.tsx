@@ -22,7 +22,7 @@ const engineBubble = {
     py: 1,
 } as const;
 
-// Uma mensagem do motor: a pergunta e, a pedido, o porquê.
+// An engine message: the question and, on request, its why.
 const EngineMessage = ({ question, questions }: { question: DialogueQuestion; questions: Record<string, string> }) => {
     const [showWhy, setShowWhy] = useState(false);
     return (
@@ -42,7 +42,7 @@ const EngineMessage = ({ question, questions }: { question: DialogueQuestion; qu
     );
 };
 
-// A resposta dada, do lado do utilizador, com o botão para a mudar.
+// The given answer, on the user's side, with a button to change it.
 const UserMessage = ({ answer, disabled, onRevise }: { answer: string; disabled: boolean; onRevise: () => void }) => (
     <Stack direction="row" spacing={0.5} sx={{ alignSelf: "flex-end", alignItems: "center" }}>
         <Tooltip title="Mudar esta resposta (as perguntas seguintes voltam a ser feitas)">
@@ -71,7 +71,7 @@ const UserMessage = ({ answer, disabled, onRevise }: { answer: string; disabled:
 
 type AnswerOptionsProps = { options: string[]; disabled: boolean; onAnswer: (value: string) => void };
 
-// As opções da pergunta atual: sim/não como dois botões, uma escolha como uma grelha.
+// The current question's options: yes/no as two buttons, a choice as a grid.
 const AnswerOptions = ({ options, disabled, onAnswer }: AnswerOptionsProps) =>
     isYesNo(options) ? (
         <Stack direction="row" spacing={1} sx={{ alignSelf: "flex-end" }}>
@@ -108,8 +108,8 @@ type Props = {
     onAnswersChange: (answers: DialogueAnswers) => void;
 };
 
-// O diálogo do motor Prolog (rules_dialog.pl) como uma conversa: escolher a experiência de
-// hoje, responder às perguntas desse ramo e ver os filmes que encaixam, com o porquê de tudo.
+// The engine dialogue as a chat: pick today's experience, answer that branch's questions
+// and see the movies that fit, with the why behind everything.
 const Dialogue = ({ answers, onAnswersChange }: Props) => {
     const { currentUser, engineStatus } = useApp();
     const { dialogue, loading, error, answer, revise, restart } = useDialogue(
@@ -119,7 +119,7 @@ const Dialogue = ({ answers, onAnswersChange }: Props) => {
         engineStatus.prolog
     );
 
-    // Os textos das perguntas, para as explicações dizerem "respondeste sim a ..." por palavras.
+    // Question texts, so explanations can say "you answered yes to ..." in words.
     const asked = [...(dialogue?.history ?? []), ...(dialogue?.question ? [dialogue.question] : [])];
     const questions = Object.fromEntries(asked.map((question) => [question.key, question.text]));
 
@@ -139,7 +139,7 @@ const Dialogue = ({ answers, onAnswersChange }: Props) => {
                             O que te apetece ver hoje?
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                            O motor Prolog faz algumas perguntas para esta sessão. Pergunta porquê em qualquer pergunta para veres o raciocínio.
+                            O motor de recomendação faz algumas perguntas para esta sessão. Pergunta porquê em qualquer pergunta para veres o raciocínio.
                         </Typography>
                     </Box>
                     <Button

@@ -6,10 +6,9 @@ import type { AnsweredQuestion, Dialogue, DialogueAnswers } from "../types/Dialo
 const answersOf = (history: AnsweredQuestion[]): DialogueAnswers =>
     Object.fromEntries(history.map(({ key, answer }) => [key, answer]));
 
-// O diálogo de um utilizador com o motor Prolog. As respostas vêm de fora (`answers`), para
-// não se perderem ao mudar de separador. Só se guardam as respostas às perguntas que o motor
-// fez: mudar uma resposta esquece as seguintes, que podiam já não se aplicar.
-// Volta a pedir depois de cada reload do motor; enquanto recarrega não pede nada.
+// A user's dialogue with the engine. Answers live outside (`answers`) so they survive tab
+// changes. Only answers to questions the engine asked are kept: changing one drops the later
+// ones, which may no longer apply. Refetches after each engine reload; idle while reloading.
 export function useDialogue(
     userId: string,
     answers: DialogueAnswers,
@@ -45,7 +44,7 @@ export function useDialogue(
         loading,
         error,
         answer: (key: string, value: string) => setAnswers({ ...answersOf(history), [key]: value }),
-        // Volta à pergunta `index` do histórico, sem a sua resposta nem as seguintes.
+        // Go back to history question `index`, dropping its answer and later ones.
         revise: (index: number) => setAnswers(answersOf(history.slice(0, index))),
         restart: () => setAnswers({}),
     };

@@ -23,7 +23,7 @@ const catalogWords: Record<string, string> = {
     OnePerson: "One-Person",
 };
 
-// Os valores (CSV, motores) ficam em inglês; isto é só como aparecem na interface.
+// Values (CSV, engines) stay in English; this is only how they display in the UI.
 const ptLabels: Record<string, string> = {
     slow: "Lento", medium: "Médio", fast: "Rápido", low: "Baixo", high: "Alto",
     tense: "Tenso", dark: "Sombrio", sad: "Triste", lighthearted: "Descontraído", romantic: "Romântico", reflective: "Reflexivo", exciting: "Empolgante",

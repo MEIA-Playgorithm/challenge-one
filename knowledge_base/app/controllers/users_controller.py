@@ -10,9 +10,8 @@ router = APIRouter(prefix="/users", tags=["users"])
 # Uma chave por coluna do CSV, com valores em texto (listas separadas por "|").
 UserBody = dict[str, Any]
 
-# {user_id:path}: um nome com "/" chega como %2F, que o servidor descodifica antes de
-# escolher a rota; sem :path, esse utilizador nunca se podia ler, alterar nem apagar.
-
+# {user_id:path}: a name with "/" arrives as %2F, which the server decodes before routing;
+# without :path that user could never be read, updated or deleted.
 
 @router.post("", status_code=201, summary="Cria um utilizador (409 se o user_id já existe)")
 def create_user(user: UserBody, users: Users):

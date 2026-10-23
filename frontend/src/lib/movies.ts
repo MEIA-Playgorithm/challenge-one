@@ -9,14 +9,14 @@ function optionalNumber(value: string) {
     return value ? Number(value.replace(",", ".")) : null;
 }
 
-// O Prolog manda a nota IMDb como o texto do CSV ("8,2"); o Drools manda um número.
+// Prolog sends the IMDb rating as CSV text ("8,2"); Drools sends a number.
 export const imdbRating = (value: number | string | null) => {
     const rating = typeof value === "number" ? value : optionalNumber(value ?? "");
     return rating !== null && Number.isFinite(rating) ? rating : null;
 };
 
-// Os valores distintos de um atributo em todo o catálogo, por ordem alfabética. Os motores
-// comparam nomes exatos, por isso só se escolhem nomes que existem nos filmes.
+// Distinct values of an attribute across the catalog, sorted. Engines match exact names,
+// so only names that exist in the movies can be picked.
 export const catalogValues = (movies: Movie[], key: "director" | "writer" | "star" | "country_origin") =>
     [...new Set(movies.flatMap((movie) => movie[key]))].sort((a, b) => a.localeCompare(b));
 

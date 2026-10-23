@@ -4,8 +4,8 @@ import type { Dialogue, DialogueAnswers } from "../types/Dialogue";
 import { request } from "./request";
 import { prologDialogueRoute } from "./routes";
 
-// O motor não guarda o diálogo: cada pedido leva todas as respostas dadas até agora e
-// devolve as perguntas já respondidas, a próxima pergunta (ou null) e as conclusões.
+// The engine keeps no dialogue state: each request sends every answer so far and gets back
+// the answered questions, the next question (or null) and the conclusions.
 export async function runDialogue(userId: string, answers: DialogueAnswers, signal?: AbortSignal) {
     const response = await request(config.engines.prolog, prologDialogueRoute, {
         method: "POST",

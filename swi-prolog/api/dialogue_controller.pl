@@ -1,9 +1,10 @@
-% Controller: o diálogo de rules_dialog.pl sem consola.
-% Cada pedido traz o utilizador e as respostas já dadas. O motor corre as regras
-% do diálogo de novo dentro de snapshot/1 (nada fica na base nem chega a outros
-% pedidos) e para na primeira pergunta sem resposta. Para cada pergunta devolve
-% o "porque": a regra em avaliação, as condições e o que conclui. No fim junta
-% as sugestões do diálogo às recomendações do utilizador (picks).
+% Controller: the rules_dialog.pl dialogue without a console.
+% Each request carries the user and the answers so far. The engine reruns the
+% dialogue rules inside snapshot/1 (nothing stays in the database or leaks to
+% other requests) and stops at the first unanswered question. Each question
+% comes with its "why": the rule being evaluated, its conditions and what it
+% concludes. Finally it matches the dialogue suggestions against the user's
+% recommendations (picks).
 :- module(dialogue_controller, []).
 :- use_module(library(http/http_dispatch)).
 :- use_module(library(http/http_json)).
@@ -31,7 +32,7 @@ json_body(Request, Body) :-
     is_dict(Body), !.
 json_body(_, _) :- throw(api_error(400, 'O corpo tem de ser um objeto JSON')).
 
-% Cada resposta tem de ser de uma pergunta do diálogo e uma das suas opções.
+% Each answer must belong to a dialogue question and be one of its options.
 valid_answer(User, Name-Value, Question-Value) :-
     ( question(User, Name, Question, Options) -> true
     ; format(atom(Message), 'Pergunta desconhecida: ~w', [Name]),
@@ -40,8 +41,8 @@ valid_answer(User, Name-Value, Question-Value) :-
     ; format(atom(Message), 'Resposta inválida para ~w; opções: ~w', [Name, Options]),
       throw(api_error(400, Message)) ).
 
-% As perguntas do diálogo são todas sobre o utilizador: escolhas
-% (opcoes_pergunta/2) e perguntas de sim ou não (perguntavel/1).
+% Dialogue questions are all about the user: choices (opcoes_pergunta/2)
+% and yes/no questions (perguntavel/1).
 question(User, Name, Question, Options) :-
     ( opcoes_pergunta(Question, Options) ; perguntavel(Question), Options = [sim, nao] ),
     Question =.. [QuestionName, User], QuestionName == Name, !.
@@ -63,14 +64,14 @@ run_dialogue(User, Given, _{user_id:User, history:History, question:Pending,
                          conclusion_json(N, Rule, Evidence, Conclusion)), Conclusions),
     session_picks(User, Picks).
 
-% Chamado pelo motor no lugar de read/1: usa a resposta dada ou para o motor.
+% Called by the engine instead of read/1: uses the given answer or stops the engine.
 answer(Question, Options, Context, Answer) :-
     ( resposta_dada(Question, Answer)
     -> assertz(pergunta_feita(Question, Options, Context, Answer))
     ; throw(pending(Question, Options, Context)) ).
 
-% Como arranca_motor/0, mas só com as regras do diálogo (identificadores
-% dialogo*). Só dependem dos utilizadores; correr todas demoraria segundos.
+% Like arranca_motor/0, but only the dialogue rules (ids dialogo*). They only
+% depend on users; running every rule would take seconds.
 dialogue_engine :-
     ultimo_facto(Before),
     forall((regra ID se LHS entao RHS, dialogue_rule(ID),
@@ -81,8 +82,8 @@ dialogue_engine :-
 
 dialogue_rule(ID) :- atom(ID), sub_atom(ID, 0, _, _, dialogo).
 
-% O mesmo que porque/2 mostra na consola, em JSON. `asking` é a posição da
-% condição perguntada: as anteriores já se verificaram.
+% What porque/2 shows in the console, as JSON. `asking` is the index of the
+% asked condition: earlier ones already hold.
 question_json(Question, Options, contexto(Rule, LHS, RHS),
               _{key:Key, text:Text, options:Options,
                 why:_{rule:Rule, conditions:Conditions, asking:Asking, concludes:Concludes}}) :-
@@ -106,7 +107,7 @@ conditions([X], [X]).
 asks(Question, escolha(Key, _)) :- Key == Question, !.
 asks(Question, Condition) :- Condition == Question.
 
-% Uma conclusão do diálogo e os factos que a justificam (como/1 da consola).
+% A dialogue conclusion and the facts behind it (console como/1).
 conclusion_json(N, Rule, Evidence, _{fact:Fact, rule:Rule, premises:Premises}) :-
     facto(N, Term), term_json(Term, Fact),
     maplist(premise_json, Evidence, Premises).
@@ -114,8 +115,8 @@ conclusion_json(N, Rule, Evidence, _{fact:Fact, rule:Rule, premises:Premises}) :
 premise_json(N, Json) :- integer(N), facto(N, Term), !, term_json(Term, Json).
 premise_json(Term, Json) :- term_json(Term, Json).
 
-% Um termo como texto Prolog e também por partes (nome e argumentos sem aspas;
-% null numa variável ainda por ligar), para a interface o descrever por palavras.
+% A term as Prolog text and also by parts (unquoted name and args; null for an
+% unbound variable), so the UI can describe it in words.
 term_json(Term, _{text:Text, name:Name, args:Args}) :-
     term_text(Term, Text),
     ( compound(Term) -> Term =.. [Name|Raw] ; Name = Term, Raw = [] ),
@@ -127,9 +128,9 @@ arg_json(Arg, Text) :- format(string(Text), '~W', [Arg, [numbervars(true)]]).
 term_text(Term, Text) :-
     format(string(Text), '~W', [Term, [quoted(true), numbervars(true), portray(true)]]).
 
-% Picks: as recomendações do utilizador (já sem os filmes que os seus limites
-% excluem) que correspondem às sugestões do diálogo. Primeiro as que cumprem mais
-% sugestões; depois a ordem das recomendações (recommendation_key/4).
+% Picks: the user's recommendations (already without movies their limits
+% exclude) that match the dialogue suggestions. Most matches first, then the
+% recommendation order (recommendation_key/4).
 session_picks(User, Picks) :-
     findall(k(Count, Key)-Id-Score-Matches,
             ( user_recommendation(User, Id, Score, _),
@@ -147,7 +148,7 @@ pick_json(User, _-Id-Score-Matches, _{movie:Movie, score:Score, status:Status, m
     recommendation_status(User, Id, Status),
     maplist([Type-Value, _{type:Type, value:Value}]>>true, Matches, Json).
 
-% Cada sugestão do diálogo e o atributo do filme que lhe corresponde.
+% Each dialogue suggestion and the movie attribute it maps to.
 session_match(User, Id, genre-Genre) :-
     facto(_, sugerir_genero(User, Genre)), facto(_, genre(Id, Genre)).
 session_match(User, Id, emotional_tone-sad) :-

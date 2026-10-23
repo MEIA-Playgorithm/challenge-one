@@ -31,7 +31,7 @@ type NamePickerProps = {
     onChange: (value: string[]) => void;
 };
 
-// Nomes do catálogo; os valores já guardados aparecem mesmo que já não estejam nos filmes.
+// Catalog names; saved values still show even if no movie has them anymore.
 const NamePicker = ({ label, helperText, options, value, disliked = false, onChange }: NamePickerProps) => (
     <Autocomplete
         multiple
@@ -77,7 +77,7 @@ const PeopleAndOrigins = ({ autosave, onAutosaveChange }: Props) => {
         "Pessoas e origens guardadas"
     );
 
-    // Um nome não pode ser ao mesmo tempo preferido e excluído: excluir tira-o dos preferidos.
+    // A name can't be both preferred and disliked: disliking removes it from preferred.
     const without = (values: string[], removed: string[]) => values.filter((value) => !removed.includes(value));
 
     return (

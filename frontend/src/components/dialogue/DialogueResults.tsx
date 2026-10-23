@@ -5,10 +5,10 @@ import type { Dialogue, DialogueConclusion } from "../../types/Dialogue";
 
 const panel = { border: 1, borderColor: "divider", borderRadius: 2, p: 2 } as const;
 
-// Os factos que respondem a "o que deve o filme ter?": os que as picks usam.
+// Facts that answer "what should the movie have?": the ones picks use.
 const SUGGESTIONS = ["sugerir_genero", "sugerir_tom", "preferencia_sessao"];
 
-// Uma conclusão por palavras e, a pedido, como lá se chegou (como/1 da consola).
+// A conclusion in words and, on request, how it was reached (console how/1).
 const Conclusion = ({ conclusion, questions }: { conclusion: DialogueConclusion; questions: Record<string, string> }) => {
     const [showHow, setShowHow] = useState(false);
     return (
@@ -33,10 +33,10 @@ type Props = {
     questions: Record<string, string>;
 };
 
-// O resultado do diálogo: os filmes de hoje, o que o motor concluiu e o que ficou de fora.
+// Dialogue result: today's movies, what the engine concluded and what was left out.
 const DialogueResults = ({ dialogue, questions }: Props) => {
     const hasSuggestions = dialogue.conclusions.some((conclusion) => SUGGESTIONS.includes(conclusion.fact.name));
-    // Um "não" impede a regra da pergunta de concluir o que concluiria (whynot/1 da consola).
+    // A "no" stops the question's rule from concluding its facts (console whynot/1).
     const declined = dialogue.history.filter((item) => item.answer === "nao");
 
     return (
@@ -46,7 +46,7 @@ const DialogueResults = ({ dialogue, questions }: Props) => {
                     Sugestões de hoje
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                    Recomendações Prolog de {dialogue.user_id} que encaixam nesta sessão, por isso os seus limites e exclusões continuam a aplicar-se.
+                    Recomendações de {dialogue.user_id} que encaixam nesta sessão, por isso os seus limites e exclusões continuam a aplicar-se.
                 </Typography>
                 {!hasSuggestions ? (
                     <Typography variant="body2" color="text.secondary">

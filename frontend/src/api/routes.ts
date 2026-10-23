@@ -24,7 +24,7 @@ const droolsRoutes: EngineRoutes = {
     reloadUsers: "/api/reload/users",
 };
 
-// Só o motor Prolog tem o diálogo (swi-prolog/rules_dialog.pl).
+// Served by swi-prolog/rules_dialog.pl.
 export const prologDialogueRoute = "/api/dialogo";
 
 export const engineRoutes: Record<EngineId, EngineRoutes> = {

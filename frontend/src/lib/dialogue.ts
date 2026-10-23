@@ -1,8 +1,8 @@
 import type { DialogueTerm } from "../types/Dialogue";
 import { formatLabel } from "./utils";
 
-// As opções vêm do motor (rules_dialog.pl) sem acentos; aqui só se escolhe como aparecem.
-// As perguntas do motor são em português, por isso as respostas também.
+// Options come from the engine without accents; this only picks how they display.
+// The engine asks in Portuguese, so answers are Portuguese too.
 const OPTION_LABELS: Record<string, string> = {
     sim: "Sim",
     nao: "Não",
@@ -32,8 +32,8 @@ export const isYesNo = (options: string[]) => options.length === 2 && options.in
 const TONES: Record<string, string> = { triste: "um tom triste" };
 const SESSION_PREFERENCES: Record<string, string> = { sobrenatural: "elementos sobrenaturais" };
 
-// Um facto do diálogo por palavras, para listas ("Sugerir: Comédia"). As perguntas de sim/não
-// usam o seu texto, se for conhecido (`questions`: chave -> texto). O resto fica em Prolog.
+// A dialogue fact in words, for lists ("Sugerir: Comédia"). Yes/no questions use their text
+// when known (`questions`: key -> text). Anything else stays as the raw term.
 export function describe(term: DialogueTerm, questions: Record<string, string> = {}): string {
     const [user, value] = term.args;
     switch (term.name) {
@@ -57,6 +57,6 @@ export function describe(term: DialogueTerm, questions: Record<string, string> =
     return question ? `Respondeste sim a “${question}”` : term.text;
 }
 
-// O que uma sugestão quer dizer num filme (DialoguePick.matches).
+// What a suggestion means for a movie (DialoguePick.matches).
 export const matchLabel = ({ type, value }: { type: string; value: string }) =>
     type === "genre" ? formatLabel(value) : `${type === "themes" ? "Tema" : "Tom"}: ${formatLabel(value)}`;

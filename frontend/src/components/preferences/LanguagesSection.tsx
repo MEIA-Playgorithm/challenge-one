@@ -44,7 +44,7 @@ const LanguagesSection = ({ form, patch }: Props) => {
                     <TextField
                         {...params}
                         label="Idiomas obrigatórios"
-                        placeholder={form.required_languages.length ? "" : "Any"}
+                        placeholder={form.required_languages.length ? "" : "Qualquer"}
                         helperText="Os filmes têm de estar em pelo menos um destes"
                     />
                 )}

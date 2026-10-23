@@ -89,8 +89,8 @@ try:
                  'recomendacoes', 'recomendacoes?id=tt0372784&min_score=12']:
         get(path, 400)
     get('recomendacoes?id=inexistente', 404)
-    # Diálogo: a primeira pergunta, o "porque" e as respostas de um pedido não
-    # ficam na base para o pedido seguinte.
+    # Dialogue: the first question, its "why", and answers from one request don't
+    # stay in the database for the next.
     start = dialogue({'user_id': 'test_user'})
     assert start['history'] == [] and start['conclusions'] == []
     assert start['question']['key'] == 'experiencia'
@@ -107,7 +107,7 @@ try:
     assert done['question'] is None
     facts = [c['fact']['text'] for c in done['conclusions']]
     assert "sugerir_genero(test_user,'Romantic Comedy')" in facts
-    # Picks: recomendações do utilizador que cumprem as sugestões, as que cumprem mais primeiro.
+    # Picks: user recommendations meeting the suggestions, most matches first.
     picks = done['picks']
     assert picks and all('Comedy' in p['movie']['genre'] for p in picks)
     counts = [len(p['matches']) for p in picks]

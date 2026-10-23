@@ -10,7 +10,7 @@ const code = { fontFamily: "monospace", fontSize: 12, overflowWrap: "anywhere" }
 
 type Props = {
     question: DialogueQuestion;
-    // Chave -> texto das perguntas conhecidas, para descrever as respostas "sim" por palavras.
+    // Key -> text of known questions, to describe "yes" answers in words.
     questions: Record<string, string>;
 };
 
@@ -24,10 +24,10 @@ const Bullets = ({ items }: { items: string[] }) => (
     </Box>
 );
 
-// O "porque" da consola, por palavras: o que a resposta permite concluir, o que o motor já
-// sabe (as condições antes da pergunta) e o que falta verificar. A regra em Prolog fica à parte.
+// The console "why" in words: what the answer lets the engine conclude, what it already
+// knows (conditions before the question) and what is left to check. The raw rule is separate.
 const WhyExplanation = ({ question, questions }: Props) => {
-    const [showProlog, setShowProlog] = useState(false);
+    const [showRule, setShowRule] = useState(false);
     const { why } = question;
     const asking = why.asking ?? why.conditions.length;
     const known = why.conditions.slice(0, asking);
@@ -58,10 +58,10 @@ const WhyExplanation = ({ question, questions }: Props) => {
                     <Bullets items={pending.map((term) => describe(term, questions))} />
                 </>
             )}
-            <Link component="button" type="button" variant="caption" onClick={() => setShowProlog((current) => !current)} sx={{ alignSelf: "flex-start" }}>
-                {showProlog ? "Esconder a regra" : `Mostrar a regra ${why.rule} em Prolog`}
+            <Link component="button" type="button" variant="caption" onClick={() => setShowRule((current) => !current)} sx={{ alignSelf: "flex-start" }}>
+                {showRule ? "Esconder a regra" : `Mostrar a regra ${why.rule}`}
             </Link>
-            {showProlog && (
+            {showRule && (
                 <Box sx={{ bgcolor: "background.paper", borderRadius: 1, p: 1 }}>
                     <Box sx={code}>regra {why.rule}</Box>
                     <Box sx={{ ...code, mt: 0.5 }}>se</Box>

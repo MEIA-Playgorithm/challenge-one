@@ -1,16 +1,16 @@
-// Resposta de POST /api/dialogo (só no motor Prolog).
+// Response of POST /api/dialogo.
 
-// Um termo Prolog: o texto completo e as partes, para o descrever por palavras. Um argumento
-// é null quando é uma variável ainda por ligar (ex.: a escolha que vai ser feita).
+// A rule term: full text plus parts, to describe it in words. An argument is null when it
+// is a still-unbound variable (e.g. the choice about to be made).
 export type DialogueTerm = {
     text: string;
     name: string;
     args: (string | null)[];
 };
 
-// O "porque" de uma pergunta: a regra em avaliação, as suas condições pela ordem em que o
-// motor as verifica e os factos que conclui se todas se verificarem. `asking` é a condição
-// perguntada; as anteriores já se verificaram.
+// A question's "why": the rule being evaluated, its conditions in the order the engine
+// checks them and the facts it concludes if all hold. `asking` is the condition being
+// asked; earlier ones already hold.
 export type DialogueWhy = {
     rule: string | number;
     conditions: DialogueTerm[];
@@ -33,7 +33,7 @@ export type DialogueConclusion = {
     premises: DialogueTerm[];
 };
 
-// Uma recomendação do utilizador que cumpre sugestões do diálogo (`matches`).
+// A user recommendation that meets dialogue suggestions (`matches`).
 export type DialoguePick = {
     score: number;
     status: "main" | "alternative";
@@ -55,5 +55,5 @@ export type Dialogue = {
     picks: DialoguePick[];
 };
 
-// Respostas dadas, por pergunta (`key`).
+// Given answers, by question (`key`).
 export type DialogueAnswers = Record<string, string>;
