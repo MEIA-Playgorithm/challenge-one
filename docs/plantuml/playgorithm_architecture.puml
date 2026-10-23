@@ -1,0 +1,71 @@
+@startuml playgorithm_architecture
+title PlayGorithm - arquitetura
+
+left to right direction
+
+skinparam backgroundColor #0B1110
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontColor #E8EFEC
+skinparam titleFontColor #FFFFFF
+skinparam ArrowColor #7DE2B8
+skinparam ArrowFontColor #9AA9A4
+skinparam ArrowFontSize 11
+skinparam rectangle {
+  BackgroundColor #111918
+  BorderColor #1E4A3F
+  FontColor #7DE2B8
+}
+skinparam component {
+  BackgroundColor #0D1413
+  BorderColor #2AC79A
+  FontColor #E8EFEC
+}
+skinparam database {
+  BackgroundColor #0D1413
+  BorderColor #2AC79A
+  FontColor #E8EFEC
+}
+skinparam actor {
+  BackgroundColor #0D1413
+  BorderColor #2AC79A
+  FontColor #E8EFEC
+}
+
+actor "Utilizador" as user
+
+rectangle "Docker Compose" as compose {
+
+  component "Frontend\nReact · TypeScript · Vite" as fe
+
+  rectangle "Base conceptual" as conceptual {
+    component "knowledge_base\nPython · FastAPI" as kb
+    database "movies.csv\nusers.csv" as csv
+  }
+
+  rectangle "Motor Prolog" as prolog {
+    component "API\nSWI-Prolog" as pl
+    database "Base de conhecimento\nfactos e regras" as pl_kb
+  }
+
+  rectangle "Motor Drools" as drools {
+    component "API\nJava · Spring Boot" as dr
+    database "Base de conhecimento\nregras DRL" as dr_kb
+  }
+}
+
+user --> fe : usa
+
+fe --> kb : lê e grava\nutilizadores
+fe --> pl : recomendações\ne explicações
+fe --> dr : recomendações\ne explicações
+
+kb --> csv
+
+pl --> kb : lê dados
+dr --> kb : lê dados
+
+pl --> pl_kb
+dr --> dr_kb
+
+@enduml

@@ -1,15 +1,25 @@
 import { Box, Paper, Tab, Tabs } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useApp } from "../../context/AppContext";
 import Preferences from "../preferences/Preferences";
 import Movies from "../movies/Movies";
 import PeopleAndOrigins from "./PeopleAndOrigins";
+import Recommendations from "../recommendations/Recommendations";
 
 const UserParameters = () => {
-    const { currentUser } = useApp();
+    const { currentUser, recommendationsOnSide } = useApp();
     const [selectedTab, setSelectedTab] = useState<string>("preferences");
     // Fica aqui para não se perder ao mudar de separador ou de utilizador.
     const [autosave, setAutosave] = useState(false);
+
+    // Ao passar as recomendações do lado para a aba, abre essa aba.
+    const wasOnSide = useRef(recommendationsOnSide);
+    useEffect(() => {
+        if (wasOnSide.current && !recommendationsOnSide) setSelectedTab("recommendations");
+        wasOnSide.current = recommendationsOnSide;
+    }, [recommendationsOnSide]);
+    // Com as recomendações ao lado a aba não existe.
+    const tab = recommendationsOnSide && selectedTab === "recommendations" ? "preferences" : selectedTab;
 
     const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
         setSelectedTab(newValue);
@@ -19,7 +29,7 @@ const UserParameters = () => {
         <Paper sx={{ display: "flex", flexDirection: "column" }}>
             <Tabs
                 variant="fullWidth"
-                value={selectedTab}
+                value={tab}
                 onChange={handleTabChange}
                 aria-label="user parameters"
                 sx={{ flexShrink: 0, borderBottom: 1, borderColor: "divider" }}
@@ -36,11 +46,18 @@ const UserParameters = () => {
                     label="People and Origins"
                     value="people-and-origins"
                 />
+                {!recommendationsOnSide && (
+                    <Tab
+                        label="Recommendations"
+                        value="recommendations"
+                    />
+                )}
             </Tabs>
             <Box sx={{ flex: 1, minHeight: 0, p: 2, overflow: "auto" }}>
-                {selectedTab === "preferences" && <Preferences key={currentUser.user_id} autosave={autosave} onAutosaveChange={setAutosave} />}
-                {selectedTab === "movies" && <Movies key={currentUser.user_id} autosave={autosave} onAutosaveChange={setAutosave} />}
-                {selectedTab === "people-and-origins" && <PeopleAndOrigins />}
+                {tab === "preferences" && <Preferences key={currentUser.user_id} autosave={autosave} onAutosaveChange={setAutosave} />}
+                {tab === "movies" && <Movies key={currentUser.user_id} autosave={autosave} onAutosaveChange={setAutosave} />}
+                {tab === "people-and-origins" && <PeopleAndOrigins />}
+                {tab === "recommendations" && <Recommendations />}
             </Box>
         </Paper>
     );

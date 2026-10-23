@@ -11,6 +11,9 @@ import { useUsers } from "../hooks/useUsers";
 type AppContextType = {
     engines: EngineId[];
     setEngines: (engines: EngineId[]) => void;
+    // As recomendações estão num painel ao lado (true) ou numa aba dos parâmetros (false).
+    recommendationsOnSide: boolean;
+    setRecommendationsOnSide: (onSide: boolean) => void;
     engineStatus: Record<EngineId, EngineStatus>;
     users: User[];
     movies: Movie[];
@@ -30,6 +33,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const [movies, setMovies] = useState<Movie[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
+    const [recommendationsOnSide, setRecommendationsOnSide] = useState(false);
 
     useEffect(() => {
         Promise.all([refresh(), getMovies().then(setMovies)])
@@ -54,6 +58,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
             value={{
                 engines,
                 setEngines,
+                recommendationsOnSide,
+                setRecommendationsOnSide,
                 engineStatus,
                 users,
                 movies,

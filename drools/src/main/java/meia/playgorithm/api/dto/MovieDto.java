@@ -1,9 +1,14 @@
 package meia.playgorithm.api.dto;
 
 import java.util.List;
+import meia.playgorithm.engine.KnowledgeBaseResult;
+import meia.playgorithm.model.Attribute;
 import meia.playgorithm.model.Movie;
 
-/** Um filme tal como a API Prolog o devolve; os campos que o Drools não conhece saem a null ou vazios. */
+/**
+ * Um filme tal como a API Prolog o devolve: os dados do CSV e o perfil inferido pelas regras de
+ * movies.drl. Os campos que o Drools não lê saem a null ou vazios.
+ */
 @SnakeCase
 public record MovieDto(
     String id,
@@ -36,36 +41,36 @@ public record MovieDto(
     List<String> subgenre
 ) {
 
-    public static MovieDto of(Movie movie) {
+    public static MovieDto of(Movie movie, KnowledgeBaseResult knowledgeBase) {
         return new MovieDto(
-            movie.getId(),
-            movie.getTitle(),
-            movie.getYear() > 0 ? movie.getYear() : null,
-            null,
-            movie.getDurationMinutes() > 0 ? movie.getDurationMinutes() : null,
-            emptyToNull(movie.getRatingMpa()),
-            movie.getRatingImdb() > 0 ? movie.getRatingImdb() : null,
-            null,
-            null,
+            movie.id(),
+            movie.title(),
+            movie.year(),
+            movie.votes(),
+            movie.minutes(),
+            emptyToNull(movie.ratingMpa()),
+            movie.rating(),
             null,
             null,
-            emptyToNull(movie.getPace()),
-            emptyToNull(movie.getComplexity()),
-            emptyToNull(movie.getViolence()),
-            emptyToNull(movie.getHumor()),
-            emptyToNull(movie.getAudience()),
-            emptyToNull(movie.getPsychologicalIntensity()),
-            List.copyOf(movie.getDirectors()),
-            List.copyOf(movie.getWriters()),
-            List.copyOf(movie.getStars()),
-            List.copyOf(movie.getGenres()),
-            List.copyOf(movie.getCountries()),
+            null,
+            null,
+            knowledgeBase.feature(movie.id(), Attribute.PACE).orElse(null),
+            knowledgeBase.feature(movie.id(), Attribute.COMPLEXITY).orElse(null),
+            knowledgeBase.feature(movie.id(), Attribute.VIOLENCE).orElse(null),
+            knowledgeBase.feature(movie.id(), Attribute.HUMOR).orElse(null),
+            knowledgeBase.feature(movie.id(), Attribute.AUDIENCE).orElse(null),
+            knowledgeBase.feature(movie.id(), Attribute.PSYCHOLOGICAL_INTENSITY).orElse(null),
+            movie.directors(),
+            movie.writers(),
+            movie.stars(),
+            movie.genres(),
+            movie.countries(),
             List.of(),
-            List.of(),
-            List.copyOf(movie.getLanguages()),
-            List.copyOf(movie.getEmotionalTones()),
-            List.copyOf(movie.getThemes()),
-            List.copyOf(movie.getSubgenres())
+            movie.companies(),
+            movie.languages(),
+            knowledgeBase.features(movie.id(), Attribute.EMOTIONAL_TONE),
+            knowledgeBase.features(movie.id(), Attribute.THEMES),
+            knowledgeBase.features(movie.id(), Attribute.SUBGENRE)
         );
     }
 

@@ -1,3 +1,14 @@
+export type Reason = {
+    type: string;
+    value?: string | number;
+    movie_id?: string;
+};
+
+export type UnmetPreference = {
+    type: string;
+    arguments: string[];
+};
+
 export type Recommendation = {
     score: number;
     status: "main" | "alternative";
@@ -7,4 +18,7 @@ export type Recommendation = {
         genre: string[];
         rating_imdb: string | null;
     };
+    reasons: Reason[];
+    unmet_preferences: UnmetPreference[];
+    score_breakdown: Record<string, number>;
 };
