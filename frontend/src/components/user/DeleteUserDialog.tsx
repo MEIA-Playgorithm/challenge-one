@@ -19,22 +19,22 @@ const DeleteUserDialog = ({ open, userId, onClose }: Props) => {
         const message = await deleteUser(userId);
         setDeleting(false);
         if (message) return toast.error(message);
-        toast.success(`Deleted ${userId}`);
+        toast.success(`${userId} eliminado`);
         onClose();
     };
 
     return (
         <Dialog open={open} onClose={onClose}>
-            <DialogTitle>Delete {userId}?</DialogTitle>
+            <DialogTitle>Eliminar {userId}?</DialogTitle>
             <DialogContent>
-                <DialogContentText>This removes {userId} from the list.</DialogContentText>
+                <DialogContentText>Isto remove {userId} da lista.</DialogContentText>
             </DialogContent>
             <DialogActions>
                 <Button onClick={onClose} color="inherit">
-                    Cancel
+                    Cancelar
                 </Button>
                 <Button color="error" disabled={deleting} onClick={confirm}>
-                    Delete
+                    Eliminar
                 </Button>
             </DialogActions>
         </Dialog>

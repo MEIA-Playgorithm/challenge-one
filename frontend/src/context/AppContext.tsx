@@ -43,7 +43,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 {loading ? (
                     <CircularProgress />
                 ) : (
-                    <Typography color="error">{loadError ?? "No users found in the knowledge base"}</Typography>
+                    <Typography color="error">{loadError ?? "Não há utilizadores na base de conhecimento"}</Typography>
                 )}
             </Box>
         );

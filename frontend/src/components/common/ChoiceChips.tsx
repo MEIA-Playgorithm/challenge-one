@@ -24,7 +24,7 @@ const ChoiceChips = <T extends string>({ label, options, value, onChange }: Prop
                     {label}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                    {value.length ? `${value.length} selected` : "Any"}
+                    {value.length ? `${value.length} selecionados` : "Qualquer"}
                 </Typography>
             </Stack>
             <Stack direction="row" useFlexGap sx={{ flexWrap: "wrap", gap: 0.75 }}>

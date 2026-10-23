@@ -5,6 +5,6 @@ export type Recommendation = {
         id: string;
         title: string;
         genre: string[];
-        rating_imdb: string | null;
+        rating_imdb: number | null;
     };
 };

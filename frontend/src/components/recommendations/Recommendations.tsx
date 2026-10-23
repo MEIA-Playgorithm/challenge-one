@@ -10,13 +10,13 @@ const Recommendations = () => {
         <Paper sx={{ p: 2, overflow: "auto" }}>
             <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1 }}>
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    Recommendations
+                    Recomendações
                 </Typography>
                 <EngineSelector />
             </Stack>
             {engines.length === 0 && (
                 <Typography color="text.secondary" variant="body2" sx={{ mt: 1 }}>
-                    No engine selected. Select at least one engine to see recommendations.
+                    Nenhum motor selecionado. Seleciona pelo menos um motor para ver recomendações.
                 </Typography>
             )}
             <Stack spacing={2} divider={<Divider flexItem />} sx={{ mt: 1 }}>

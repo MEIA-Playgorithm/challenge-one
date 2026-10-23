@@ -29,14 +29,14 @@ const UserSummary = ({ user, canDelete, onEdit, onDelete }: Props) => {
                     {user.user_id}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                    {user.age ? `Age ${user.age}` : "No age set"}
+                    {user.age ? `${user.age} anos` : "Sem idade definida"}
                 </Typography>
             </Box>
             <Button variant="outlined" size="small" onClick={onEdit}>
-                Edit
+                Editar
             </Button>
             <Button variant="outlined" size="small" color="error" disabled={!canDelete} onClick={onDelete}>
-                Delete
+                Eliminar
             </Button>
         </Stack>
     );

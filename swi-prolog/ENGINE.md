@@ -233,6 +233,13 @@ profile, `dialogo_2` suggests Drama and `dialogo_3` suggests the sad tone. A neg
 chain. In the other branches the choice already allows the first genre suggestion, and the next question adds
 a suggestion or a preference if the answer is affirmative.
 
+### The same dialogue over HTTP
+
+The API runs this dialogue without the console: `POST /api/dialogo` takes the answers given so far and returns
+the next question with its "why", as `porque.` explains it, and the user's recommendations that fit the
+genre, tone and session suggestions (`picks`). The frontend shows it in the **Dialogue** tab. See
+[api/README.md](api/README.md#post-apidialogo).
+
 ### Look at the choice, the answers and the explanations
 
 After you finish the comedy example:

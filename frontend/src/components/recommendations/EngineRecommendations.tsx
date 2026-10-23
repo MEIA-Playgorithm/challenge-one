@@ -2,6 +2,7 @@ import { Chip, CircularProgress, List, ListItem, ListItemText, Typography } from
 import { useApp } from "../../context/AppContext";
 import { useRecommendations } from "../../hooks/useRecommendations";
 import { config, type EngineId } from "../../lib/config";
+import { formatLabel } from "../../lib/utils";
 
 type Props = {
     engine: EngineId;
@@ -35,7 +36,7 @@ const EngineRecommendations = ({ engine, showTitle }: Props) => {
             )}
             {!loading && !error && items.length === 0 && (
                 <Typography color="text.secondary" variant="body2">
-                    No eligible movies.
+                    Sem filmes elegíveis.
                 </Typography>
             )}
             <List dense>
@@ -43,9 +44,9 @@ const EngineRecommendations = ({ engine, showTitle }: Props) => {
                     <ListItem key={movie.id} disableGutters>
                         <ListItemText
                             primary={movie.title}
-                            secondary={`${movie.genre.slice(0, 3).join(", ")} · IMDb ${movie.rating_imdb ?? "?"} · ${score} pts`}
+                            secondary={`${movie.genre.slice(0, 3).map(formatLabel).join(", ")} · IMDb ${movie.rating_imdb?.toFixed(1) ?? "?"} · ${score} pts`}
                         />
-                        {status === "alternative" && <Chip label="alternative" size="small" />}
+                        {status === "alternative" && <Chip label="alternativa" size="small" />}
                     </ListItem>
                 ))}
             </List>

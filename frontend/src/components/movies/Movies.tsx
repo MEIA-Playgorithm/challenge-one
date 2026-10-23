@@ -34,7 +34,7 @@ const Movies = ({ autosave, onAutosaveChange }: Props) => {
     const blockedWishes = currentUser.allow_rewatch ? [] : form.wishlist.filter((id) => watchedIds.has(id));
 
     const wishlistHint = blockedWishes.length
-        ? `Already watched, so not recommended until rewatching is allowed: ${blockedWishes.map(movieLabel).join(", ")}`
+        ? `Já vistos, por isso não são recomendados até permitires rever: ${blockedWishes.map(movieLabel).join(", ")}`
         : undefined;
 
     const { saving, error, remaining, save } = useSave(
@@ -42,15 +42,15 @@ const Movies = ({ autosave, onAutosaveChange }: Props) => {
         dirty,
         () => updateUser(currentUser.user_id, { ...currentUser, ...form }),
         autosave,
-        "Movies saved"
+        "Filmes guardados"
     );
 
     return (
         <Stack sx={{ minHeight: "100%" }}>
             <Stack spacing={3} divider={<Divider flexItem />} sx={{ flex: 1, pb: 3 }}>
                 <PreferenceSection
-                    title="Watched"
-                    description="Ratings of 4 or 5 boost similar movies. Watched movies are skipped unless rewatching is allowed."
+                    title="Vistos"
+                    description="Notas de 4 ou 5 favorecem filmes semelhantes. Os filmes vistos são ignorados, a não ser que permitas rever."
                 >
                     <Autocomplete
                         size="small"
@@ -62,7 +62,7 @@ const Movies = ({ autosave, onAutosaveChange }: Props) => {
                         }}
                         getOptionLabel={movieLabel}
                         renderInput={(params) => (
-                            <TextField {...params} label="Add a watched movie" placeholder="Search by title" />
+                            <TextField {...params} label="Adicionar um filme visto" placeholder="Pesquisar por título" />
                         )}
                     />
                     <Stack spacing={1.5}>
@@ -79,7 +79,7 @@ const Movies = ({ autosave, onAutosaveChange }: Props) => {
                     </Stack>
                 </PreferenceSection>
 
-                <PreferenceSection title="Wishlist" description="Each movie here adds to its score.">
+                <PreferenceSection title="Lista de desejos" description="Cada filme aqui recebe mais pontos.">
                     <Autocomplete
                         multiple
                         size="small"
@@ -92,8 +92,8 @@ const Movies = ({ autosave, onAutosaveChange }: Props) => {
                         renderInput={(params) => (
                             <TextField
                                 {...params}
-                                label="Want to see"
-                                placeholder={form.wishlist.length ? "" : "None"}
+                                label="Quero ver"
+                                placeholder={form.wishlist.length ? "" : "Nenhum"}
                                 helperText={wishlistHint}
                             />
                         )}
