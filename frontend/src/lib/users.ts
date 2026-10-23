@@ -1,4 +1,5 @@
 import type { Audience, EmotionalTone, Era, Level, Pace, Popularity, Theme, User, WatchedMovie } from "../types/User";
+import { csvFields } from "./csv";
 
 function list(value: string) {
     return value ? value.split("|") : [];
@@ -11,16 +12,23 @@ function optionalNumber(value: string) {
 function watched(value: string): WatchedMovie[] {
     return list(value).map((item) => {
         const [movie_id, rating] = item.split("=");
-        return { movie_id, rating: Number(rating) as WatchedMovie["rating"] };
+        // A movie without a rating ("tt123", old format) counts as 0, as in the engines.
+        return { movie_id, rating: (Number(rating) || 0) as WatchedMovie["rating"] };
     });
 }
+
+// Age is optional: 0 means unset. Engines only accept integers from 0 to 120.
+export const MAX_AGE = 120;
+export const ageError = (age: number) =>
+    Number.isInteger(age) && age >= 0 && age <= MAX_AGE ? null : `Número inteiro de 1 a ${MAX_AGE}, ou vazio`;
 
 // Converte o conteúdo de knowledge_base/users.csv em utilizadores.
 export function parseUsersCsv(csv: string): User[] {
     const [header, ...rows] = csv.trim().split(/\r?\n/);
-    const columns = header.split(",");
+    const columns = csvFields(header);
     return rows.map((row) => {
-        const values = Object.fromEntries(columns.map((column, index) => [column, row.split(",")[index]]));
+        const cells = csvFields(row);
+        const values = Object.fromEntries(columns.map((column, index) => [column, cells[index]]));
         return {
             user_id: values.user_id,
             age: Number(values.age),
@@ -69,6 +77,9 @@ export function userToRow(user: User): Record<string, string> {
     for (const [column, value] of Object.entries(rest)) {
         row[column] = Array.isArray(value) ? value.join("|") : value === null ? "" : String(value);
     }
+    // Age 0 means unset (empty CSV reads as 0); engines would read 0 years and only
+    // recommend all-ages movies.
+    row.age = user.age ? String(user.age) : "";
     row.watched = watched.map((item) => `${item.movie_id}=${item.rating}`).join("|");
     row.min_rating = hasMinRating ? String(min_rating) : "";
     row.rating_tolerance = hasMinRating ? String(rating_tolerance) : "";

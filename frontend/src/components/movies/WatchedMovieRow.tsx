@@ -4,7 +4,7 @@ import type { WatchedMovie, WatchedMovieRating } from "../../types/User";
 import { useApp } from "../../context/AppContext";
 import { formatLabel } from "../../lib/utils";
 
-const RATING_LABELS = ["Watched, no opinion", "Didn't like at all", "Didn't like", "It was okay", "Liked", "Liked a lot"];
+const RATING_LABELS = ["Visto, sem opinião", "Não gostei nada", "Não gostei", "Foi razoável", "Gostei", "Gostei muito"];
 
 type Props = {
     item: WatchedMovie;
@@ -24,7 +24,7 @@ const WatchedMovieRow = ({ item, onRate, onRemove }: Props) => {
           ]
               .filter(Boolean)
               .join(" · ")
-        : "Not in the catalog";
+        : "Não está no catálogo";
 
     return (
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" } }}>
@@ -41,12 +41,12 @@ const WatchedMovieRow = ({ item, onRate, onRemove }: Props) => {
                 value={item.rating}
                 max={5}
                 onChange={(_, value) => onRate((value ?? 0) as WatchedMovieRating)}
-                aria-label={`Rating for ${title}`}
+                aria-label={`Classificação de ${title}`}
             />
             <Typography variant="caption" color="text.secondary" sx={{ width: { sm: 148 } }}>
                 {RATING_LABELS[item.rating]}
             </Typography>
-            <IconButton size="small" aria-label={`Remove ${title}`} onClick={onRemove}>
+            <IconButton size="small" aria-label={`Remover ${title}`} onClick={onRemove}>
                 <CloseIcon fontSize="small" />
             </IconButton>
         </Stack>

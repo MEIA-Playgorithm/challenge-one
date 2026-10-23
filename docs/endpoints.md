@@ -14,6 +14,7 @@ X = the service implements the endpoint. The last column says whether the fronte
 | POST | `/api/reload` | X | X | — | — | — |
 | POST | `/api/reload/users` | X | X | — | — | X |
 | POST | `/api/reload/movies` | X | X | — | — | — |
+| POST | `/api/dialogo` | X | — | — | — | X |
 | GET | `/api/how` | — | X | — | — | — |
 | GET | `/api/why-not` | — | X | — | — | — |
 | GET | `/api/trace` | — | X | — | — | — |
@@ -74,6 +75,7 @@ The **Frontend** column says whether the frontend calls the endpoint.
 | POST | `/api/reload` | Reads both CSV files again | — | — |
 | POST | `/api/reload/users` | Reads the users CSV again | — | calls it |
 | POST | `/api/reload/movies` | Reads the movies CSV again | — | — |
+| POST | `/api/dialogo` | Runs the dialogue for a user up to the next question, with its "why" | JSON: `user_id`, `answers` | calls it |
 
 ### Drools (`:8082`)
 
@@ -121,12 +123,12 @@ The **Frontend** column says whether the frontend calls the endpoint.
 
 | Service | Endpoints | Only in this service | The frontend uses |
 | --- | :-: | --- | :-: |
-| Prolog | 8 | none | 2 |
+| Prolog | 9 | `/api/dialogo` | 3 |
 | Drools | 15 | `/api/how`, `/api/why-not`, `/api/trace`, `/api/dialogue`, `/docs`, `/swagger-ui/index.html`, `/openapi.json` | 2 |
 | Knowledge base | 10 | all | 5 |
 | Frontend | 2 | `/health`, `/config.json` | 1 |
 
-Both engines have the same 8 data endpoints. Drools adds the 3 explanations, the dialogue and the documentation. The
-frontend uses 10 of the 35 endpoints (counting each service separately): `/api/recomendacoes_utilizador` and
-`/api/reload/users` (in both engines), 5 from the knowledge base (`/users.csv`, `/movies.csv`, and `POST`,
+Both engines have the same 8 data endpoints. Prolog adds the dialogue; Drools adds the 3 explanations, its own dialogue
+and the documentation. The frontend uses 11 of the 36 endpoints (counting each service separately): `/api/recomendacoes_utilizador` and
+`/api/reload/users` (in both engines), `/api/dialogo` (Prolog only), 5 from the knowledge base (`/users.csv`, `/movies.csv`, and `POST`,
 `PUT` and `DELETE` on `/users`) and its own `/config.json`.

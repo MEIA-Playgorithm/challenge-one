@@ -34,9 +34,9 @@ const RecommendationExplanation = ({ recommendation }: { recommendation: Recomme
 
     return (
         <Box sx={{ display: "grid", gap: 1, pl: 1, pb: 1 }}>
-            <Section title="Why it was recommended" lines={(reasons ?? []).map(reasonText)} />
-            <Section title="Score" lines={breakdown} />
-            <Section title="Preferences not met" lines={(unmet_preferences ?? []).map(unmetText)} />
+            <Section title="Porque foi recomendado" lines={(reasons ?? []).map(reasonText)} />
+            <Section title="Pontuação" lines={breakdown} />
+            <Section title="Preferências não cumpridas" lines={(unmet_preferences ?? []).map(unmetText)} />
         </Box>
     );
 };

@@ -13,6 +13,7 @@
 :- use_module(movies_controller).
 :- use_module(users_controller).
 :- use_module(reload_controller).
+:- use_module(dialogue_controller).
 
 :- dynamic server_port/1.
 

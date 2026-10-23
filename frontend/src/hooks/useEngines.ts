@@ -25,7 +25,7 @@ export function useEngines() {
             update(id, (status) => ({ ...status, reloading: true }));
             reloadUsers(id)
                 .then(() => null)
-                .catch((err: Error) => `Reload failed: ${err.message}`)
+                .catch((err: Error) => `Falha ao recarregar: ${err.message}`)
                 .then((error) => update(id, (status) => ({ reloading: false, error, version: status.version + 1 })));
         }
     };

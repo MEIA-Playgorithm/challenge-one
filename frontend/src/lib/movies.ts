@@ -1,15 +1,5 @@
 import type { Movie } from "../types/Movie";
-
-function fields(row: string) {
-    const cells = [""];
-    let quoted = false;
-    for (const char of row) {
-        if (char === '"') quoted = !quoted;
-        else if (char === "," && !quoted) cells.push("");
-        else cells[cells.length - 1] += char;
-    }
-    return cells;
-}
+import { csvFields } from "./csv";
 
 function list(value: string) {
     return value ? value.split(",").map((item) => item.trim()) : [];
@@ -19,12 +9,23 @@ function optionalNumber(value: string) {
     return value ? Number(value.replace(",", ".")) : null;
 }
 
+// Prolog sends the IMDb rating as CSV text ("8,2"); Drools sends a number.
+export const imdbRating = (value: number | string | null) => {
+    const rating = typeof value === "number" ? value : optionalNumber(value ?? "");
+    return rating !== null && Number.isFinite(rating) ? rating : null;
+};
+
+// Distinct values of an attribute across the catalog, sorted. Engines match exact names,
+// so only names that exist in the movies can be picked.
+export const catalogValues = (movies: Movie[], key: "director" | "writer" | "star" | "country_origin") =>
+    [...new Set(movies.flatMap((movie) => movie[key]))].sort((a, b) => a.localeCompare(b));
+
 // Converte o conteúdo de knowledge_base/movies.csv em filmes, ordenados por título.
 export function parseMoviesCsv(csv: string): Movie[] {
     const [header, ...rows] = csv.trim().split(/\r?\n/);
-    const columns = fields(header);
+    const columns = csvFields(header);
     const movies = rows.map((row) => {
-        const values = Object.fromEntries(fields(row).map((value, index) => [columns[index], value]));
+        const values = Object.fromEntries(csvFields(row).map((value, index) => [columns[index], value]));
         return {
             id: values.id,
             title: values.title,
@@ -33,7 +34,9 @@ export function parseMoviesCsv(csv: string): Movie[] {
             rating_imdb: optionalNumber(values.rating_imdb),
             genre: list(values.genre),
             director: list(values.director),
+            writer: list(values.writer),
             star: list(values.star),
+            country_origin: list(values.country_origin),
             language: list(values.language),
         };
     });

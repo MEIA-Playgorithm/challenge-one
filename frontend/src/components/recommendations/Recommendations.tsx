@@ -15,14 +15,14 @@ const Recommendations = () => {
         <Stack spacing={2}>
             <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1 }}>
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    Recommendations
+                    Recomendações
                 </Typography>
                 <Stack direction="row" sx={{ alignItems: "center", gap: 1 }}>
                     <EngineSelector />
-                    <Tooltip title={recommendationsOnSide ? "Show as a tab" : "Show on the side"}>
+                    <Tooltip title={recommendationsOnSide ? "Mostrar como separador" : "Mostrar ao lado"}>
                         <IconButton
                             size="small"
-                            aria-label={recommendationsOnSide ? "Show recommendations as a tab" : "Show recommendations on the side"}
+                            aria-label={recommendationsOnSide ? "Mostrar recomendações como separador" : "Mostrar recomendações ao lado"}
                             onClick={() => setRecommendationsOnSide(!recommendationsOnSide)}
                         >
                             {recommendationsOnSide ? <TabIcon /> : <ViewSidebarIcon />}
@@ -31,8 +31,8 @@ const Recommendations = () => {
                 </Stack>
             </Stack>
             {engines.length === 0 && (
-                <Typography color="text.secondary" variant="body2">
-                    No engine selected. Select at least one engine to see recommendations.
+                <Typography color="text.secondary" variant="body2" sx={{ mt: 1 }}>
+                    Nenhum motor selecionado. Seleciona pelo menos um motor para ver recomendações.
                 </Typography>
             )}
             <Box

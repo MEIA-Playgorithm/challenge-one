@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useApp } from "../../context/AppContext";
 import { useRecommendations } from "../../hooks/useRecommendations";
 import { config, type EngineId } from "../../lib/config";
+import { formatLabel } from "../../lib/utils";
 import type { Recommendation } from "../../types/Recommendation";
 import RecommendationExplanation from "./RecommendationExplanation";
 
@@ -22,12 +23,12 @@ const RecommendationItem = ({ recommendation }: { recommendation: Recommendation
             <ListItem disableGutters>
                 <ListItemText
                     primary={movie.title}
-                    secondary={`${movie.genre.slice(0, 3).join(", ")} · IMDb ${movie.rating_imdb ?? "?"} · ${score} pts`}
+                    secondary={`${movie.genre.slice(0, 3).map(formatLabel).join(", ")} · IMDb ${movie.rating_imdb?.toFixed(1) ?? "?"} · ${score} pts`}
                 />
-                {status === "alternative" && <Chip label="alternative" size="small" />}
+                {status === "alternative" && <Chip label="alternativa" size="small" />}
                 <IconButton
                     size="small"
-                    aria-label={`Explain ${movie.title}`}
+                    aria-label={`Explicar ${movie.title}`}
                     aria-expanded={open}
                     onClick={() => setOpen(!open)}
                     sx={{ transform: open ? "rotate(180deg)" : "none" }}
@@ -69,7 +70,7 @@ const EngineRecommendations = ({ engine, showTitle }: Props) => {
             )}
             {!loading && !error && items.length === 0 && (
                 <Typography color="text.secondary" variant="body2">
-                    No eligible movies.
+                    Sem filmes elegíveis.
                 </Typography>
             )}
             <List dense>

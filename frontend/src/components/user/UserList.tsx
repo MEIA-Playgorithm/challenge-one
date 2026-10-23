@@ -35,10 +35,10 @@ const UserList = ({ users, selectedId, creating, onSelect, onNew }: Props) => {
                     />
                 );
             })}
-            <Tooltip title="New user">
+            <Tooltip title="Novo utilizador">
                 <Chip
                     icon={<AddIcon />}
-                    label="New"
+                    label="Novo"
                     onClick={onNew}
                     variant={creating ? "filled" : "outlined"}
                     color={creating ? "primary" : "default"}

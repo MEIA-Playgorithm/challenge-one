@@ -8,7 +8,7 @@ export async function request(service: Service, path: string, init: RequestInit 
         response = await fetch(`${service.baseUrl}${path}`, init);
     } catch (err) {
         if (init.signal?.aborted) throw err;
-        throw new Error(`${service.label} is not reachable`);
+        throw new Error(`${service.label} não está acessível`);
     }
     if (!response.ok) {
         const body = await response.json().catch(() => ({}));

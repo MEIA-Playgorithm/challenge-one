@@ -12,7 +12,7 @@ type Props = {
 };
 
 const SentimentSelector = ({ label, options, liked, disliked, onChange }: Props) => {
-    const items = [...new Set([...options, ...liked, ...disliked])].sort((a, b) => a.localeCompare(b));
+    const items = [...new Set([...options, ...liked, ...disliked])].sort((a, b) => formatLabel(a).localeCompare(formatLabel(b), "pt"));
 
     const cycle = (item: string) => {
         if (liked.includes(item)) {
@@ -37,7 +37,7 @@ const SentimentSelector = ({ label, options, liked, disliked, onChange }: Props)
                     {label}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                    {liked.length} liked · {disliked.length} disliked
+                    {liked.length} gosto · {disliked.length} não gosto
                 </Typography>
             </Stack>
             <Stack direction="row" useFlexGap sx={{ flexWrap: "wrap", gap: 0.75 }}>

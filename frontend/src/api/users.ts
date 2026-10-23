@@ -4,7 +4,7 @@ import type { User } from "../types/User";
 import { request } from "./request";
 import { knowledgeBaseRoutes as routes } from "./routes";
 
-const knowledgeBase = () => ({ label: "Knowledge base", baseUrl: config.knowledgeBaseUrl });
+const knowledgeBase = () => ({ label: "Base de conhecimento", baseUrl: config.knowledgeBaseUrl });
 
 const json = (user: User): RequestInit => ({
     headers: { "Content-Type": "application/json" },

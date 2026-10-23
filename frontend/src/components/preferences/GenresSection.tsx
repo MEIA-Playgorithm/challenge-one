@@ -17,11 +17,11 @@ const GenresSection = ({ form, patch }: Props) => {
 
     return (
         <PreferenceSection
-            title="Genres"
-            description="Liked genres weigh the most and disliked genres exclude a movie. Click a chip to like, dislike or clear it."
+            title="Géneros"
+            description="Os géneros de que gostas pesam mais e os de que não gostas excluem um filme. Clica num género para gostar, não gostar ou limpar."
         >
             <SentimentSelector
-                label="Main genres"
+                label="Géneros principais"
                 options={GENRES}
                 liked={form.preferred_genres}
                 disliked={dislikedMainGenres}
@@ -41,9 +41,9 @@ const GenresSection = ({ form, patch }: Props) => {
                 renderInput={(params) => (
                     <TextField
                         {...params}
-                        label="Preferred subgenres"
-                        placeholder={form.preferred_subgenres.length ? "" : "Any"}
-                        helperText="Finer matches on top of the genres"
+                        label="Subgéneros preferidos"
+                        placeholder={form.preferred_subgenres.length ? "" : "Qualquer"}
+                        helperText="Correspondências mais finas além dos géneros"
                     />
                 )}
             />
@@ -64,9 +64,9 @@ const GenresSection = ({ form, patch }: Props) => {
                 renderInput={(params) => (
                     <TextField
                         {...params}
-                        label="Disliked subgenres"
-                        placeholder={dislikedSubgenres.length ? "" : "None"}
-                        helperText="Excludes any movie tagged with these"
+                        label="Subgéneros de que não gostas"
+                        placeholder={dislikedSubgenres.length ? "" : "Nenhum"}
+                        helperText="Exclui qualquer filme com estes subgéneros"
                     />
                 )}
             />

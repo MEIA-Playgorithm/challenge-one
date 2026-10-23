@@ -30,7 +30,7 @@ const Preferences = ({ autosave, onAutosaveChange }: Props) => {
         dirty && !hasErrors,
         () => updateUser(currentUser.user_id, { ...currentUser, ...form }),
         autosave,
-        "Preferences saved"
+        "Preferências guardadas"
     );
 
     return (
@@ -45,7 +45,7 @@ const Preferences = ({ autosave, onAutosaveChange }: Props) => {
 
             <SaveBar
                 dirty={dirty}
-                blocked={hasErrors ? "Fix the highlighted limits to save" : undefined}
+                blocked={hasErrors ? "Corrige os limites assinalados para guardar" : undefined}
                 saving={saving}
                 error={error}
                 remaining={remaining}

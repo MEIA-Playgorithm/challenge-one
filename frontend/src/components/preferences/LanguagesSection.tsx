@@ -1,7 +1,7 @@
 import { Autocomplete, TextField } from "@mui/material";
 import { LANGUAGES } from "../../lib/options";
 import type { PreferenceFields } from "../../lib/preferences";
-import { withValues } from "../../lib/utils";
+import { formatLabel, withValues } from "../../lib/utils";
 import PreferenceSection from "../common/PreferenceSection";
 import SentimentSelector from "../common/SentimentSelector";
 
@@ -13,11 +13,11 @@ type Props = {
 const LanguagesSection = ({ form, patch }: Props) => {
     return (
         <PreferenceSection
-            title="Languages"
-            description="Liked languages add to the score and disliked ones exclude a movie. Required languages are a hard filter."
+            title="Idiomas"
+            description="Os idiomas de que gostas somam pontos e os de que não gostas excluem um filme. Os idiomas obrigatórios são um filtro estrito."
         >
             <SentimentSelector
-                label="Spoken languages"
+                label="Idiomas falados"
                 options={LANGUAGES}
                 liked={form.preferred_languages}
                 disliked={form.disliked_languages}
@@ -33,6 +33,7 @@ const LanguagesSection = ({ form, patch }: Props) => {
                 multiple
                 size="small"
                 filterSelectedOptions
+                getOptionLabel={formatLabel}
                 options={withValues(LANGUAGES, form.required_languages).filter(
                     (language) => !form.disliked_languages.includes(language)
                 )}
@@ -42,9 +43,9 @@ const LanguagesSection = ({ form, patch }: Props) => {
                 renderInput={(params) => (
                     <TextField
                         {...params}
-                        label="Required languages"
-                        placeholder={form.required_languages.length ? "" : "Any"}
-                        helperText="Movies must be in at least one of these"
+                        label="Idiomas obrigatórios"
+                        placeholder={form.required_languages.length ? "" : "Qualquer"}
+                        helperText="Os filmes têm de estar em pelo menos um destes"
                     />
                 )}
             />

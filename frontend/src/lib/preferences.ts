@@ -51,7 +51,7 @@ export const limitErrors = (form: PreferenceFields) => {
     for (const [key, [min, max]] of Object.entries(LIMIT_RANGES) as [LimitKey, [number, number]][]) {
         const value = form[key];
         if (value !== null && (!Number.isInteger(value) || value < min || value > max)) {
-            errors[key] = `Whole number from ${min} to ${max}`;
+            errors[key] = `Número inteiro de ${min} a ${max}`;
         }
     }
     if (
@@ -61,7 +61,7 @@ export const limitErrors = (form: PreferenceFields) => {
         form.year_to !== null &&
         form.year_from > form.year_to
     ) {
-        errors.year_to = "Must not be before the start year";
+        errors.year_to = "Não pode ser anterior ao ano inicial";
     }
     return errors;
 };
