@@ -1,0 +1,45 @@
+/* Destacar código inline sem alterar os blocos de código. */
+code {
+    color: #17365d !important;
+    background-color: #e2eaf4 !important;
+    font-weight: 700;
+    border: 1px solid #9fb4ce;
+    border-radius: 3px;
+    padding: 0.08em 0.28em;
+}
+
+pre code {
+    color: inherit !important;
+    background-color: transparent !important;
+    font-weight: inherit;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+}
+
+/* Manter cada legenda junto da tabela que identifica. */
+.table-caption {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+}
+
+/* Evitar divisão das tabelas entre páginas */
+table {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+}
+
+/* Evitar divisão das linhas */
+tr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+}
+
+/* Evitar títulos isolados no fim da página */
+h1,
+h2,
+h3,
+h4 {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+}
