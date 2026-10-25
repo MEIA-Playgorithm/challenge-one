@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
 import { runDialogue } from "../api/dialogue";
+import type { EngineId } from "../lib/config";
 import type { EngineStatus } from "./useEngines";
 import type { AnsweredQuestion, Dialogue, DialogueAnswers } from "../types/Dialogue";
 
 const answersOf = (history: AnsweredQuestion[]): DialogueAnswers =>
     Object.fromEntries(history.map(({ key, answer }) => [key, answer]));
 
-// A user's dialogue with the engine. Answers live outside (`answers`) so they survive tab
+// A user's dialogue with an engine. Answers live outside (`answers`) so they survive tab
 // changes. Only answers to questions the engine asked are kept: changing one drops the later
 // ones, which may no longer apply. Refetches after each engine reload; idle while reloading.
 export function useDialogue(
+    engine: EngineId,
     userId: string,
     answers: DialogueAnswers,
     setAnswers: (answers: DialogueAnswers) => void,
@@ -25,7 +27,7 @@ export function useDialogue(
         if (reload.reloading) return;
 
         const controller = new AbortController();
-        runDialogue(userId, answers, controller.signal)
+        runDialogue(engine, userId, answers, controller.signal)
             .then(setDialogue)
             .catch((err: Error) => {
                 if (err.name === "AbortError") return;
@@ -35,7 +37,7 @@ export function useDialogue(
                 if (!controller.signal.aborted) setLoading(false);
             });
         return () => controller.abort();
-    }, [userId, answers, reload.reloading, reload.version]);
+    }, [engine, userId, answers, reload.reloading, reload.version]);
 
     const history = dialogue?.history ?? [];
 

@@ -32,18 +32,19 @@ const WatchedMovieRow = ({ item, onRate, onRemove }: Props) => {
                 <Typography variant="body2" noWrap sx={{ fontWeight: 500 }}>
                     {title}
                 </Typography>
-                <Typography variant="caption" color="text.secondary" noWrap>
+                <Typography variant="caption" color="textSecondary" noWrap>
                     {details}
                 </Typography>
             </Box>
             <Rating
+                sx={{ "& .MuiRating-iconFilled": { color: "primary.main" } }}
                 name={item.movie_id}
                 value={item.rating}
                 max={5}
                 onChange={(_, value) => onRate((value ?? 0) as WatchedMovieRating)}
                 aria-label={`Classificação de ${title}`}
             />
-            <Typography variant="caption" color="text.secondary" sx={{ width: { sm: 148 } }}>
+            <Typography variant="caption" color="textSecondary" sx={{ width: { sm: 148 } }}>
                 {RATING_LABELS[item.rating]}
             </Typography>
             <IconButton size="small" aria-label={`Remover ${title}`} onClick={onRemove}>

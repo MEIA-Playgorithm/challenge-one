@@ -9,7 +9,7 @@ export type EngineStatus = { reloading: boolean; error: string | null; version: 
 export function useEngines() {
     // Lido aqui e não ao carregar o módulo: a configuração só existe depois de loadConfig().
     const engineIds = Object.keys(config.engines) as EngineId[];
-    const [engines, setSelectedEngines] = useState<EngineId[]>([]);
+    const [engines, setSelectedEngines] = useState<EngineId[]>(engineIds);
     const [engineStatus, setEngineStatus] = useState(
         () => Object.fromEntries(engineIds.map((id) => [id, { reloading: false, error: null, version: 0 }])) as Record<EngineId, EngineStatus>
     );

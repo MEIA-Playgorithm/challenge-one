@@ -1,4 +1,5 @@
-import type { DialogueTerm } from "../types/Dialogue";
+import type { DialogueConclusion, DialoguePick, DialogueQuestion, DialogueTerm } from "../types/Dialogue";
+import type { Recommendation } from "../types/Recommendation";
 import { formatLabel } from "./utils";
 
 // Options come from the engine without accents; this only picks how they display.
@@ -15,18 +16,7 @@ const OPTION_LABELS: Record<string, string> = {
     fantasia: "Fantasia",
 };
 
-const OPTION_ICONS: Record<string, string> = {
-    emocao: "💗",
-    comedia: "😄",
-    acao: "💥",
-    misterio: "🔍",
-    terror: "👻",
-    ficcao_cientifica: "🚀",
-    fantasia: "🐉",
-};
-
 export const optionLabel = (option: string) => OPTION_LABELS[option] ?? formatLabel(option);
-export const optionIcon = (option: string): string | undefined => OPTION_ICONS[option];
 export const isYesNo = (options: string[]) => options.length === 2 && options.includes("sim") && options.includes("nao");
 
 const TONES: Record<string, string> = { triste: "um tom triste" };
@@ -60,3 +50,38 @@ export function describe(term: DialogueTerm, questions: Record<string, string> =
 // What a suggestion means for a movie (DialoguePick.matches).
 export const matchLabel = ({ type, value }: { type: string; value: string }) =>
     type === "genre" ? formatLabel(value) : `${type === "themes" ? "Tema" : "Tom"}: ${formatLabel(value)}`;
+
+
+// The facts a question's rule concludes if it is answered yes. Prolog sends them as terms;
+// Drools only says them in the last line of its text, e.g. DialogueConclusion(type == "x", value == "y").
+export function concludes({ why }: DialogueQuestion): DialogueTerm[] {
+    if (!Array.isArray(why)) return why.concludes;
+    const found = why[why.length - 1].match(/DialogueConclusion\(type == "(\w+)", value == "([^"]+)"\)/);
+    return found ? [{ name: found[1], args: [null, found[2]], text: `${found[1]}(${found[2]})` }] : [];
+}
+
+// Same order as Prolog sorts a pick's matches: by type and then by value.
+const byTerm = (a: DialoguePick["matches"][number], b: DialoguePick["matches"][number]) =>
+    a.type === b.type ? (a.value < b.value ? -1 : 1) : a.type < b.type ? -1 : 1;
+
+// The picks the Prolog dialogue returns, for an engine that does not: the user's recommendations
+// that match the suggestions, most matches first and then in recommendation order.
+export function sessionPicks(recommendations: Recommendation[], conclusions: DialogueConclusion[]): DialoguePick[] {
+    const suggested = (name: string) => conclusions.filter(({ fact }) => fact.name === name).map(({ fact }) => fact.args[1]);
+    const genres = suggested("sugerir_genero");
+    const sad = suggested("sugerir_tom").includes("triste");
+    const supernatural = suggested("preferencia_sessao").includes("sobrenatural");
+
+    return recommendations
+        .map(({ movie, score, status }) => {
+            const matches: DialoguePick["matches"] = [
+                ...movie.genre.filter((genre) => genres.includes(genre)).map((value) => ({ type: "genre" as const, value })),
+                ...(sad && movie.emotional_tone.includes("sad") ? [{ type: "emotional_tone" as const, value: "sad" }] : []),
+                ...(supernatural && movie.themes.includes("supernatural") ? [{ type: "themes" as const, value: "supernatural" }] : []),
+            ];
+            return { movie, score, status, matches: matches.sort(byTerm) };
+        })
+        .filter(({ matches }) => matches.length > 0)
+        .sort((a, b) => b.matches.length - a.matches.length)
+        .slice(0, 12);
+}

@@ -80,6 +80,11 @@ Each service has its own README. The documents in `docs/` explain the design and
 | [Branch management](docs/branch-management.md) | How to work with branches |
 | [Conventional Commits](docs/conventional-commits.md) | The commit message format |
 
+## Credits
+
+Playgorithm. The colours of the interface are inspired by the
+[Playgorithm blog](https://playgorithm.blogspot.com).
+
 ## Branch policy
 
 - **main** is production. Changes arrive through Pull Requests only.

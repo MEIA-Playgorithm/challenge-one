@@ -59,7 +59,7 @@ const LimitsSection = ({ form, errors, userAge, patch }: Props) => {
                     <Typography variant="body2" sx={{ fontWeight: 500 }}>
                         Classificação IMDb mínima
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" color="textSecondary">
                         {form.min_rating === null ? "Qualquer" : form.min_rating.toFixed(1)}
                     </Typography>
                 </Stack>
@@ -70,6 +70,11 @@ const LimitsSection = ({ form, errors, userAge, patch }: Props) => {
                         max={10}
                         step={0.5}
                         marks={RATING_MARKS}
+                        sx={{
+                            // Os rótulos das pontas ficam dentro da coluna, e não a sair para fora da pista.
+                            '& .MuiSlider-markLabel[data-index="0"]': { transform: "none" },
+                            '& .MuiSlider-markLabel[data-index="5"]': { transform: "translateX(-100%)" },
+                        }}
                         valueLabelDisplay="auto"
                         onChange={(_, value) => setMinRating(value as number)}
                         aria-label="Classificação IMDb mínima"
@@ -80,8 +85,8 @@ const LimitsSection = ({ form, errors, userAge, patch }: Props) => {
                     control={<Switch checked={form.rating_required} onChange={(event) => patch({ rating_required: event.target.checked })} />}
                     label={
                         <Box>
-                            <Typography variant="body2">Mínimo estrito</Typography>
-                            <Typography variant="caption" color="text.secondary">
+                            <Typography variant="body2" sx={{ fontWeight: 500 }}>Mínimo estrito</Typography>
+                            <Typography variant="caption" color="textSecondary">
                                 Exclui todos os filmes abaixo da classificação mínima
                             </Typography>
                         </Box>
@@ -95,7 +100,7 @@ const LimitsSection = ({ form, errors, userAge, patch }: Props) => {
                     <Typography variant="body2" sx={{ fontWeight: 500 }}>
                         Tolerância da classificação
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" color="textSecondary">
                         ±{form.rating_tolerance.toFixed(1)}
                     </Typography>
                 </Stack>
@@ -111,7 +116,7 @@ const LimitsSection = ({ form, errors, userAge, patch }: Props) => {
                         aria-label="Tolerância da classificação"
                     />
                 </Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" color="textSecondary">
                     {toleranceHint}
                 </Typography>
             </Box>
@@ -120,8 +125,8 @@ const LimitsSection = ({ form, errors, userAge, patch }: Props) => {
                 control={<Switch checked={form.allow_rewatch} onChange={(event) => patch({ allow_rewatch: event.target.checked })} />}
                 label={
                     <Box>
-                        <Typography variant="body2">Permitir rever</Typography>
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography variant="body2" sx={{ fontWeight: 500 }}>Permitir rever</Typography>
+                        <Typography variant="caption" color="textSecondary">
                             Mantém nas recomendações os filmes já vistos
                         </Typography>
                     </Box>

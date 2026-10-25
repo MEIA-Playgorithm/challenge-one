@@ -13,11 +13,14 @@ const Recommendations = () => {
 
     return (
         <Stack spacing={2}>
-            <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1 }}>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    Recomendações
-                </Typography>
-                <Stack direction="row" sx={{ alignItems: "center", gap: 1 }}>
+            <Stack direction="row" sx={{ alignItems: "center", flexWrap: "wrap", gap: 1 }}>
+                {/* Na aba, o nome já está na barra de abas; só o painel lateral precisa do título. */}
+                {recommendationsOnSide && (
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        Recomendações
+                    </Typography>
+                )}
+                <Stack direction="row" sx={{ alignItems: "center", gap: 1, ml: "auto" }}>
                     <EngineSelector />
                     <Tooltip title={recommendationsOnSide ? "Mostrar como separador" : "Mostrar ao lado"}>
                         <IconButton
@@ -31,7 +34,7 @@ const Recommendations = () => {
                 </Stack>
             </Stack>
             {engines.length === 0 && (
-                <Typography color="text.secondary" variant="body2" sx={{ mt: 1 }}>
+                <Typography color="textSecondary" variant="body2" sx={{ mt: 1 }}>
                     Nenhum motor selecionado. Seleciona pelo menos um motor para ver recomendações.
                 </Typography>
             )}

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Stack, TextField, Typography } from "@mui/material";
+import { Button, Stack, TextField } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import { toast } from "sonner";
@@ -43,20 +43,20 @@ const UserForm = ({ mode, onClose }: Props) => {
     };
 
     return (
+        // Uma só linha, com a altura do cartão do utilizador, para a página não saltar ao abrir.
         <Stack
             component="form"
+            direction="row"
             spacing={2}
+            sx={{ alignItems: "center", minHeight: 64 }}
             onSubmit={(event) => {
                 event.preventDefault();
                 save();
             }}
         >
-            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                {mode === "create" ? "Novo utilizador" : "Editar utilizador"}
-            </Typography>
-            <Stack direction="row" spacing={2}>
+            <Stack direction="row" spacing={2} sx={{ flex: 1 }}>
                 <TextField
-                    label="Nome"
+                    label={mode === "create" ? "Nome do novo utilizador" : "Nome"}
                     value={form.user_id}
                     onChange={(event) => setForm((current) => ({ ...current, user_id: event.target.value }))}
                     size="small"
