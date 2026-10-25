@@ -81,6 +81,15 @@ try:
                    for c in x['satisfied_requirements']) for x in family)
     get('recomendacoes_utilizador?user_id=missing', 404)
     get('recomendacoes_utilizador', 400)
+    # Why not: excluded movies list the engine's exclusion reasons; recommended ones have none.
+    excluded = get('why-not?user_id=family&movie=tt0372784')
+    assert excluded['explanation_type'] == 'why_not' and excluded['movie']['id'] == 'tt0372784'
+    assert any(x['rule'] == 'duration_limit' and x['details'] == 'duration_limit(100)'
+               for x in excluded['exclusions'])
+    assert 'exclusions' not in get('why-not?user_id=test_user&movie=tt0372784')
+    get('why-not?user_id=missing&movie=tt0372784', 404)
+    get('why-not?user_id=test_user&movie=missing', 404)
+    get('why-not?user_id=test_user', 400)
     result = get('recomendacoes?id=tt0372784&limit=5')
     scores = [item['score'] for item in result['items']]
     assert len(scores) == 5 and scores == sorted(scores, reverse=True)

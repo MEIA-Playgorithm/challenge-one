@@ -16,6 +16,7 @@ The API of the Prolog engine. It always answers JSON.
 | `GET /api/filme?id=` | Returns one movie |
 | `GET /api/recomendacoes?id=` | Lists movies similar to a movie |
 | `GET /api/recomendacoes_utilizador?user_id=` | Recommends movies to a user |
+| `GET /api/why-not?user_id=&movie=` | Why a movie was not recommended to a user |
 | `POST /api/reload` | Reads both CSV files again |
 | `POST /api/reload/users` | Reads only `users.csv` again |
 | `POST /api/reload/movies` | Reads only `movies.csv` again |
@@ -159,6 +160,33 @@ Response (one item, shortened):
   already watched every movie that meets the limits).
 - Do not add the rule weights on the client: use `score_breakdown`.
 - How the score is calculated: [ENGINE.md](../ENGINE.md).
+
+### `GET /api/why-not?user_id=ana&movie=tt0087469`
+
+Why a movie was not recommended to a user. Same shape as the Drools endpoint of the same name.
+
+| Parameter | Values |
+| --- | --- |
+| `user_id` | **Required.** The user |
+| `movie` | **Required.** The movie id |
+
+Response for an excluded movie (the movie is shortened):
+
+```json
+{
+  "explanation_type": "why_not",
+  "movie": { "id": "tt0087469", "title": "Indiana Jones and the Temple of Doom", "...": "..." },
+  "conclusion": "O filme foi excluído pelas regras da lista exclusions.",
+  "exclusions": [
+    { "type": "EXCLUSION", "rule": "watched", "movie_id": "tt0087469", "details": "watched" },
+    { "type": "EXCLUSION", "rule": "rating_limit", "movie_id": "tt0087469", "details": "rating_limit(8,0)" }
+  ]
+}
+```
+
+- `rule` is the kind of exclusion and `details` the reason as the engine states it (`exclusion_reason/3`).
+- If the movie was recommended, there is no `exclusions` field and the `conclusion` says so.
+- An unknown user or movie gives 404.
 
 ### `POST /api/dialogo`
 
