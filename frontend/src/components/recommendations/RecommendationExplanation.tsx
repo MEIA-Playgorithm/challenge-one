@@ -11,19 +11,21 @@ const reasonText = ({ type, value, movie_id }: Reason) => {
 const unmetText = ({ type, arguments: args }: UnmetPreference) =>
     args.length === 0 ? label(type) : `${label(type)}: ${args.join(", ")}`;
 
-type SectionProps = { title: string; lines: string[] };
+type Line = { text: string; color?: ChipProps["color"] };
 
-const Section = ({ title, lines }: SectionProps) =>
+// Um bloco do dropdown: título e uma linha de chips, por ordem alfabética (os motores
+// devolvem-nos por ordens diferentes).
+const Section = ({ title, lines }: { title: string; lines: Line[] }) =>
     lines.length === 0 ? null : (
         <Box>
             <Typography variant="caption" color="text.secondary">
                 {title}
             </Typography>
-            {lines.map((line) => (
-                <Typography key={line} variant="body2">
-                    {line}
-                </Typography>
-            ))}
+            <Stack direction="row" sx={{ flexWrap: "wrap", gap: 0.5, mt: 0.5 }}>
+                {[...lines].sort((a, b) => a.text.localeCompare(b.text, "pt", { numeric: true })).map(({ text, color }) => (
+                    <Chip key={text} label={text} color={color} size="small" variant="outlined" />
+                ))}
+            </Stack>
         </Box>
     );
 
@@ -34,7 +36,7 @@ const whyNotLines = (recommendation: Recommendation, top: Recommendation) => {
     const best = top.score_breakdown ?? {};
     const gap = Math.round((top.score - recommendation.score) * 100) / 100;
     // Cor por tipo: distância ao vencedor, pontos perdidos, preferência falhada.
-    const lines: { text: string; color: ChipProps["color"] }[] = [
+    const lines: Line[] = [
         { text: gap > 0 ? `${gap} pts atrás de ${top.movie.title}` : `empatado com ${top.movie.title}, perdeu no desempate`, color: "error" },
     ];
     for (const part of new Set([...Object.keys(own), ...Object.keys(best)])) {
@@ -48,28 +50,20 @@ const whyNotLines = (recommendation: Recommendation, top: Recommendation) => {
     return lines;
 };
 
-// Porque foi recomendado, como a pontuação se compõe e o que não cumpre.
+// Os mesmos três blocos em todos os filmes. O primeiro diz porque foi recomendado
+// (o 1.º da lista) ou porque ficou atrás dele (os outros).
 const RecommendationExplanation = ({ recommendation, top }: { recommendation: Recommendation; top?: Recommendation }) => {
     const { reasons, score_breakdown, unmet_preferences } = recommendation;
-    const breakdown = Object.entries(score_breakdown ?? {}).map(([part, points]) => `${label(part)}: ${points} pts`);
 
     return (
         <Box sx={{ display: "grid", gap: 1, pl: 1, pb: 1 }}>
-            {top && (
-                <Box>
-                    <Typography variant="caption" color="text.secondary">
-                        Porque não foi o recomendado
-                    </Typography>
-                    <Stack direction="row" sx={{ flexWrap: "wrap", gap: 0.5, mt: 0.5 }}>
-                        {whyNotLines(recommendation, top).map(({ text, color }) => (
-                            <Chip key={text} label={text} color={color} size="small" variant="outlined" />
-                        ))}
-                    </Stack>
-                </Box>
+            {top ? (
+                <Section title="Porque ficou atrás do 1.º" lines={whyNotLines(recommendation, top)} />
+            ) : (
+                <Section title="Porque foi recomendado" lines={(reasons ?? []).map((reason) => ({ text: reasonText(reason), color: "success" }))} />
             )}
-            <Section title="Porque foi recomendado" lines={(reasons ?? []).map(reasonText)} />
-            <Section title="Pontuação" lines={breakdown} />
-            <Section title="Preferências não cumpridas" lines={(unmet_preferences ?? []).map(unmetText)} />
+            <Section title="Pontuação" lines={Object.entries(score_breakdown ?? {}).map(([part, points]) => ({ text: `${label(part)}: ${points} pts` }))} />
+            <Section title="Preferências não cumpridas" lines={(unmet_preferences ?? []).map((unmet) => ({ text: unmetText(unmet), color: "info" }))} />
         </Box>
     );
 };
