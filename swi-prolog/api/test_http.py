@@ -39,6 +39,17 @@ def get(path, status=200, method=None):
         assert response.status == status, (path, response.status, response.read())
         assert response.headers['Access-Control-Allow-Origin'] == '*'
         return json.load(response)
+def dialogue(body, status=200):
+    data = body.encode() if isinstance(body, str) else json.dumps(body).encode()
+    request = urllib.request.Request(base + 'dialogo', data=data, method='POST',
+                                     headers={'Content-Type': 'application/json'})
+    try:
+        response = urllib.request.urlopen(request, timeout=30)
+    except urllib.error.HTTPError as error:
+        response = error
+    with response:
+        assert response.status == status, (body, response.status, response.read())
+        return json.load(response)
 try:
     for _ in range(300):
         if server.poll() is not None:
@@ -70,6 +81,15 @@ try:
                    for c in x['satisfied_requirements']) for x in family)
     get('recomendacoes_utilizador?user_id=missing', 404)
     get('recomendacoes_utilizador', 400)
+    # Why not: excluded movies list the engine's exclusion reasons; recommended ones have none.
+    excluded = get('why-not?user_id=family&movie=tt0372784')
+    assert excluded['explanation_type'] == 'why_not' and excluded['movie']['id'] == 'tt0372784'
+    assert any(x['rule'] == 'duration_limit' and x['details'] == 'duration_limit(100)'
+               for x in excluded['exclusions'])
+    assert 'exclusions' not in get('why-not?user_id=test_user&movie=tt0372784')
+    get('why-not?user_id=missing&movie=tt0372784', 404)
+    get('why-not?user_id=test_user&movie=missing', 404)
+    get('why-not?user_id=test_user', 400)
     result = get('recomendacoes?id=tt0372784&limit=5')
     scores = [item['score'] for item in result['items']]
     assert len(scores) == 5 and scores == sorted(scores, reverse=True)
@@ -78,6 +98,39 @@ try:
                  'recomendacoes', 'recomendacoes?id=tt0372784&min_score=12']:
         get(path, 400)
     get('recomendacoes?id=inexistente', 404)
+    # Dialogue: the first question, its "why", and answers from one request don't
+    # stay in the database for the next.
+    start = dialogue({'user_id': 'test_user'})
+    assert start['history'] == [] and start['conclusions'] == []
+    assert start['question']['key'] == 'experiencia'
+    why = start['question']['why']
+    assert why['rule'] == 'dialogo_experiencia'
+    assert why['conditions'][why['asking']]['text'] == 'escolha(experiencia(test_user),A)'
+    assert start['picks'] == []
+    comedy = dialogue({'user_id': 'test_user', 'answers': {'experiencia': 'comedia'}})
+    assert [h['answer'] for h in comedy['history']] == ['comedia']
+    assert comedy['question']['key'] == 'prefere_romance_com_humor'
+    assert comedy['question']['why']['rule'] == 'dialogo_comedia_2'
+    done = dialogue({'user_id': 'test_user',
+                     'answers': {'experiencia': 'comedia', 'prefere_romance_com_humor': 'sim'}})
+    assert done['question'] is None
+    facts = [c['fact']['text'] for c in done['conclusions']]
+    assert "sugerir_genero(test_user,'Romantic Comedy')" in facts
+    # Picks: user recommendations meeting the suggestions, most matches first.
+    picks = done['picks']
+    assert picks and all('Comedy' in p['movie']['genre'] for p in picks)
+    counts = [len(p['matches']) for p in picks]
+    assert counts == sorted(counts, reverse=True)
+    action = dialogue({'user_id': 'test_user', 'answers': {'experiencia': 'acao'}})
+    assert all({'type': 'genre', 'value': 'Action'} in p['matches'] for p in action['picks'])
+    assert dialogue({'user_id': 'test_user'})['history'] == []
+    for body in ['x', '[]', {}, {'user_id': ''}, {'user_id': 1},
+                 {'user_id': 'test_user', 'answers': []},
+                 {'user_id': 'test_user', 'answers': {'desconhecida': 'sim'}},
+                 {'user_id': 'test_user', 'answers': {'experiencia': 'sim'}},
+                 {'user_id': 'test_user', 'answers': {'prefere_romance_com_humor': 'talvez'}}]:
+        dialogue(body, 400)
+    dialogue({'user_id': 'missing'}, 404)
     with urllib.request.urlopen(urllib.request.Request(base+'recomendacoes', method='OPTIONS')) as response:
         assert response.status == 200
     try:

@@ -37,12 +37,12 @@ const SaveBar = ({ dirty, blocked, saving, error, remaining, autosave, onAutosav
         error ??
         blocked ??
         (saving
-            ? "Saving..."
+            ? "A guardar..."
             : remaining !== null
-              ? `Saving in ${Math.ceil(remaining / 1000)}s`
+              ? `A guardar em ${Math.ceil(remaining / 1000)}s`
               : dirty
-                ? "Unsaved changes"
-                : "All changes saved");
+                ? "Alterações por guardar"
+                : "Todas as alterações guardadas");
 
     return (
         <Box
@@ -64,9 +64,10 @@ const SaveBar = ({ dirty, blocked, saving, error, remaining, autosave, onAutosav
                     {message}
                 </Typography>
                 <Button variant="text" size="small" color="inherit" startIcon={<CloseIcon />} disabled={!dirty} onClick={onReset}>
-                    Reset
+                    Repor
                 </Button>
-                <ButtonGroup variant="contained" size="small" disabled={saving}>
+                {/* Sem alterações o grupo fica só com contorno, para a seta não parecer ativa ao lado do botão apagado. */}
+                <ButtonGroup variant={dirty ? "contained" : "outlined"} size="small" disabled={saving}>
                     <Button
                         startIcon={
                             remaining !== null ? (
@@ -76,7 +77,7 @@ const SaveBar = ({ dirty, blocked, saving, error, remaining, autosave, onAutosav
                                     size={18}
                                     thickness={6}
                                     color="inherit"
-                                    aria-label="Time until autosave"
+                                    aria-label="Tempo até guardar automaticamente"
                                 />
                             ) : (
                                 <CheckIcon />
@@ -85,9 +86,9 @@ const SaveBar = ({ dirty, blocked, saving, error, remaining, autosave, onAutosav
                         disabled={!dirty || Boolean(blocked) || saving}
                         onClick={onSave}
                     >
-                        Save
+                        Guardar
                     </Button>
-                    <Button size="small" aria-label="Save options" onClick={(event) => setMenuAnchor(event.currentTarget.parentElement)}>
+                    <Button size="small" aria-label="Opções de gravação" onClick={(event) => setMenuAnchor(event.currentTarget.parentElement)}>
                         <ArrowDropDownIcon />
                     </Button>
                 </ButtonGroup>
@@ -108,7 +109,7 @@ const SaveBar = ({ dirty, blocked, saving, error, remaining, autosave, onAutosav
                         }}
                     >
                         <Checkbox size="small" checked={autosave} disableRipple sx={{ p: 0, mr: 1.5 }} />
-                        <ListItemText primary="Autosave" secondary="Saves 5 seconds after your last change" />
+                        <ListItemText primary="Guardar automaticamente" secondary="Guarda 5 segundos após a última alteração" />
                     </MenuItem>
                 </Menu>
             </Stack>

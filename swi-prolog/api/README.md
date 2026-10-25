@@ -16,9 +16,11 @@ The API of the Prolog engine. It always answers JSON.
 | `GET /api/filme?id=` | Returns one movie |
 | `GET /api/recomendacoes?id=` | Lists movies similar to a movie |
 | `GET /api/recomendacoes_utilizador?user_id=` | Recommends movies to a user |
+| `GET /api/why-not?user_id=&movie=` | Why a movie was not recommended to a user |
 | `POST /api/reload` | Reads both CSV files again |
 | `POST /api/reload/users` | Reads only `users.csv` again |
 | `POST /api/reload/movies` | Reads only `movies.csv` again |
+| `POST /api/dialogo` | Runs the dialogue up to the next question, with its "why" |
 
 ---
 
@@ -159,6 +161,95 @@ Response (one item, shortened):
 - Do not add the rule weights on the client: use `score_breakdown`.
 - How the score is calculated: [ENGINE.md](../ENGINE.md).
 
+### `GET /api/why-not?user_id=ana&movie=tt0087469`
+
+Why a movie was not recommended to a user. Same shape as the Drools endpoint of the same name.
+
+| Parameter | Values |
+| --- | --- |
+| `user_id` | **Required.** The user |
+| `movie` | **Required.** The movie id |
+
+Response for an excluded movie (the movie is shortened):
+
+```json
+{
+  "explanation_type": "why_not",
+  "movie": { "id": "tt0087469", "title": "Indiana Jones and the Temple of Doom", "...": "..." },
+  "conclusion": "O filme foi excluído pelas regras da lista exclusions.",
+  "exclusions": [
+    { "type": "EXCLUSION", "rule": "watched", "movie_id": "tt0087469", "details": "watched" },
+    { "type": "EXCLUSION", "rule": "rating_limit", "movie_id": "tt0087469", "details": "rating_limit(8,0)" }
+  ]
+}
+```
+
+- `rule` is the kind of exclusion and `details` the reason as the engine states it (`exclusion_reason/3`).
+- If the movie was recommended, there is no `exclusions` field and the `conclusion` says so.
+- An unknown user or movie gives 404.
+
+### `POST /api/dialogo`
+
+The dialogue of [rules_dialog.pl](../rules_dialog.pl) without the console. The engine keeps no state between
+requests: each request sends every answer given so far, the engine runs the dialogue rules again and stops at
+the first question with no answer. Nothing is saved in the base, and parallel requests do not see each other's
+answers (the run happens inside `snapshot/1`).
+
+```json
+{ "user_id": "ana", "answers": { "experiencia": "comedia" } }
+```
+
+`answers` is optional. Each key is a question (the name of the fact asked, without the user) and each value
+one of its `options`. Answers to questions the engine does not reach are ignored.
+
+```json
+{
+  "user_id": "ana",
+  "history": [
+    { "key": "experiencia", "text": "ana, que experiência te apetece ter com o filme de hoje?",
+      "options": ["emocao", "comedia", "..."], "answer": "comedia", "why": { "...": "..." } }
+  ],
+  "question": {
+    "key": "prefere_romance_com_humor",
+    "text": "ana, preferes humor ligado a uma história romântica?",
+    "options": ["sim", "nao"],
+    "why": {
+      "rule": "dialogo_comedia_2",
+      "conditions": [
+        { "text": "experiencia_sessao(ana,comedia)", "name": "experiencia_sessao", "args": ["ana", "comedia"] },
+        { "text": "prefere_romance_com_humor(ana)", "name": "prefere_romance_com_humor", "args": ["ana"] }
+      ],
+      "asking": 1,
+      "concludes": [
+        { "text": "sugerir_genero(ana,'Romantic Comedy')", "name": "sugerir_genero", "args": ["ana", "Romantic Comedy"] }
+      ]
+    }
+  },
+  "conclusions": [
+    { "fact": { "text": "sugerir_genero(ana,'Comedy')", "...": "..." }, "rule": "dialogo_comedia_1",
+      "premises": [ { "text": "experiencia_sessao(ana,comedia)", "...": "..." } ] }
+  ],
+  "picks": [
+    { "movie": { "id": "tt1583420", "title": "Larry Crowne", "...": "..." }, "score": 87.3, "status": "main",
+      "matches": [ { "type": "genre", "value": "Comedy" }, { "type": "genre", "value": "Romantic Comedy" } ] }
+  ]
+}
+```
+
+- `why` is what `porque.` prints in the console: the rule being evaluated, its conditions in the order the
+  engine checks them, and the facts it concludes if they all hold. `asking` is the position of the condition
+  being asked; the ones before it already hold.
+- Every term comes as Prolog text and in parts (`name`, `args` without quotes), so a client can describe it in
+  words. An argument that is still an unbound variable (the choice about to be made) is `null`.
+- `question` is `null` when the dialogue has ended. `conclusions` are the facts inferred so far, with the rule
+  and the facts that justify each one (as `como/1`).
+- `picks` (up to 12) are the user's recommendations that fit the session suggestions: `sugerir_genero` matches
+  the movie genre, `sugerir_tom(U, triste)` the `sad` emotional tone and `preferencia_sessao(U, sobrenatural)`
+  the `supernatural` theme. Movies that match more suggestions come first, then the usual recommendation
+  order. They come from `user_recommendation/4`, so the user's limits and exclusions still apply.
+- `400` for a body that is not a JSON object, a missing `user_id`, an unknown question or an answer that is
+  not one of its options; `404` for an unknown user.
+
 ---
 
 ## Reloading the data
@@ -216,6 +307,7 @@ Errors always have the same shape, with the message in `error`:
 | `movies_controller.pl` | `/api/filmes`, `/api/filme` and `/api/recomendacoes` (and how a movie is serialised) |
 | `users_controller.pl` | `/api/recomendacoes_utilizador` |
 | `reload_controller.pl` | `/api/reload`, `/api/reload/users` and `/api/reload/movies` |
+| `dialogue_controller.pl` | `/api/dialogo` (answers replace `read/1` through `resposta_externa/4` in `../sp_exp2.pl`) |
 
 A new controller is a module with its own `http_handler` declarations, in the form
 `api_handle(get, handler)`, loaded in `server.pl`. The reload logic (`recarrega_base/1`) is in

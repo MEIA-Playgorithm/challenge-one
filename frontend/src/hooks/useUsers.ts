@@ -29,15 +29,15 @@ export function useUsers(onWritten: () => void) {
 
     const createUser = async (user: User) => {
         const userId = user.user_id.trim();
-        if (!userId) return "Name is required";
-        if (users.some((item) => item.user_id === userId)) return "Please choose another name, this one is already taken.";
+        if (!userId) return "O nome é obrigatório";
+        if (users.some((item) => item.user_id === userId)) return "Esse nome já está a ser usado. Escolhe outro.";
         return save(() => usersApi.createUser({ ...user, user_id: userId }), userId);
     };
 
     const updateUser = async (previousId: string, user: User) => {
         const userId = user.user_id.trim();
-        if (!userId) return "Name is required";
-        if (users.some((item) => item.user_id === userId && item.user_id !== previousId)) return "Please choose another name, this one is already taken.";
+        if (!userId) return "O nome é obrigatório";
+        if (users.some((item) => item.user_id === userId && item.user_id !== previousId)) return "Esse nome já está a ser usado. Escolhe outro.";
         return save(() => usersApi.updateUser(previousId, { ...user, user_id: userId }), userId);
     };
 

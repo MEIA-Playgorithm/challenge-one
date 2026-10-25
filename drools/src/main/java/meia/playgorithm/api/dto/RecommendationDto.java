@@ -2,7 +2,6 @@ package meia.playgorithm.api.dto;
 
 import java.util.List;
 import java.util.Map;
-import meia.playgorithm.model.Movie;
 import meia.playgorithm.model.Recommendation;
 
 @SnakeCase
@@ -16,11 +15,11 @@ public record RecommendationDto(
     Map<String, Double> scoreBreakdown
 ) {
 
-    public static RecommendationDto of(Recommendation recommendation, Movie movie) {
+    public static RecommendationDto of(Recommendation recommendation, MovieDto movie) {
         return new RecommendationDto(
             recommendation.getScore(),
             recommendation.getReasons().stream().map(ReasonDto::of).toList(),
-            MovieDto.of(movie),
+            movie,
             recommendation.getStatus(),
             List.of(),
             recommendation.getUnmetPreferences().stream().map(UnmetDto::of).toList(),

@@ -16,7 +16,7 @@ loadConfig()
             <StrictMode>
                 <ThemeProvider theme={theme}>
                     <CssBaseline />
-                    <Toaster position="top-center" richColors expand theme="dark" />
+                    <Toaster position="top-center" richColors expand theme="dark" containerAriaLabel="Notificações" />
                     <AppProvider>
                         <App />
                     </AppProvider>

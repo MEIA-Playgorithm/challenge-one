@@ -72,6 +72,12 @@ pergunta_facto(Facto, Contexto) :-
       assertz(resposta_utilizador(Facto, Resposta)),
       ( Resposta == sim -> regista_facto_utilizador(Facto) ; fail ) ).
 
+% Without a console (HTTP API): resposta_externa(+Question, +Options, +Context, -Answer)
+% replaces read/1. Only exists during a request (see api/dialogue_controller.pl).
+:- dynamic resposta_externa/4.
+
+le_escolha(Chave, Opcoes, Contexto, Resposta) :-
+    resposta_externa(Chave, Opcoes, Contexto, Resposta), !.
 le_escolha(Chave, Opcoes, Contexto, Resposta) :-
     ( current_predicate(texto_pergunta/2), texto_pergunta(Chave, Texto)
     -> format('~a~n', [Texto])
@@ -87,6 +93,8 @@ le_escolha(Chave, Opcoes, Contexto, Resposta) :-
     ; writeln('Opção inválida. Escolhe uma das opções apresentadas.'),
       le_escolha(Chave, Opcoes, Contexto, Resposta) ).
 
+le_resposta(Facto, Contexto, Resposta) :-
+    resposta_externa(Facto, [sim, nao], Contexto, Resposta), !.
 le_resposta(Facto, Contexto, Resposta) :-
     ( current_predicate(texto_pergunta/2), texto_pergunta(Facto, Texto) ->
 		format('~a (sim/nao/porque, terminar com .)~n', [Texto])

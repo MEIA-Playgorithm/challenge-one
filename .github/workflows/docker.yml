@@ -1,0 +1,66 @@
+name: Docker images
+
+# Builds the four images (the same ones as docker-compose.yml).
+# - Pull request into development or main: builds only, to catch a broken image before the merge.
+# - Push to main, or a version tag (v*): builds and publishes to GitHub Container Registry.
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [development, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  images:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: frontend, context: ./frontend, dockerfile: ./frontend/Dockerfile }
+          - { name: knowledge-base, context: ./knowledge_base, dockerfile: ./knowledge_base/Dockerfile }
+          - { name: swi-prolog, context: ., dockerfile: ./swi-prolog/Dockerfile }
+          - { name: drools, context: ., dockerfile: ./drools/Dockerfile }
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      # The registry only accepts lower case names, and the organisation is MEIA-Playgorithm.
+      - name: Image name
+        id: image
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/challenge-one-${{ matrix.name }}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/login-action@v3
+        if: github.event_name != 'pull_request'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # latest only on main (the default branch is development), the commit on every build,
+      # and 1.2.3 on a v1.2.3 tag.
+      - name: Tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.image.outputs.name }}
+          tags: |
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=sha
+            type=semver,pattern={{version}}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}

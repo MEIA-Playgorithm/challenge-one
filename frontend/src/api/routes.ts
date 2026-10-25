@@ -24,6 +24,11 @@ const droolsRoutes: EngineRoutes = {
     reloadUsers: "/api/reload/users",
 };
 
+export const dialogueRoutes: Record<EngineId, string> = {
+    prolog: "/api/dialogo",
+    drools: "/api/dialogue",
+};
+
 export const engineRoutes: Record<EngineId, EngineRoutes> = {
     prolog: prologRoutes,
     drools: droolsRoutes,

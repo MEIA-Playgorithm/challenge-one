@@ -10,14 +10,14 @@ type Props = {
 
 const MoodSection = ({ form, patch }: Props) => {
     return (
-        <PreferenceSection title="Mood and themes" description="The tone and subjects a movie should lean towards.">
+        <PreferenceSection title="Ambiente e temas" description="O tom e os assuntos para que um filme deve tender.">
             <ChoiceChips
-                label="Emotional tones"
+                label="Tons emocionais"
                 options={EMOTIONAL_TONES}
                 value={form.preferred_emotional_tones}
                 onChange={(value) => patch({ preferred_emotional_tones: value })}
             />
-            <ChoiceChips label="Themes" options={THEMES} value={form.preferred_themes} onChange={(value) => patch({ preferred_themes: value })} />
+            <ChoiceChips label="Temas" options={THEMES} value={form.preferred_themes} onChange={(value) => patch({ preferred_themes: value })} />
         </PreferenceSection>
     );
 };

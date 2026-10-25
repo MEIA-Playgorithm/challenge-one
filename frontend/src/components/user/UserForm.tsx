@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Button, Stack, TextField, Typography } from "@mui/material";
+import { Button, Stack, TextField } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import { toast } from "sonner";
 import { useApp } from "../../context/AppContext";
 import { emptyUser, type User } from "../../types/User";
+import { ageError, MAX_AGE } from "../../lib/users";
 
 type Props = {
     mode: "create" | "edit";
@@ -17,12 +18,13 @@ const UserForm = ({ mode, onClose }: Props) => {
     const [form, setForm] = useState(mode === "edit" ? { user_id: currentUser.user_id, age: currentUser.age } : { user_id: "", age: 0 });
     const [saving, setSaving] = useState(false);
 
-    const canSave = form.user_id.trim() !== "";
+    const ageMessage = ageError(form.age);
+    const canSave = form.user_id.trim() !== "" && !ageMessage;
 
     const save = async () => {
         if (!canSave || saving) return;
         if (mode === "edit" && form.user_id.trim() === currentUser.user_id && form.age === currentUser.age) {
-            toast("No changes to save");
+            toast("Sem alterações para guardar");
             return;
         }
 
@@ -37,24 +39,24 @@ const UserForm = ({ mode, onClose }: Props) => {
             return;
         }
         onClose();
-        toast.success(mode === "create" ? "User created" : "User saved");
+        toast.success(mode === "create" ? "Utilizador criado" : "Utilizador guardado");
     };
 
     return (
+        // Uma só linha, com a altura do cartão do utilizador, para a página não saltar ao abrir.
         <Stack
             component="form"
+            direction="row"
             spacing={2}
+            sx={{ alignItems: "center", minHeight: 64 }}
             onSubmit={(event) => {
                 event.preventDefault();
                 save();
             }}
         >
-            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                {mode === "create" ? "New User" : "Edit User"}
-            </Typography>
-            <Stack direction="row" spacing={2}>
+            <Stack direction="row" spacing={2} sx={{ flex: 1 }}>
                 <TextField
-                    label="Name"
+                    label={mode === "create" ? "Nome do novo utilizador" : "Nome"}
                     value={form.user_id}
                     onChange={(event) => setForm((current) => ({ ...current, user_id: event.target.value }))}
                     size="small"
@@ -62,20 +64,23 @@ const UserForm = ({ mode, onClose }: Props) => {
                     autoFocus
                 />
                 <TextField
-                    label="Age"
+                    label="Idade"
                     type="number"
                     value={form.age || ""}
                     onChange={(event) => setForm((current) => ({ ...current, age: Number(event.target.value) }))}
+                    error={Boolean(ageMessage)}
+                    helperText={ageMessage}
                     size="small"
                     sx={{ width: 120 }}
+                    slotProps={{ htmlInput: { min: 1, max: MAX_AGE, step: 1 } }}
                 />
             </Stack>
             <Stack direction="row" spacing={1}>
                 <Button type="submit" variant="contained" size="small" startIcon={<CheckIcon />} disabled={saving || !canSave}>
-                    Save
+                    Guardar
                 </Button>
                 <Button type="button" variant="text" size="small" startIcon={<CloseIcon />} onClick={onClose} color="inherit">
-                    Cancel
+                    Cancelar
                 </Button>
             </Stack>
         </Stack>
