@@ -36,7 +36,7 @@ const SentimentSelector = ({ label, options, liked, disliked, onChange }: Props)
                 <Typography variant="body2" sx={{ fontWeight: 500 }}>
                     {label}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" color="textSecondary">
                     {liked.length} gosto · {disliked.length} não gosto
                 </Typography>
             </Stack>

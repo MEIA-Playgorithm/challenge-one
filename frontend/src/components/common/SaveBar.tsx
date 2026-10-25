@@ -66,7 +66,8 @@ const SaveBar = ({ dirty, blocked, saving, error, remaining, autosave, onAutosav
                 <Button variant="text" size="small" color="inherit" startIcon={<CloseIcon />} disabled={!dirty} onClick={onReset}>
                     Repor
                 </Button>
-                <ButtonGroup variant="contained" size="small" disabled={saving}>
+                {/* Sem alterações o grupo fica só com contorno, para a seta não parecer ativa ao lado do botão apagado. */}
+                <ButtonGroup variant={dirty ? "contained" : "outlined"} size="small" disabled={saving}>
                     <Button
                         startIcon={
                             remaining !== null ? (

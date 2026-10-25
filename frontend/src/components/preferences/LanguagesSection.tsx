@@ -39,7 +39,7 @@ const LanguagesSection = ({ form, patch }: Props) => {
                 )}
                 value={form.required_languages}
                 onChange={(_, value) => patch({ required_languages: value })}
-                slotProps={{ chip: { size: "small" } }}
+                slotProps={{ chip: { size: "small", color: "primary" } }}
                 renderInput={(params) => (
                     <TextField
                         {...params}

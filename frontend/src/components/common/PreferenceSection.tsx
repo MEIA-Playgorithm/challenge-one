@@ -14,7 +14,7 @@ const PreferenceSection = ({ title, description, children }: Props) => {
                 <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                     {title}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" color="textSecondary">
                     {description}
                 </Typography>
             </Box>
