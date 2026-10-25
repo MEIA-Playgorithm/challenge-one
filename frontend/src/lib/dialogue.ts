@@ -16,18 +16,7 @@ const OPTION_LABELS: Record<string, string> = {
     fantasia: "Fantasia",
 };
 
-const OPTION_ICONS: Record<string, string> = {
-    emocao: "💗",
-    comedia: "😄",
-    acao: "💥",
-    misterio: "🔍",
-    terror: "👻",
-    ficcao_cientifica: "🚀",
-    fantasia: "🐉",
-};
-
 export const optionLabel = (option: string) => OPTION_LABELS[option] ?? formatLabel(option);
-export const optionIcon = (option: string): string | undefined => OPTION_ICONS[option];
 export const isYesNo = (options: string[]) => options.length === 2 && options.includes("sim") && options.includes("nao");
 
 const TONES: Record<string, string> = { triste: "um tom triste" };
@@ -71,6 +60,10 @@ export function concludes({ why }: DialogueQuestion): DialogueTerm[] {
     return found ? [{ name: found[1], args: [null, found[2]], text: `${found[1]}(${found[2]})` }] : [];
 }
 
+// Same order as Prolog sorts a pick's matches: by type and then by value.
+const byTerm = (a: DialoguePick["matches"][number], b: DialoguePick["matches"][number]) =>
+    a.type === b.type ? (a.value < b.value ? -1 : 1) : a.type < b.type ? -1 : 1;
+
 // The picks the Prolog dialogue returns, for an engine that does not: the user's recommendations
 // that match the suggestions, most matches first and then in recommendation order.
 export function sessionPicks(recommendations: Recommendation[], conclusions: DialogueConclusion[]): DialoguePick[] {
@@ -86,7 +79,7 @@ export function sessionPicks(recommendations: Recommendation[], conclusions: Dia
                 ...(sad && movie.emotional_tone.includes("sad") ? [{ type: "emotional_tone" as const, value: "sad" }] : []),
                 ...(supernatural && movie.themes.includes("supernatural") ? [{ type: "themes" as const, value: "supernatural" }] : []),
             ];
-            return { movie, score, status, matches };
+            return { movie, score, status, matches: matches.sort(byTerm) };
         })
         .filter(({ matches }) => matches.length > 0)
         .sort((a, b) => b.matches.length - a.matches.length)

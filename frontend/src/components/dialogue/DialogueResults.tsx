@@ -1,9 +1,12 @@
 import { useState } from "react";
-import { Box, Chip, Link, Stack, Typography } from "@mui/material";
+import { Box, Button, Chip, Stack, Typography } from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import FadeLine from "../common/FadeLine";
 import { concludes, describe, matchLabel, optionLabel } from "../../lib/dialogue";
 import type { Dialogue, DialogueConclusion } from "../../types/Dialogue";
 
-const panel = { border: 1, borderColor: "divider", borderRadius: 2, p: 2 } as const;
+// Os blocos não têm caixa: separam-se com a mesma linha tenue das outras abas.
+const panel = { py: 1 } as const;
 
 // Facts that answer "what should the movie have?": the ones picks use.
 const SUGGESTIONS = ["sugerir_genero", "sugerir_tom", "preferencia_sessao"];
@@ -16,16 +19,22 @@ const Conclusion = ({ conclusion, questions }: { conclusion: DialogueConclusion;
             <Typography variant="body2" component="span">
                 {describe(conclusion.fact, questions)}
             </Typography>{" "}
-            <Link component="button" type="button" variant="caption" onClick={() => setShowHow((current) => !current)}>
-                {showHow ? "esconder" : "como?"}
-            </Link>
+            <Button
+                size="small"
+                endIcon={<ExpandMoreIcon sx={{ transform: showHow ? "rotate(180deg)" : "none" }} />}
+                aria-expanded={showHow}
+                onClick={() => setShowHow((current) => !current)}
+                sx={{ py: 0, ml: 0.5 }}
+            >
+                {showHow ? "Esconder" : "Como?"}
+            </Button>
             {showHow &&
                 (conclusion.how ? (
-                    <Typography variant="caption" color="text.secondary" component="pre" sx={{ m: 0, whiteSpace: "pre-wrap", fontFamily: "monospace" }}>
+                    <Typography variant="caption" color="textSecondary" component="pre" sx={{ m: 0, whiteSpace: "pre-wrap", fontFamily: "monospace" }}>
                         {conclusion.how.join("\n")}
                     </Typography>
                 ) : (
-                    <Typography variant="caption" color="text.secondary" component="div">
+                    <Typography variant="caption" color="textSecondary" component="div">
                         Regra {conclusion.rule}, porque: {conclusion.premises.map((premise) => describe(premise, questions)).join("; ")}.
                     </Typography>
                 ))}
@@ -45,22 +54,22 @@ const DialogueResults = ({ dialogue, questions }: Props) => {
     const declined = dialogue.history.filter((item) => item.answer === "nao");
 
     return (
-        <Stack spacing={2}>
+        <Stack spacing={2} divider={<FadeLine />}>
             <Box sx={panel}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                     Sugestões de hoje
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                <Typography variant="body2" color="textSecondary" sx={{ mb: 1.5 }}>
                     Recomendações de {dialogue.user_id} que encaixam nesta sessão, por isso os seus limites e exclusões continuam a aplicar-se.
                 </Typography>
                 {!hasSuggestions ? (
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" color="textSecondary">
                         {dialogue.question
                             ? "Responde às perguntas e os filmes que encaixam aparecem aqui."
                             : "As tuas respostas não levaram a nenhuma sugestão. Experimenta mudar uma delas."}
                     </Typography>
                 ) : dialogue.picks.length === 0 ? (
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" color="textSecondary">
                         Nenhum dos filmes elegíveis de {dialogue.user_id} encaixa nestas sugestões. Os seus limites podem excluí-los.
                     </Typography>
                 ) : (
@@ -71,19 +80,19 @@ const DialogueResults = ({ dialogue, questions }: Props) => {
                                     <Typography variant="body2" sx={{ fontWeight: 600 }}>
                                         {movie.title}
                                         {movie.year !== null && (
-                                            <Typography component="span" variant="body2" color="text.secondary">
+                                            <Typography component="span" variant="body2" color="textSecondary">
                                                 {" "}
                                                 ({movie.year})
                                             </Typography>
                                         )}
                                     </Typography>
-                                    <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
+                                    <Typography variant="caption" color="textSecondary" sx={{ flexShrink: 0 }}>
                                         IMDb {movie.rating_imdb?.toFixed(1) ?? "?"} · {score} pts
                                     </Typography>
                                 </Stack>
                                 <Stack direction="row" useFlexGap sx={{ flexWrap: "wrap", gap: 0.5, mt: 0.75 }}>
                                     {matches.map((match) => (
-                                        <Chip key={`${match.type}-${match.value}`} label={matchLabel(match)} size="small" color="primary" />
+                                        <Chip key={`${match.type}-${match.value}`} label={matchLabel(match)} size="small" color="primary" variant="outlined" />
                                     ))}
                                     {status === "alternative" && <Chip label="abaixo da tua classificação mínima" size="small" variant="outlined" />}
                                 </Stack>
@@ -115,7 +124,7 @@ const DialogueResults = ({ dialogue, questions }: Props) => {
                         {declined.map((item) => (
                             <Typography component="li" variant="body2" key={item.key}>
                                 {concludes(item).map((fact) => describe(fact, questions)).join("; ")}
-                                <Typography component="span" variant="caption" color="text.secondary">
+                                <Typography component="span" variant="caption" color="textSecondary">
                                     {" "}
                                     — respondeste {optionLabel(item.answer)} a “{item.text}”
                                 </Typography>
