@@ -26,7 +26,7 @@ const RecommendationItem = ({ recommendation, rank, top }: { recommendation: Rec
                     primary={`${rank}. ${movie.title}`}
                     secondary={`${movie.genre.slice(0, 3).map(formatLabel).join(", ")} · IMDb ${movie.rating_imdb?.toFixed(1) ?? "?"} · ${score} pts`}
                 />
-                {!top && <Chip label="recomendado" color="primary" size="small" sx={{ mr: 0.5 }} />}
+                {!top && <Chip label="recomendado" color="primary" variant="outlined" size="small" sx={{ mr: 0.5 }} />}
                 {status === "alternative" && <Chip label="alternativa" size="small" />}
                 <IconButton
                     size="small"
@@ -71,7 +71,7 @@ const EngineRecommendations = ({ engine, showTitle }: Props) => {
                 </Typography>
             )}
             {!loading && !error && items.length === 0 && (
-                <Typography color="text.secondary" variant="body2">
+                <Typography color="textSecondary" variant="body2">
                     Sem filmes elegíveis.
                 </Typography>
             )}
