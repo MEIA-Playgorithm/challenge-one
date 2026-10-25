@@ -59,7 +59,7 @@
 - [Resumo e objetivos](#resumo-e-objetivos)
 - [Enquadramento académico](#enquadramento-académico)
 - [Aquisição de conhecimento com o perito](#aquisição-de-conhecimento-com-o-perito)
-- [Respostas do perito](#respostas-do-perito)
+- [Respostas do perito sobre o projecto](#respostas-do-perito-sobre-o-projecto)
 - [1. Organização e representação do conhecimento](#1-organização-e-representação-do-conhecimento)
 - [2. Carregamento dos filmes e dos utilizadores](#2-carregamento-dos-filmes-e-dos-utilizadores)
 - [3. Motor de inferência](#3-motor-de-inferência)
@@ -93,22 +93,21 @@
 - [Tabela 5 — Condições das regras e operações de verificação do motor.](#tabela-5)
 - [Tabela 6 — Comparação entre o motor prévio e os dois motores Prolog atuais.](#tabela-6)
 - [Tabela 7 — Alterações no diagnóstico de conclusões não obtidas com whynot.](#tabela-7)
-- [Tabela 8 — Resultados das experiências de encadeamento e combinação de condições.](#tabela-8)
-- [Tabela 9 — Estruturas de metaconhecimento e respetiva utilização.](#tabela-9)
-- [Tabela 10 — Mecanismos de explicação: momento de utilização e informação apresentada.](#tabela-10)
-- [Tabela 11 — Explicações disponíveis na interface web.](#tabela-11)
-- [Tabela 12 — Grupos de regras sobre filmes e conhecimento produzido.](#tabela-12)
-- [Tabela 13 — Pesos das características na pontuação de semelhança entre filmes.](#tabela-13)
-- [Tabela 14 — Componentes da pontuação das recomendações personalizadas.](#tabela-14)
-- [Tabela 15 — Decomposição da pontuação de Jungle Cruise para Inês.](#tabela-15)
-- [Tabela 16 — Opções de experiência da sessão, perguntas e conclusões do diálogo.](#tabela-16)
-- [Tabela 17 — Correspondência entre conclusões do diálogo e atributos do catálogo inferido.](#tabela-17)
-- [Tabela 18 — Separadores da interface e respetivas funcionalidades.](#tabela-18)
-- [Tabela 19 — Campos de pessoas e origens e respetivos efeitos no perfil.](#tabela-19)
-- [Tabela 20 — Endpoints da API HTTP, parâmetros e resultados.](#tabela-20)
-- [Tabela 21 — Campos de uma recomendação personalizada e significado para o cliente.](#tabela-21)
-- [Tabela 22 — Resultados e alcance das verificações do núcleo e da API.](#tabela-22)
-- [Tabela 23 — Ficheiros de testes Playwright e comportamentos verificados.](#tabela-23)
+- [Tabela 8 — Estruturas de metaconhecimento e respetiva utilização.](#tabela-8)
+- [Tabela 9 — Mecanismos de explicação: momento de utilização e informação apresentada.](#tabela-9)
+- [Tabela 10 — Explicações disponíveis na interface web.](#tabela-10)
+- [Tabela 11 — Grupos de regras sobre filmes e conhecimento produzido.](#tabela-11)
+- [Tabela 12 — Pesos das características na pontuação de semelhança entre filmes.](#tabela-12)
+- [Tabela 13 — Componentes da pontuação das recomendações personalizadas.](#tabela-13)
+- [Tabela 14 — Decomposição da pontuação de Jungle Cruise para Inês.](#tabela-14)
+- [Tabela 15 — Opções de experiência da sessão, perguntas e conclusões do diálogo.](#tabela-15)
+- [Tabela 16 — Correspondência entre conclusões do diálogo e atributos do catálogo inferido.](#tabela-16)
+- [Tabela 17 — Separadores da interface e respetivas funcionalidades.](#tabela-17)
+- [Tabela 18 — Campos de pessoas e origens e respetivos efeitos no perfil.](#tabela-18)
+- [Tabela 19 — Endpoints da API HTTP, parâmetros e resultados.](#tabela-19)
+- [Tabela 20 — Campos de uma recomendação personalizada e significado para o cliente.](#tabela-20)
+- [Tabela 21 — Resultados e alcance das verificações do núcleo e da API.](#tabela-21)
+- [Tabela 22 — Ficheiros de testes Playwright e comportamentos verificados.](#tabela-22)
 
 <div style="break-after: page; page-break-after: always;"></div>
 
@@ -570,7 +569,7 @@ O motor prévio já usava metaconhecimento de controlo em `facto_dispara_regras/
 
 Metaconhecimento é informação sobre o próprio conhecimento e o seu processo de utilização. Deve distinguir-se dos factos do domínio: `genre(M, G)` descreve um filme; `justifica(N, Regra, Evidencias)` descreve como o sistema obteve uma conclusão.
 
-<p id="tabela-9" class="table-caption" align="center"><em>Tabela 9 — Estruturas de metaconhecimento e respetiva utilização.</em></p>
+<p id="tabela-8" class="table-caption" align="center"><em>Tabela 8 — Estruturas de metaconhecimento e respetiva utilização.</em></p>
 
 | Estrutura | Conhecimento representado | Utilização efetiva |
 | --- | --- | --- |
@@ -589,7 +588,7 @@ A pesquisa do `whynot` inspeciona os consequentes das regras para descobrir quai
 
 ## 4. Mecanismos de explicação
 
-<p id="tabela-10" class="table-caption" align="center"><em>Tabela 10 — Mecanismos de explicação: momento de utilização e informação apresentada.</em></p>
+<p id="tabela-9" class="table-caption" align="center"><em>Tabela 9 — Mecanismos de explicação: momento de utilização e informação apresentada.</em></p>
 
 | Mecanismo | Momento e entrada | Informação apresentada |
 | --- | --- | --- |
@@ -636,7 +635,7 @@ A análise não é uma enumeração completa de todas as combinações possívei
 
 Os mecanismos do núcleo sustentam agora duas apresentações complementares:
 
-<p id="tabela-11" class="table-caption" align="center"><em>Tabela 11 — Explicações disponíveis na interface web.</em></p>
+<p id="tabela-10" class="table-caption" align="center"><em>Tabela 10 — Explicações disponíveis na interface web.</em></p>
 
 | Local na interface | Ação | Informação apresentada |
 | --- | --- | --- |
@@ -652,7 +651,7 @@ Abrir uma explicação não responde à pergunta nem avança o diálogo. A apres
 
 As regras 1 a 33 enriquecem o catálogo antes da personalização.
 
-<p id="tabela-12" class="table-caption" align="center"><em>Tabela 12 — Grupos de regras sobre filmes e conhecimento produzido.</em></p>
+<p id="tabela-11" class="table-caption" align="center"><em>Tabela 11 — Grupos de regras sobre filmes e conhecimento produzido.</em></p>
 
 | Regras | Conhecimento produzido |
 | --- | --- |
@@ -671,7 +670,7 @@ Os limites de época são fixos: anterior a 2000 é clássico, 2000–2019 é mo
 
 A regra 32 considera dois filmes semelhantes quando partilham género e idioma. A regra 33 calcula uma pontuação separada:
 
-<p id="tabela-13" class="table-caption" align="center"><em>Tabela 13 — Pesos das características na pontuação de semelhança entre filmes.</em></p>
+<p id="tabela-12" class="table-caption" align="center"><em>Tabela 12 — Pesos das características na pontuação de semelhança entre filmes.</em></p>
 
 | Característica em comum | Pontos |
 | --- | --- |
@@ -722,7 +721,7 @@ A fórmula é:
 Score = Género + IMDb + Realizador + Ator + Secundários
 ```
 
-<p id="tabela-14" class="table-caption" align="center"><em>Tabela 14 — Componentes da pontuação das recomendações personalizadas.</em></p>
+<p id="tabela-13" class="table-caption" align="center"><em>Tabela 13 — Componentes da pontuação das recomendações personalizadas.</em></p>
 
 | Componente | Contributo |
 | --- | --- |
@@ -753,7 +752,7 @@ sort(Candidates, Ranked).
 
 Para Inês, usando o perfil do CSV local, e o filme `tt0870154` do catálogo local, identificado como *Jungle Cruise*, a execução de 21 de outubro confirmou:
 
-<p id="tabela-15" class="table-caption" align="center"><em>Tabela 15 — Decomposição da pontuação de Jungle Cruise para Inês.</em></p>
+<p id="tabela-14" class="table-caption" align="center"><em>Tabela 14 — Decomposição da pontuação de Jungle Cruise para Inês.</em></p>
 
 | Componente | Pontos |
 | --- | --- |
@@ -783,7 +782,7 @@ regra dialogo_experiencia
 
 `opcoes_pergunta(experiencia(_), Opcoes)` declara sete opções. A seleção fica guardada como facto de entrada `escolha(experiencia(U), Opcao)`; a regra produz `experiencia_sessao(U, Opcao)` com justificação. No fluxo normal, apenas o percurso escolhido é ativado, evitando perguntar por todas as experiências.
 
-<p id="tabela-16" class="table-caption" align="center"><em>Tabela 16 — Opções de experiência da sessão, perguntas e conclusões do diálogo.</em></p>
+<p id="tabela-15" class="table-caption" align="center"><em>Tabela 15 — Opções de experiência da sessão, perguntas e conclusões do diálogo.</em></p>
 
 | Opção inicial | Perguntas de aprofundamento | Conclusões possíveis |
 | --- | --- | --- |
@@ -811,7 +810,7 @@ Cada execução decorre dentro de `snapshot/1`: as alterações temporárias do 
 
 As conclusões do diálogo são agora usadas por `session_picks/2`, que cruza as recomendações elegíveis do utilizador com as características pretendidas para a sessão:
 
-<p id="tabela-17" class="table-caption" align="center"><em>Tabela 17 — Correspondência entre conclusões do diálogo e atributos do catálogo inferido.</em></p>
+<p id="tabela-16" class="table-caption" align="center"><em>Tabela 16 — Correspondência entre conclusões do diálogo e atributos do catálogo inferido.</em></p>
 
 | Conclusão | Correspondência no catálogo inferido |
 | --- | --- |
@@ -846,7 +845,7 @@ O visual atual aproxima-se da identidade Playgorithm: fundo verde muito escuro (
 
 O painel superior reúne os perfis em etiquetas com avatar, a identidade do utilizador selecionado e as ações de edição. A área principal organiza-se em cinco separadores:
 
-<p id="tabela-18" class="table-caption" align="center"><em>Tabela 18 — Separadores da interface e respetivas funcionalidades.</em></p>
+<p id="tabela-17" class="table-caption" align="center"><em>Tabela 17 — Separadores da interface e respetivas funcionalidades.</em></p>
 
 | Separador | Funcionalidade |
 | --- | --- |
@@ -894,7 +893,7 @@ Em **Filmes**, os seletores pesquisam títulos e apresentam o ano. O histórico 
 
 O separador está implementado com seis seletores de múltiplos valores, alimentados pelos nomes existentes no catálogo:
 
-<p id="tabela-19" class="table-caption" align="center"><em>Tabela 19 — Campos de pessoas e origens e respetivos efeitos no perfil.</em></p>
+<p id="tabela-18" class="table-caption" align="center"><em>Tabela 18 — Campos de pessoas e origens e respetivos efeitos no perfil.</em></p>
 
 | Campo | Efeito no perfil |
 | --- | --- |
@@ -979,7 +978,7 @@ A divisão evita duplicar a política de recomendação no navegador: os motores
 
 ### 10.2. Contrato implementado
 
-<p id="tabela-20" class="table-caption" align="center"><em>Tabela 20 — Endpoints da API HTTP, parâmetros e resultados.</em></p>
+<p id="tabela-19" class="table-caption" align="center"><em>Tabela 19 — Endpoints da API HTTP, parâmetros e resultados.</em></p>
 
 | Método e caminho | Parâmetros | Resultado |
 | --- | --- | --- |
@@ -1000,7 +999,7 @@ A recomendação por filme e a recomendação por utilizador têm significados d
 
 Um item personalizado contém:
 
-<p id="tabela-21" class="table-caption" align="center"><em>Tabela 21 — Campos de uma recomendação personalizada e significado para o cliente.</em></p>
+<p id="tabela-20" class="table-caption" align="center"><em>Tabela 20 — Campos de uma recomendação personalizada e significado para o cliente.</em></p>
 
 | Campo | Significado para o cliente |
 | --- | --- |
@@ -1100,7 +1099,7 @@ python3 api/test_http.py
 Este teste inicia um servidor temporário com perfis próprios e verifica endpoints, filtros, paginação, recomendações, soma das componentes da pontuação, alternativas, mínimo estrito, restrições de sessão, erros, CORS e métodos HTTP. A abertura da porta local exigiu execução fora da sandbox; o resultado foi `OK: endpoints, filtros, paginação, recomendações, erros, CORS e métodos HTTP`.
 <div style="break-after: page; page-break-after: always;"></div>
 
-<p id="tabela-22" class="table-caption" align="center"><em>Tabela 22 — Resultados e alcance das verificações do núcleo e da API.</em></p>
+<p id="tabela-21" class="table-caption" align="center"><em>Tabela 21 — Resultados e alcance das verificações do núcleo e da API.</em></p>
 
 | Verificação executada | Resultado | Alcance |
 | --- | --- | --- |
@@ -1120,7 +1119,7 @@ Foram também reconfirmados o número de filmes, utilizadores locais e regras, a
 A suite Playwright contém **nove cenários**, executados com um único worker para evitar escritas e recarregamentos concorrentes entre testes. Usa os serviços reais e perfis temporários com identificadores únicos; não simula respostas dos motores. Nos cenários de diálogo, pessoas/origens e recomendações, a criação, interação e eliminação do perfil são feitas pela interface. A fixture observa os pedidos de recarregamento desencadeados pelo frontend e aguarda os dois motores na preparação e limpeza.
 <div style="break-after: page; page-break-after: always;"></div>
 
-<p id="tabela-23" class="table-caption" align="center"><em>Tabela 23 — Ficheiros de testes Playwright e comportamentos verificados.</em></p>
+<p id="tabela-22" class="table-caption" align="center"><em>Tabela 22 — Ficheiros de testes Playwright e comportamentos verificados.</em></p>
 
 | Ficheiro | Casos | Comportamento verificado |
 | --- | --- | --- |
