@@ -14,7 +14,8 @@ type Props = {
 };
 
 // Uma recomendação, com a explicação num dropdown.
-const RecommendationItem = ({ recommendation }: { recommendation: Recommendation }) => {
+// `top` é o vencedor; quando existe, este item ficou atrás dele e mostra porque não.
+const RecommendationItem = ({ recommendation, rank, top }: { recommendation: Recommendation; rank: number; top?: Recommendation }) => {
     const [open, setOpen] = useState(false);
     const { movie, score, status } = recommendation;
 
@@ -22,9 +23,10 @@ const RecommendationItem = ({ recommendation }: { recommendation: Recommendation
         <li>
             <ListItem disableGutters>
                 <ListItemText
-                    primary={movie.title}
+                    primary={`${rank}. ${movie.title}`}
                     secondary={`${movie.genre.slice(0, 3).map(formatLabel).join(", ")} · IMDb ${movie.rating_imdb?.toFixed(1) ?? "?"} · ${score} pts`}
                 />
+                {!top && <Chip label="recomendado" color="primary" size="small" sx={{ mr: 0.5 }} />}
                 {status === "alternative" && <Chip label="alternativa" size="small" />}
                 <IconButton
                     size="small"
@@ -37,7 +39,7 @@ const RecommendationItem = ({ recommendation }: { recommendation: Recommendation
                 </IconButton>
             </ListItem>
             <Collapse in={open} unmountOnExit>
-                <RecommendationExplanation recommendation={recommendation} />
+                <RecommendationExplanation recommendation={recommendation} top={top} />
             </Collapse>
         </li>
     );
@@ -74,8 +76,13 @@ const EngineRecommendations = ({ engine, showTitle }: Props) => {
                 </Typography>
             )}
             <List dense>
-                {items.map((recommendation) => (
-                    <RecommendationItem key={recommendation.movie.id} recommendation={recommendation} />
+                {items.map((recommendation, index) => (
+                    <RecommendationItem
+                        key={recommendation.movie.id}
+                        recommendation={recommendation}
+                        rank={index + 1}
+                        top={index > 0 ? items[0] : undefined}
+                    />
                 ))}
             </List>
         </section>
