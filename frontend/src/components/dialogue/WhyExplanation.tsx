@@ -29,6 +29,14 @@ const Bullets = ({ items }: { items: string[] }) => (
 const WhyExplanation = ({ question, questions }: Props) => {
     const [showRule, setShowRule] = useState(false);
     const { why } = question;
+    // Drools explains itself in text; show it as it comes.
+    if (Array.isArray(why)) {
+        return (
+            <Box component="pre" sx={{ ...code, mt: 1, pt: 1, m: 0, borderTop: 1, borderColor: "divider", whiteSpace: "pre-wrap" }}>
+                {why.join("\n")}
+            </Box>
+        );
+    }
     const asking = why.asking ?? why.conditions.length;
     const known = why.conditions.slice(0, asking);
     const pending = why.conditions.slice(asking + 1);

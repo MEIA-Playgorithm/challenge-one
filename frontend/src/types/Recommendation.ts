@@ -15,7 +15,10 @@ export type Recommendation = {
     movie: {
         id: string;
         title: string;
+        year: number | null;
         genre: string[];
+        emotional_tone: string[];
+        themes: string[];
         rating_imdb: number | null;
     };
     reasons: Reason[];

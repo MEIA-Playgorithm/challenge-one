@@ -4,6 +4,8 @@ import EditIcon from "@mui/icons-material/Edit";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutlineOutlined";
 import ReplayIcon from "@mui/icons-material/Replay";
 import { useApp } from "../../context/AppContext";
+import { config, type EngineId } from "../../lib/config";
+import EngineSelector from "../recommendations/EngineSelector";
 import { useDialogue } from "../../hooks/useDialogue";
 import { isYesNo, optionIcon, optionLabel } from "../../lib/dialogue";
 import type { DialogueAnswers, DialogueQuestion } from "../../types/Dialogue";
@@ -108,15 +110,19 @@ type Props = {
     onAnswersChange: (answers: DialogueAnswers) => void;
 };
 
-// The engine dialogue as a chat: pick today's experience, answer that branch's questions
-// and see the movies that fit, with the why behind everything.
-const Dialogue = ({ answers, onAnswersChange }: Props) => {
+type EngineDialogueProps = Props & { engine: EngineId; showChat: boolean; showTitle: boolean };
+
+// One engine's dialogue. `showChat` is for the first engine only: the chat (pick today's
+// experience, answer that branch's questions, with the why behind each) is shown once and
+// every engine gets the column with its own results for the same answers.
+const EngineDialogue = ({ engine, showChat, showTitle, answers, onAnswersChange }: EngineDialogueProps) => {
     const { currentUser, engineStatus } = useApp();
     const { dialogue, loading, error, answer, revise, restart } = useDialogue(
+        engine,
         currentUser.user_id,
         answers,
         onAnswersChange,
-        engineStatus.prolog
+        engineStatus[engine]
     );
 
     // Question texts, so explanations can say "you answered yes to ..." in words.
@@ -124,72 +130,110 @@ const Dialogue = ({ answers, onAnswersChange }: Props) => {
     const questions = Object.fromEntries(asked.map((question) => [question.key, question.text]));
 
     return (
-        <Box
-            sx={{
-                display: "grid",
-                gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 5fr) minmax(0, 6fr)" },
-                gap: 3,
-                alignItems: "start",
-            }}
-        >
-            <Stack spacing={1.5}>
-                <Stack direction="row" sx={{ alignItems: "flex-start", justifyContent: "space-between", gap: 1 }}>
-                    <Box>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                            O que te apetece ver hoje?
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                            O motor de recomendação faz algumas perguntas para esta sessão. Pergunta porquê em qualquer pergunta para veres o raciocínio.
-                        </Typography>
-                    </Box>
-                    <Button
-                        size="small"
-                        color="inherit"
-                        startIcon={<ReplayIcon />}
-                        disabled={loading || !dialogue?.history.length}
-                        onClick={restart}
-                        sx={{ flexShrink: 0 }}
-                    >
-                        Recomeçar
-                    </Button>
-                </Stack>
+        <>
+            {showChat && (
+                <Stack spacing={1.5}>
+                    <Stack direction="row" sx={{ alignItems: "flex-start", justifyContent: "space-between", gap: 1 }}>
+                        <Box>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                                O que te apetece ver hoje?
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                O motor de recomendação faz algumas perguntas para esta sessão. Pergunta porquê em qualquer pergunta para veres o raciocínio.
+                            </Typography>
+                        </Box>
+                        <Button
+                            size="small"
+                            color="inherit"
+                            startIcon={<ReplayIcon />}
+                            disabled={loading || !dialogue?.history.length}
+                            onClick={restart}
+                            sx={{ flexShrink: 0 }}
+                        >
+                            Recomeçar
+                        </Button>
+                    </Stack>
 
+                    {dialogue && (
+                        <Stack spacing={1.25} aria-live="polite">
+                            {dialogue.history.map((item, index) => (
+                                <Stack key={item.key} spacing={1.25}>
+                                    <EngineMessage question={item} questions={questions} />
+                                    <UserMessage answer={item.answer} disabled={loading} onRevise={() => revise(index)} />
+                                </Stack>
+                            ))}
+                            {dialogue.question ? (
+                                <Stack key={dialogue.question.key} spacing={1.25}>
+                                    <EngineMessage question={dialogue.question} questions={questions} />
+                                    <AnswerOptions
+                                        options={dialogue.question.options}
+                                        disabled={loading}
+                                        onAnswer={(value) => answer(dialogue.question!.key, value)}
+                                    />
+                                </Stack>
+                            ) : (
+                                <Box sx={engineBubble}>
+                                    <Typography variant="body2">É tudo o que precisava. As tuas sugestões estão prontas.</Typography>
+                                </Box>
+                            )}
+                            {loading && <CircularProgress size={18} sx={{ alignSelf: "flex-start" }} aria-label="À espera do motor" />}
+                        </Stack>
+                    )}
+                </Stack>
+            )}
+
+            <Stack spacing={1.5}>
+                {showTitle && (
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                        {config.engines[engine].label}
+                    </Typography>
+                )}
                 {error && (
                     <Typography color="error" variant="body2">
                         {error}
                     </Typography>
                 )}
                 {!dialogue && loading && <CircularProgress size={24} />}
-
-                {dialogue && (
-                    <Stack spacing={1.25} aria-live="polite">
-                        {dialogue.history.map((item, index) => (
-                            <Stack key={item.key} spacing={1.25}>
-                                <EngineMessage question={item} questions={questions} />
-                                <UserMessage answer={item.answer} disabled={loading} onRevise={() => revise(index)} />
-                            </Stack>
-                        ))}
-                        {dialogue.question ? (
-                            <Stack key={dialogue.question.key} spacing={1.25}>
-                                <EngineMessage question={dialogue.question} questions={questions} />
-                                <AnswerOptions
-                                    options={dialogue.question.options}
-                                    disabled={loading}
-                                    onAnswer={(value) => answer(dialogue.question!.key, value)}
-                                />
-                            </Stack>
-                        ) : (
-                            <Box sx={engineBubble}>
-                                <Typography variant="body2">É tudo o que precisava. As tuas sugestões estão prontas.</Typography>
-                            </Box>
-                        )}
-                        {loading && <CircularProgress size={18} sx={{ alignSelf: "flex-start" }} aria-label="À espera do motor" />}
-                    </Stack>
-                )}
+                {dialogue && <DialogueResults dialogue={dialogue} questions={questions} />}
             </Stack>
+        </>
+    );
+};
 
-            {dialogue && <DialogueResults dialogue={dialogue} questions={questions} />}
-        </Box>
+// One chat and, next to it, each chosen engine's results for the same answers.
+const Dialogue = ({ answers, onAnswersChange }: Props) => {
+    const { engines } = useApp();
+
+    return (
+        <Stack spacing={2}>
+            <Stack direction="row" sx={{ justifyContent: "flex-end" }}>
+                <EngineSelector />
+            </Stack>
+            {engines.length === 0 && (
+                <Typography color="text.secondary" variant="body2">
+                    Nenhum motor selecionado. Seleciona pelo menos um motor para o diálogo.
+                </Typography>
+            )}
+            <Box
+                sx={{
+                    display: "grid",
+                    gap: 3,
+                    alignItems: "start",
+                    gridTemplateColumns: { xs: "1fr", lg: `minmax(0, 4fr) repeat(${Math.max(engines.length, 1)}, minmax(0, 5fr))` },
+                }}
+            >
+                {engines.map((engine, index) => (
+                    <EngineDialogue
+                        key={engine}
+                        engine={engine}
+                        showChat={index === 0}
+                        showTitle={engines.length > 1}
+                        answers={answers}
+                        onAnswersChange={onAnswersChange}
+                    />
+                ))}
+            </Box>
+        </Stack>
     );
 };
 

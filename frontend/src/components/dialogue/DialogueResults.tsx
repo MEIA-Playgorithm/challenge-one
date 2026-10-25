@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Box, Chip, Link, Stack, Typography } from "@mui/material";
-import { describe, matchLabel, optionLabel } from "../../lib/dialogue";
+import { concludes, describe, matchLabel, optionLabel } from "../../lib/dialogue";
 import type { Dialogue, DialogueConclusion } from "../../types/Dialogue";
 
 const panel = { border: 1, borderColor: "divider", borderRadius: 2, p: 2 } as const;
@@ -19,11 +19,16 @@ const Conclusion = ({ conclusion, questions }: { conclusion: DialogueConclusion;
             <Link component="button" type="button" variant="caption" onClick={() => setShowHow((current) => !current)}>
                 {showHow ? "esconder" : "como?"}
             </Link>
-            {showHow && (
-                <Typography variant="caption" color="text.secondary" component="div">
-                    Regra {conclusion.rule}, porque: {conclusion.premises.map((premise) => describe(premise, questions)).join("; ")}.
-                </Typography>
-            )}
+            {showHow &&
+                (conclusion.how ? (
+                    <Typography variant="caption" color="text.secondary" component="pre" sx={{ m: 0, whiteSpace: "pre-wrap", fontFamily: "monospace" }}>
+                        {conclusion.how.join("\n")}
+                    </Typography>
+                ) : (
+                    <Typography variant="caption" color="text.secondary" component="div">
+                        Regra {conclusion.rule}, porque: {conclusion.premises.map((premise) => describe(premise, questions)).join("; ")}.
+                    </Typography>
+                ))}
         </Box>
     );
 };
@@ -109,7 +114,7 @@ const DialogueResults = ({ dialogue, questions }: Props) => {
                     <Stack component="ul" spacing={0.75} sx={{ m: 0, pl: 2.5 }}>
                         {declined.map((item) => (
                             <Typography component="li" variant="body2" key={item.key}>
-                                {item.why.concludes.map((fact) => describe(fact, questions)).join("; ")}
+                                {concludes(item).map((fact) => describe(fact, questions)).join("; ")}
                                 <Typography component="span" variant="caption" color="text.secondary">
                                     {" "}
                                     — respondeste {optionLabel(item.answer)} a “{item.text}”

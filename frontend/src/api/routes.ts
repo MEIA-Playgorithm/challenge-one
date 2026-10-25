@@ -24,8 +24,10 @@ const droolsRoutes: EngineRoutes = {
     reloadUsers: "/api/reload/users",
 };
 
-// Served by swi-prolog/rules_dialog.pl.
-export const prologDialogueRoute = "/api/dialogo";
+export const dialogueRoutes: Record<EngineId, string> = {
+    prolog: "/api/dialogo",
+    drools: "/api/dialogue",
+};
 
 export const engineRoutes: Record<EngineId, EngineRoutes> = {
     prolog: prologRoutes,
