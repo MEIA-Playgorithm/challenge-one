@@ -1,4 +1,4 @@
-import { createTheme } from "@mui/material";
+import { alpha, createTheme } from "@mui/material";
 import { ptPT } from "@mui/material/locale";
 
 // Colours taken from the Playgorithm blog (playgorithm.blogspot.com).
@@ -72,6 +72,22 @@ const theme = createTheme({
                 }),
             },
         },
+        // Campos de texto no mesmo tamanho (14 px) que o resto da interface.
+        // Abas: letra maior e legível, e uma cor de hover (a selecionada fica a verde e a negrito).
+        MuiTab: {
+            styleOverrides: {
+                root: ({ theme }) => ({
+                    fontSize: 15,
+                    fontWeight: 500,
+                    color: alpha(theme.palette.text.primary, 0.7),
+                    transition: "color 0.15s, background-color 0.15s",
+                    "&:not(.Mui-selected):hover": { color: theme.palette.text.primary, backgroundColor: alpha(theme.palette.primary.main, 0.1) },
+                    "&.Mui-selected": { fontWeight: 600 },
+                }),
+            },
+        },
+        MuiInputBase: { styleOverrides: { root: { fontSize: 14 } } },
+        MuiInputLabel: { styleOverrides: { root: { fontSize: 14 } } },
     },
 }, ptPT);
 
