@@ -15,6 +15,8 @@ const UserPanel = () => {
     // O utilizador a apagar; o diálogo guarda-o enquanto fecha.
     const [deleteId, setDeleteId] = useState<string | null>(null);
     const [deleteOpen, setDeleteOpen] = useState(false);
+    // A lista para trocar de utilizador pode esconder-se.
+    const [showUsers, setShowUsers] = useState(true);
 
     const selectUser = (user: User) => {
         setCurrentUser(user);
@@ -23,21 +25,25 @@ const UserPanel = () => {
 
     return (
         <Paper sx={{ flex: "0 0 auto", overflow: "visible" }}>
-            <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
-                <UserList
-                    users={users}
-                    selectedId={mode === "create" ? null : currentUser.user_id}
-                    creating={mode === "create"}
-                    onSelect={selectUser}
-                    onNew={() => setMode("create")}
-                />
-            </Box>
+            {showUsers && (
+                <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
+                    <UserList
+                        users={users}
+                        selectedId={mode === "create" ? null : currentUser.user_id}
+                        creating={mode === "create"}
+                        onSelect={selectUser}
+                        onNew={() => setMode("create")}
+                    />
+                </Box>
+            )}
 
             <Box sx={{ p: 3 }}>
                 {mode === "view" ? (
                     <UserSummary
                         user={currentUser}
                         canDelete={users.length > 1}
+                        usersShown={showUsers}
+                        onToggleUsers={() => setShowUsers(!showUsers)}
                         onEdit={() => setMode("edit")}
                         onDelete={() => {
                             setDeleteId(currentUser.user_id);
